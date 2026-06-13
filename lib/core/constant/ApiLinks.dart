@@ -1,0 +1,51 @@
+class ApiLinks {
+  static const String server = "http://10.0.2.2:5004/api";
+
+  // Auth
+  static const String login = "$server/Auth/login";
+  static const String refreshToken = "$server/Auth/refresh";
+  static const String logout = "$server/Auth/logout";
+
+  // Users
+  static const String users = "$server/Users";
+  static String userById(int id) => "$server/Users/$id";
+
+  // Doctors
+  static const String doctors = "$server/Doctors";
+  static String doctorById(int id) => "$server/Doctors/$id";
+
+  // Patients
+  static const String patients = "$server/Patients";
+  static String patientById(int id) => "$server/Patients/$id";
+
+  // Appointments
+  static const String appointments = "$server/Appointments";
+  static String appointmentById(int id) => "$server/Appointments/$id";
+
+  static String appointmentsByUserId(int userId) =>
+      "$server/Appointments/user/$userId";
+
+  static String availableSlots({required int doctorId, required String date}) =>
+      "$server/Appointments/available-slots?doctorId=$doctorId&date=$date";
+
+  static String cancelAppointment(int id) => "$server/Appointments/$id/cancel";
+
+  static String completeAppointment(int id) =>
+      "$server/Appointments/$id/complete";
+
+  // Medical Records
+  static const String medicalRecords = "$server/MedicalRecords";
+  static String medicalRecordById(int id) => "$server/MedicalRecords/$id";
+
+  // Payments
+  static const String payments = "$server/Payments";
+  static String paymentById(int id) => "$server/Payments/$id";
+
+  // Prescriptions
+  static const String prescriptions = "$server/Prescriptions";
+  static String prescriptionById(int id) => "$server/Prescriptions/$id";
+
+  //Images
+  static const String images =
+      "http://192.168.8.4:5210/api/Images/GetImage/a7f5a107-9b50-449c-bec3-91bf5d49af83.jpg";
+}
