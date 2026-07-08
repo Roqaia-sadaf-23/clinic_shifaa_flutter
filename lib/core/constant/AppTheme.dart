@@ -6,7 +6,7 @@ ThemeData themArabic = ThemeData(
     backgroundColor: Appcolor.babybluecolor,
   ),
 
-  appBarTheme: AppBarTheme(backgroundColor: Appcolor.primarycolor),
+  appBarTheme: AppBarTheme(backgroundColor: Appcolor.primary),
 
   fontFamily: "Cairo",
   colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
@@ -39,7 +39,7 @@ ThemeData themEnglish = ThemeData(
     centerTitle: true,
     iconTheme: IconThemeData(color: Appcolor.black),
     titleTextStyle: TextStyle(
-      color: Appcolor.primarycolor,
+      color: Appcolor.primary,
       fontWeight: FontWeight.bold,
       fontSize: 25,
     ),

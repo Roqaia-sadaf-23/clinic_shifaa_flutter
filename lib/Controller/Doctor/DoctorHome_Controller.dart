@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 
 import '../../View/Screen/Doctor/DoctorHomePage.dart' show AppointmentModel;
 
-class DoctorController extends GetxController {
+class DoctorHomeController extends GetxController {
   bool isLoading = false;
   final List<AppointmentModel> appointments = const [
     AppointmentModel(

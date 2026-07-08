@@ -1,267 +1,139 @@
+// ignore_for_file: file_names
+
 import 'dart:io';
 
+import 'package:clinic_shifaa/View/Widget/Custome/buildButton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
+import 'package:clinic_shifaa/View/Widget/Custome/buildDropdownField.dart';
+import '../../../../Controller/Auth/RegisterPage/RegisterPage_controler.dart';
+import '../../../../core/constant/Appcolor.dart';
+import '../../../Widget/Custome/buildCard.dart';
+import '../../../Widget/Custome/buildField.dart';
+import '../../../Widget/Custome/genderOption.dart';
 
-class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+class RegisterScreen extends StatelessWidget {
+  RegisterScreen({super.key});
 
-  @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
-}
-
-class _RegisterScreenState extends State<RegisterScreen>
-    with TickerProviderStateMixin {
-  final _formKey = GlobalKey<FormState>();
-  final _scrollController = ScrollController();
-
-  // Controllers
-  final _firstNameCtrl = TextEditingController();
-  final _lastNameCtrl = TextEditingController();
-  final _emailCtrl = TextEditingController();
-  final _userNameCtrl = TextEditingController();
-  final _passwordCtrl = TextEditingController();
-  final _nationalityNoCtrl = TextEditingController();
-  final _phoneCtrl = TextEditingController();
-  final _ageCtrl = TextEditingController();
-  final _addressCtrl = TextEditingController();
-  final _noteCtrl = TextEditingController();
-
-  // State variables
-  bool _isActive = true;
-  int _gender = 0; // 0 = Male, 1 = Female
-  int _roleId = 0;
-  int _nationalityCountryId = 0;
-  bool _obscurePassword = true;
-  int _currentStep = 0;
-  File? _profileImage;
-
-  late AnimationController _fadeController;
-  late AnimationController _slideController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-
-  // Colors
-  static const Color _primary = Color(0xFF0F3460);
-  static const Color _secondary = Color(0xFF16213E);
-  static const Color _accent = Color(0xFF533483);
-  static const Color _gold = Color(0xFFE94560);
-  static const Color _cardBg = Color(0xFF1A1A2E);
-  static const Color _inputBg = Color(0xFF16213E);
-  static const Color _white = Colors.white;
-  static const Color _textLight = Color(0xFFB0BEC5);
-
-  final List<String> _countries = [
-    'Saudi Arabia',
-    'Egypt',
-    'UAE',
-    'Kuwait',
-    'Jordan',
-    'Lebanon',
-    'Iraq',
-    'Syria',
-    'Other',
-  ];
-
-  final List<String> _roles = ['User', 'Admin', 'Moderator', 'Editor'];
-
-  @override
-  void initState() {
-    super.initState();
-    _fadeController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    );
-    _slideController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 500),
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeIn,
-    );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOut));
-
-    _fadeController.forward();
-    _slideController.forward();
-  }
-
-  @override
-  void dispose() {
-    _fadeController.dispose();
-    _slideController.dispose();
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked != null) {
-      setState(() => _profileImage = File(picked.path));
-    }
-  }
-
-  void _nextStep() {
-    if (_currentStep < 2) {
-      _slideController.reset();
-      setState(() => _currentStep++);
-      _slideController.forward();
-    }
-  }
-
-  void _prevStep() {
-    if (_currentStep > 0) {
-      _slideController.reset();
-      setState(() => _currentStep--);
-      _slideController.forward();
-    }
-  }
-
-  void _submit() {
-    if (_formKey.currentState!.validate()) {
-      final data = {
-        "firstName": _firstNameCtrl.text,
-        "lastName": _lastNameCtrl.text,
-        "email": _emailCtrl.text,
-        "userName": _userNameCtrl.text,
-        "password": _passwordCtrl.text,
-        "isActive": _isActive,
-        "nationalityNo": _nationalityNoCtrl.text,
-        "roleId": _roleId,
-        "phoneNumber": int.tryParse(_phoneCtrl.text) ?? 0,
-        "age": int.tryParse(_ageCtrl.text) ?? 0,
-        "address": _addressCtrl.text,
-        "gender": _gender,
-        "nationalityCountryId": _nationalityCountryId,
-        "imagePath": _profileImage?.path ?? "",
-        "note": _noteCtrl.text,
-      };
-      // TODO: Send data to API
-      debugPrint(data.toString());
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Registration Successful! 🎉'),
-          backgroundColor: _accent,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
-    }
-  }
+  final RegisterController controller = Get.put(RegisterController());
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _cardBg,
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: Stack(
-          children: [
-            // Background decoration
-            Positioned(
-              top: -80,
-              right: -80,
-              child: Container(
-                width: 300,
-                height: 300,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [_accent.withOpacity(0.3), Colors.transparent],
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: -100,
-              left: -60,
-              child: Container(
-                width: 250,
-                height: 250,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [_gold.withOpacity(0.2), Colors.transparent],
-                  ),
-                ),
-              ),
-            ),
-
-            // Main Content
-            SafeArea(
-              child: Column(
-                children: [
-                  _buildHeader(),
-                  _buildStepIndicator(),
-                  Expanded(
-                    child: Form(
-                      key: _formKey,
-                      child: SlideTransition(
-                        position: _slideAnimation,
-                        child: _buildCurrentStep(),
+    return GetBuilder<RegisterController>(
+      builder: (controller) {
+        return Scaffold(
+          backgroundColor: Appcolor.cardBg,
+          body: FadeTransition(
+            opacity: controller.fadeAnimation,
+            child: Stack(
+              children: [
+                Positioned(
+                  top: -80,
+                  right: -80,
+                  child: Container(
+                    width: 300,
+                    height: 300,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          Appcolor.accent.withOpacity(0.3),
+                          Colors.transparent,
+                        ],
                       ),
                     ),
                   ),
-                  _buildNavigationButtons(),
-                ],
-              ),
+                ),
+                Positioned(
+                  bottom: -100,
+                  left: -60,
+                  child: Container(
+                    width: 250,
+                    height: 250,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          Appcolor.gold.withOpacity(0.2),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                SafeArea(
+                  child: Column(
+                    children: [
+                      _buildHeader(controller),
+                      _buildStepIndicator(controller),
+                      Expanded(
+                        child: Form(
+                          key: controller.formKey,
+                          child: SlideTransition(
+                            position: controller.slideAnimation,
+                            child: _buildCurrentStep(controller),
+                          ),
+                        ),
+                      ),
+                      _buildNavigationButtons(controller),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(RegisterController controller) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
       child: Column(
         children: [
-          // Profile Image
           GestureDetector(
-            onTap: _pickImage,
+            onTap: controller.pickImage,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               width: 100,
               height: 100,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [_accent, _gold],
+                gradient: const LinearGradient(
+                  colors: [Appcolor.accent, Appcolor.gold],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: _accent.withOpacity(0.5),
+                    color: Appcolor.accent.withOpacity(0.5),
                     blurRadius: 20,
                     spreadRadius: 2,
                   ),
                 ],
               ),
-              child: _profileImage != null
+              child: controller.profileImage != null
                   ? ClipOval(
-                      child: Image.file(_profileImage!, fit: BoxFit.cover),
+                      child: Image.file(
+                        File(controller.profileImage!.path),
+                        fit: BoxFit.cover,
+                      ),
                     )
-                  : Column(
+                  : const Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
                           Icons.add_a_photo_rounded,
-                          color: _white,
+                          color: Appcolor.white,
                           size: 28,
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Text(
                           'Upload',
                           style: TextStyle(
-                            color: _white,
+                            color: Appcolor.white,
                             fontSize: 10,
                             fontWeight: FontWeight.w500,
                           ),
@@ -272,13 +144,15 @@ class _RegisterScreenState extends State<RegisterScreen>
           ),
           const SizedBox(height: 16),
           ShaderMask(
-            shaderCallback: (bounds) => LinearGradient(
-              colors: [_white, _textLight],
-            ).createShader(bounds),
+            shaderCallback: (bounds) {
+              return const LinearGradient(
+                colors: [Appcolor.white, Appcolor.textLight],
+              ).createShader(bounds);
+            },
             child: const Text(
               'Create Account',
               style: TextStyle(
-                color: Colors.white,
+                color: Appcolor.white,
                 fontSize: 26,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.5,
@@ -286,23 +160,25 @@ class _RegisterScreenState extends State<RegisterScreen>
             ),
           ),
           const SizedBox(height: 4),
-          Text(
+          const Text(
             'Fill in your details to get started',
-            style: TextStyle(color: _textLight, fontSize: 13),
+            style: TextStyle(color: Appcolor.textLight, fontSize: 13),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStepIndicator() {
+  Widget _buildStepIndicator(RegisterController controller) {
     final steps = ['Personal', 'Account', 'Details'];
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
       child: Row(
         children: List.generate(steps.length, (i) {
-          final isActive = i == _currentStep;
-          final isDone = i < _currentStep;
+          final isActive = i == controller.currentStep;
+          final isDone = i < controller.currentStep;
+
           return Expanded(
             child: Row(
               children: [
@@ -315,16 +191,18 @@ class _RegisterScreenState extends State<RegisterScreen>
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(2),
                           gradient: isActive || isDone
-                              ? LinearGradient(colors: [_gold, _accent])
+                              ? const LinearGradient(
+                                  colors: [Appcolor.gold, Appcolor.accent],
+                                )
                               : null,
-                          color: isActive || isDone ? null : _inputBg,
+                          color: isActive || isDone ? null : Appcolor.inputBg,
                         ),
                       ),
                       const SizedBox(height: 6),
                       Text(
                         steps[i],
                         style: TextStyle(
-                          color: isActive ? _white : _textLight,
+                          color: isActive ? Appcolor.white : Appcolor.textLight,
                           fontSize: 11,
                           fontWeight: isActive
                               ? FontWeight.w600
@@ -343,21 +221,20 @@ class _RegisterScreenState extends State<RegisterScreen>
     );
   }
 
-  Widget _buildCurrentStep() {
-    switch (_currentStep) {
+  Widget _buildCurrentStep(RegisterController controller) {
+    switch (controller.currentStep) {
       case 0:
-        return _buildPersonalStep();
+        return _buildPersonalStep(controller);
       case 1:
-        return _buildAccountStep();
+        return _buildAccountStep(controller);
       case 2:
-        return _buildDetailsStep();
+        return _buildDetailsStep(controller);
       default:
         return const SizedBox();
     }
   }
 
-  // ─── STEP 1: Personal Info ───────────────────────────────────────────────
-  Widget _buildPersonalStep() {
+  Widget _buildPersonalStep(RegisterController controller) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
@@ -365,8 +242,8 @@ class _RegisterScreenState extends State<RegisterScreen>
           Row(
             children: [
               Expanded(
-                child: _buildField(
-                  controller: _firstNameCtrl,
+                child: buildField(
+                  controller: controller.firstNameCtrl,
                   label: 'First Name',
                   icon: Icons.person_outline_rounded,
                   validator: (v) => v!.isEmpty ? 'Required' : null,
@@ -374,8 +251,8 @@ class _RegisterScreenState extends State<RegisterScreen>
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildField(
-                  controller: _lastNameCtrl,
+                child: buildField(
+                  controller: controller.lastNameCtrl,
                   label: 'Last Name',
                   icon: Icons.person_outline_rounded,
                   validator: (v) => v!.isEmpty ? 'Required' : null,
@@ -383,47 +260,47 @@ class _RegisterScreenState extends State<RegisterScreen>
               ),
             ],
           ),
-          _buildField(
-            controller: _phoneCtrl,
+          buildField(
+            controller: controller.phoneCtrl,
             label: 'Phone Number',
             icon: Icons.phone_outlined,
             keyboardType: TextInputType.phone,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             validator: (v) => v!.isEmpty ? 'Required' : null,
           ),
-          _buildField(
-            controller: _ageCtrl,
+          buildField(
+            controller: controller.ageCtrl,
             label: 'Age',
             icon: Icons.cake_outlined,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           ),
-          _buildField(
-            controller: _addressCtrl,
+          buildField(
+            controller: controller.addressCtrl,
             label: 'Address',
             icon: Icons.location_on_outlined,
             maxLines: 2,
           ),
-          _buildGenderSelector(),
+          buildGenderSelector(controller),
           const SizedBox(height: 16),
         ],
       ),
     );
   }
 
-  Widget _buildGenderSelector() {
-    return _buildCard(
+  Widget buildGenderSelector(RegisterController controller) {
+    return buildCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
-              Icon(Icons.wc_rounded, color: _accent, size: 18),
-              const SizedBox(width: 8),
+              Icon(Icons.wc_rounded, color: Appcolor.accent, size: 18),
+              SizedBox(width: 8),
               Text(
                 'Gender',
                 style: TextStyle(
-                  color: _textLight,
+                  color: Appcolor.textLight,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
@@ -433,9 +310,9 @@ class _RegisterScreenState extends State<RegisterScreen>
           const SizedBox(height: 12),
           Row(
             children: [
-              _genderOption(0, 'Male', Icons.male_rounded),
+              genderOption(controller, 0, 'Male', Icons.male_rounded),
               const SizedBox(width: 12),
-              _genderOption(1, 'Female', Icons.female_rounded),
+              genderOption(controller, 1, 'Female', Icons.female_rounded),
             ],
           ),
         ],
@@ -443,60 +320,19 @@ class _RegisterScreenState extends State<RegisterScreen>
     );
   }
 
-  Widget _genderOption(int value, String label, IconData icon) {
-    final selected = _gender == value;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _gender = value),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            gradient: selected
-                ? LinearGradient(colors: [_accent, _gold])
-                : null,
-            color: selected ? null : _cardBg,
-            border: Border.all(
-              color: selected
-                  ? Colors.transparent
-                  : _textLight.withOpacity(0.2),
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: _white, size: 18),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  color: _white,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 13,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ─── STEP 2: Account Info ────────────────────────────────────────────────
-  Widget _buildAccountStep() {
+  Widget _buildAccountStep(RegisterController controller) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         children: [
-          _buildField(
-            controller: _userNameCtrl,
+          buildField(
+            controller: controller.userNameCtrl,
             label: 'Username',
             icon: Icons.alternate_email_rounded,
             validator: (v) => v!.isEmpty ? 'Required' : null,
           ),
-          _buildField(
-            controller: _emailCtrl,
+          buildField(
+            controller: controller.emailCtrl,
             label: 'Email Address',
             icon: Icons.email_outlined,
             keyboardType: TextInputType.emailAddress,
@@ -506,34 +342,47 @@ class _RegisterScreenState extends State<RegisterScreen>
               return null;
             },
           ),
-          _buildPasswordField(),
-          _buildDropdownField(
+          _buildPasswordField(controller),
+          buildDropdownField(
             label: 'Role',
             icon: Icons.badge_outlined,
-            value: _roles[_roleId],
-            items: _roles,
-            onChanged: (v) => setState(() => _roleId = _roles.indexOf(v!)),
+            value: controller.selectedRole?.roleName,
+            items: controller.roles.map((role) => role.roleName).toList(),
+            onChanged: (v) {
+              if (v == null) return;
+
+              final role = controller.roles.firstWhere(
+                (role) => role.roleName == v,
+              );
+
+              controller.changeRole(role);
+            },
           ),
-          _buildActiveToggle(),
+
+          _buildActiveToggle(controller),
           const SizedBox(height: 16),
         ],
       ),
     );
   }
 
-  Widget _buildPasswordField() {
-    return _buildCard(
+  Widget _buildPasswordField(RegisterController controller) {
+    return buildCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
-              Icon(Icons.lock_outline_rounded, color: _accent, size: 18),
-              const SizedBox(width: 8),
+              Icon(
+                Icons.lock_outline_rounded,
+                color: Appcolor.accent,
+                size: 18,
+              ),
+              SizedBox(width: 8),
               Text(
                 'Password',
                 style: TextStyle(
-                  color: _textLight,
+                  color: Appcolor.textLight,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
@@ -542,9 +391,9 @@ class _RegisterScreenState extends State<RegisterScreen>
           ),
           const SizedBox(height: 8),
           TextFormField(
-            controller: _passwordCtrl,
-            obscureText: _obscurePassword,
-            style: TextStyle(color: _white, fontSize: 14),
+            controller: controller.passwordCtrl,
+            obscureText: controller.obscurePassword,
+            style: const TextStyle(color: Appcolor.white, fontSize: 14),
             validator: (v) {
               if (v!.isEmpty) return 'Required';
               if (v.length < 6) return 'Min 6 characters';
@@ -552,19 +401,18 @@ class _RegisterScreenState extends State<RegisterScreen>
             },
             decoration: InputDecoration(
               hintText: '••••••••',
-              hintStyle: TextStyle(color: _textLight.withOpacity(0.5)),
+              hintStyle: TextStyle(color: Appcolor.textLight.withOpacity(0.5)),
               border: InputBorder.none,
               isDense: true,
               suffixIcon: IconButton(
                 icon: Icon(
-                  _obscurePassword
+                  controller.obscurePassword
                       ? Icons.visibility_off_outlined
                       : Icons.visibility_outlined,
-                  color: _textLight,
+                  color: Appcolor.textLight,
                   size: 18,
                 ),
-                onPressed: () =>
-                    setState(() => _obscurePassword = !_obscurePassword),
+                onPressed: controller.togglePassword,
               ),
             ),
           ),
@@ -573,83 +421,149 @@ class _RegisterScreenState extends State<RegisterScreen>
     );
   }
 
-  Widget _buildActiveToggle() {
-    return _buildCard(
+  Widget _buildActiveToggle(RegisterController controller) {
+    return buildCard(
       child: Row(
         children: [
-          Icon(Icons.toggle_on_outlined, color: _accent, size: 18),
+          const Icon(
+            Icons.toggle_on_outlined,
+            color: Appcolor.accent,
+            size: 18,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Active Status',
                   style: TextStyle(
-                    color: _white,
+                    color: Appcolor.white,
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 Text(
-                  'Account is ${_isActive ? "active" : "inactive"}',
-                  style: TextStyle(color: _textLight, fontSize: 11),
+                  'Account is ${controller.isActive ? "active" : "inactive"}',
+                  style: const TextStyle(
+                    color: Appcolor.textLight,
+                    fontSize: 11,
+                  ),
                 ),
               ],
             ),
           ),
           Switch.adaptive(
-            value: _isActive,
-            onChanged: (v) => setState(() => _isActive = v),
-            activeColor: _gold,
-            activeTrackColor: _accent.withOpacity(0.5),
+            value: controller.isActive,
+            onChanged: controller.changeActive,
+            activeColor: Appcolor.gold,
+            activeTrackColor: Appcolor.accent.withOpacity(0.5),
           ),
         ],
       ),
     );
   }
 
-  // ─── STEP 3: Additional Details ──────────────────────────────────────────
-  Widget _buildDetailsStep() {
+  Widget _buildDetailsStep(RegisterController controller) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         children: [
-          _buildField(
-            controller: _nationalityNoCtrl,
+          buildField(
+            controller: controller.nationalityNoCtrl,
             label: 'Nationality / National ID',
             icon: Icons.credit_card_outlined,
           ),
-          _buildDropdownField(
-            label: 'Country of Nationality',
-            icon: Icons.flag_outlined,
-            value: _countries[_nationalityCountryId],
-            items: _countries,
-            onChanged: (v) =>
-                setState(() => _nationalityCountryId = _countries.indexOf(v!)),
+          buildCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.flag_outlined,
+                      color: Appcolor.accent,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Country of Nationality',
+                      style: TextStyle(
+                        color: Appcolor.textLight,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                buildDropdownField(
+                  label: 'Country',
+                  icon: Icons.flag_outlined,
+                  value: controller.selectedCountry?.CountryName,
+                  items: controller.countries
+                      .map((country) => country.CountryName)
+                      .toList(),
+                  onChanged: (v) {
+                    if (v == null) return;
+
+                    final country = controller.countries.firstWhere(
+                      (country) => country.CountryName == v,
+                    );
+
+                    controller.changeCountry(country);
+                  },
+                ),
+                /* DropdownButton<RoleModel>(
+                  value: controller.selectedRole,
+                  isExpanded: true,
+                  dropdownColor: Appcolor.secondary,
+                  underline: const SizedBox(),
+                  iconEnabledColor: Appcolor.textLight,
+                  style: const TextStyle(color: Appcolor.white, fontSize: 14),
+                  items: controller.roles.map((role) {
+                    return DropdownMenuItem<RoleModel>(
+                      value: role,
+                      child: Text(role.roleName),
+                    );
+                  }).toList(),
+                  onChanged: (role) {
+                    if (role != null) {
+                      controller.selectedRole = role;
+                      controller.roleId = role.Id;
+                      controller.update();
+                    }
+                  },
+                ), */
+              ],
+            ),
           ),
-          _buildField(
-            controller: _noteCtrl,
+
+          buildField(
+            controller: controller.noteCtrl,
             label: 'Note / Bio',
             icon: Icons.note_alt_outlined,
             maxLines: 4,
           ),
           const SizedBox(height: 20),
-          _buildSummaryCard(),
+          _buildSummaryCard(controller),
           const SizedBox(height: 16),
         ],
       ),
     );
   }
 
-  Widget _buildSummaryCard() {
+  Widget _buildSummaryCard(RegisterController controller) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _accent.withOpacity(0.4), width: 1),
+        border: Border.all(color: Appcolor.accent.withOpacity(0.4), width: 1),
         gradient: LinearGradient(
-          colors: [_accent.withOpacity(0.15), _gold.withOpacity(0.08)],
+          colors: [
+            Appcolor.accent.withOpacity(0.15),
+            Appcolor.gold.withOpacity(0.08),
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -657,14 +571,14 @@ class _RegisterScreenState extends State<RegisterScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
-              Icon(Icons.check_circle_outline, color: _gold, size: 18),
-              const SizedBox(width: 8),
+              Icon(Icons.check_circle_outline, color: Appcolor.gold, size: 18),
+              SizedBox(width: 8),
               Text(
                 'Summary',
                 style: TextStyle(
-                  color: _white,
+                  color: Appcolor.white,
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
                 ),
@@ -672,12 +586,21 @@ class _RegisterScreenState extends State<RegisterScreen>
             ],
           ),
           const SizedBox(height: 12),
-          _summaryRow('Name', '${_firstNameCtrl.text} ${_lastNameCtrl.text}'),
-          _summaryRow('Email', _emailCtrl.text),
-          _summaryRow('Username', _userNameCtrl.text),
-          _summaryRow('Gender', _gender == 0 ? 'Male' : 'Female'),
-          _summaryRow('Role', _roles[_roleId]),
-          _summaryRow('Status', _isActive ? '✅ Active' : '❌ Inactive'),
+          _summaryRow(
+            'Name',
+            '${controller.firstNameCtrl.text} ${controller.lastNameCtrl.text}',
+          ),
+          _summaryRow('Email', controller.emailCtrl.text),
+          _summaryRow('Username', controller.userNameCtrl.text),
+          _summaryRow('Gender', controller.gender == 0 ? 'Male' : 'Female'),
+          _summaryRow(
+            'Country',
+            controller.selectedCountry?.CountryName ?? '—',
+          ),
+          _summaryRow(
+            'Status',
+            controller.isActive ? '✅ Active' : '❌ Inactive',
+          ),
         ],
       ),
     );
@@ -690,17 +613,23 @@ class _RegisterScreenState extends State<RegisterScreen>
         children: [
           SizedBox(
             width: 80,
-            child: Text(key, style: TextStyle(color: _textLight, fontSize: 11)),
+            child: Text(
+              key,
+              style: const TextStyle(color: Appcolor.textLight, fontSize: 11),
+            ),
           ),
-          Text(
+          const Text(
             '• ',
-            style: TextStyle(color: _accent, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: Appcolor.accent,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           Expanded(
             child: Text(
               value.isEmpty ? '—' : value,
-              style: TextStyle(
-                color: _white,
+              style: const TextStyle(
+                color: Appcolor.white,
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
               ),
@@ -712,197 +641,34 @@ class _RegisterScreenState extends State<RegisterScreen>
     );
   }
 
-  // ─── Navigation Buttons ──────────────────────────────────────────────────
-  Widget _buildNavigationButtons() {
-    final isLast = _currentStep == 2;
+  Widget _buildNavigationButtons(RegisterController controller) {
+    final isLast = controller.currentStep == 2;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
       child: Row(
         children: [
-          if (_currentStep > 0)
+          if (controller.currentStep > 0)
             Expanded(
-              child: _buildButton(
+              child: buildButton(
                 label: 'Back',
                 icon: Icons.arrow_back_rounded,
-                onPressed: _prevStep,
+                onPressed: controller.prevStep,
                 outline: true,
               ),
             ),
-          if (_currentStep > 0) const SizedBox(width: 12),
+          if (controller.currentStep > 0) const SizedBox(width: 12),
           Expanded(
             flex: 2,
-            child: _buildButton(
+            child: buildButton(
               label: isLast ? 'Register' : 'Continue',
               icon: isLast ? Icons.check_rounded : Icons.arrow_forward_rounded,
-              onPressed: isLast ? _submit : _nextStep,
+
+              onPressed: isLast ? controller.submit : controller.nextStep,
             ),
           ),
         ],
       ),
     );
   }
-
-  Widget _buildButton({
-    required String label,
-    required IconData icon,
-    required VoidCallback onPressed,
-    bool outline = false,
-  }) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        height: 52,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          gradient: outline
-              ? null
-              : LinearGradient(
-                  colors: [_gold, _accent],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
-          border: outline
-              ? Border.all(color: _textLight.withOpacity(0.3))
-              : null,
-          boxShadow: outline
-              ? []
-              : [
-                  BoxShadow(
-                    color: _gold.withOpacity(0.35),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: _white,
-                fontWeight: FontWeight.w600,
-                fontSize: 15,
-                letterSpacing: 0.3,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Icon(icon, color: _white, size: 18),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ─── Shared Widgets ──────────────────────────────────────────────────────
-  Widget _buildCard({required Widget child}) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: _inputBg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _white.withOpacity(0.05)),
-      ),
-      child: child,
-    );
-  }
-
-  Widget _buildField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    TextInputType keyboardType = TextInputType.text,
-    List<TextInputFormatter>? inputFormatters,
-    String? Function(String?)? validator,
-    int maxLines = 1,
-  }) {
-    return _buildCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: _accent, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  color: _textLight,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: controller,
-            keyboardType: keyboardType,
-            inputFormatters: inputFormatters,
-            validator: validator,
-            maxLines: maxLines,
-            style: TextStyle(color: _white, fontSize: 14),
-            decoration: InputDecoration(
-              hintText: 'Enter $label',
-              hintStyle: TextStyle(color: _textLight.withOpacity(0.4)),
-              border: InputBorder.none,
-              isDense: true,
-              errorStyle: TextStyle(color: _gold, fontSize: 11),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDropdownField({
-    required String label,
-    required IconData icon,
-    required String value,
-    required List<String> items,
-    required void Function(String?) onChanged,
-  }) {
-    return _buildCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: _accent, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  color: _textLight,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          DropdownButton<String>(
-            value: value,
-            isExpanded: true,
-            dropdownColor: _secondary,
-            underline: const SizedBox(),
-            iconEnabledColor: _textLight,
-            style: TextStyle(color: _white, fontSize: 14),
-            items: items
-                .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                .toList(),
-            onChanged: onChanged,
-          ),
-        ],
-      ),
-    );
-  }
-
-  ImagePicker() {}
-}
-
-class ImageSource {
-  static const gallery = 0;
 }

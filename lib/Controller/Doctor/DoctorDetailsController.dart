@@ -3,24 +3,38 @@ import 'package:clinic_shifaa/data/model/DoctorModel.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../data/datasource/remote/Doctors/DactorData.dart';
+
 class DoctorDetailsController extends GetxController {
   final GlobalKey<FormState> formstate = GlobalKey<FormState>();
   Myservices myservices = Get.find();
 
   int selectedDayIndex = 0;
   int selectedTimeIndex = 0;
-  List<DoctorDetailsModel> doctors = [];
-
+  //List<DoctorDetailsModel> doctors = [];
+  DoctorData doctorData = DoctorData(Get.find());
   List<DateTime> availableDates = [];
   List<TimeOfDay> availableTimes = [];
+  final today = DateTime.now();
 
   @override
   void onInit() {
     super.onInit();
-    generateAvailableDates();
+
+    getDoctorInfo();
+    // generateAvailableDates();
     //   generateAvailableTimes();
   }
 
+  DoctorDetailsModel? doctors;
+
+  getDoctorInfo() async {
+    doctors = await doctorData.getdata();
+    print("DOCTOR = ${doctors?.firstName}");
+    update();
+  }
+
+  /* 
   void generateAvailableDates() {
     final today = DateTime.now();
 
@@ -80,5 +94,5 @@ class DoctorDetailsController extends GetxController {
     };
 
     print(data);
-  }
+  } */
 }

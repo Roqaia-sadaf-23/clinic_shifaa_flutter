@@ -13,7 +13,7 @@ class Custumbottunlang extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       child: ElevatedButton(
-        style: ElevatedButton.styleFrom(backgroundColor: Appcolor.primarycolor),
+        style: ElevatedButton.styleFrom(backgroundColor: Appcolor.primary),
         onPressed: onPressed,
         child: Text(textbutton, style: TextStyle(fontWeight: FontWeight.bold)),
       ),

@@ -4,6 +4,7 @@ class DoctorDetailsModel {
   final String firstName;
   final String lastName;
   final int age;
+  final int? experienceYears;
   final String? note;
   final String specialization;
   final String imagePath;
@@ -15,6 +16,7 @@ class DoctorDetailsModel {
     required this.firstName,
     required this.lastName,
     required this.age,
+    this.experienceYears,
     this.note,
     required this.specialization,
     required this.imagePath,
@@ -28,6 +30,7 @@ class DoctorDetailsModel {
       firstName: json['firstName'],
       lastName: json['lastName'],
       age: json['age'],
+      experienceYears: json['experienceYears'],
       note: json['note'],
       specialization: json['specialization'],
       imagePath: json['imagePath'],
@@ -42,6 +45,7 @@ class DoctorDetailsModel {
       'firstName': firstName,
       'lastName': lastName,
       'age': age,
+      'experienceYears': experienceYears,
       'note': note,
       'specialization': specialization,
       'imagePath': imagePath,

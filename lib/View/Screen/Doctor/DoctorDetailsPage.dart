@@ -37,6 +37,10 @@ class DoctorDetailsPage extends StatelessWidget {
       ),
       body: GetBuilder<DoctorDetailsController>(
         builder: (controller) {
+          //var Item = controller.doctors[0];
+          if (controller.doctors == null) {
+            return const Center(child: Text("++++No data+++++"));
+          }
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -85,7 +89,7 @@ class DoctorDetailsPage extends StatelessWidget {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(24),
                         child: Image.network(
-                          ApiLinks.images,
+                          ApiLinks.images + controller.doctors!.imagePath,
 
                           height: 190,
                           width: 190,
@@ -113,37 +117,43 @@ class DoctorDetailsPage extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: const Column(
+                  child: Column(
                     children: [
                       Text(
-                        "د. محمد السبيعي",
-                        style: TextStyle(
+                        controller.doctors!.firstName +
+                            " " +
+                            controller.doctors!.lastName,
+                        style: const TextStyle(
                           fontSize: 21,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 6),
+                      const SizedBox(height: 6),
                       Text(
-                        "استشاري قلب",
+                        controller.doctors!.specialization,
                         style: TextStyle(fontSize: 15, color: Colors.grey),
                       ),
-                      SizedBox(height: 14),
+                      const SizedBox(height: 14),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.star, color: Colors.orange, size: 20),
-                          SizedBox(width: 5),
-                          Text("4.8"),
-                          SizedBox(width: 20),
-                          Icon(
+                          const Icon(
+                            Icons.star,
+                            color: Colors.orange,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 5),
+                          const Text("4.8"),
+                          const SizedBox(width: 20),
+                          const Icon(
                             Icons.work_outline,
                             color: Colors.blue,
                             size: 20,
                           ),
-                          SizedBox(width: 5),
-                          Text("15 سنة خبرة"),
                         ],
                       ),
+                      const SizedBox(width: 5),
+                      Text("${controller.doctors!.experienceYears} سنوات خبرة"),
                     ],
                   ),
                 ),
@@ -179,7 +189,7 @@ class DoctorDetailsPage extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 16),
-
+                /*
                 // المواعيد
                 Container(
                   width: double.infinity,
@@ -209,7 +219,7 @@ class DoctorDetailsPage extends StatelessWidget {
                             final date = controller.availableDates[index];
                             final selected =
                                 controller.selectedDayIndex == index;
-
+ 
                             return GestureDetector(
                               onTap: () => controller.selectDay(index),
                               child: Container(
@@ -410,7 +420,7 @@ class DoctorDetailsPage extends StatelessWidget {
                     ),
                   ),
                 ),
-
+ */
                 const SizedBox(height: 20),
               ],
             ),

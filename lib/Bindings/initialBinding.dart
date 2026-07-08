@@ -1,5 +1,6 @@
 // ignore: file_names
 import 'package:get/get.dart';
+import '../Controller/Auth/RegisterPage/RegisterPage_controler.dart';
 import '../core/class/ApiService.dart';
 
 import '../core/localization/changelocal.dart';
@@ -17,5 +18,6 @@ class initialBinding extends Bindings {
     Get.putAsync<Myservices>(() async => await Myservices().init());
     Get.put(ApiService());
     Get.put(localController());
+    Get.lazyPut<RegisterController>(() => RegisterController(), fenix: true);
   }
 }

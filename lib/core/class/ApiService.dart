@@ -45,14 +45,14 @@ class Right<L, R> extends Either<L, R> {
 class ApiService {
   Future<Map<String, String>> _headers({bool auth = false}) async {
     final headers = {"Content-Type": "application/json"};
-    /* 
+   
     if (auth) {
       final token = await AuthService.getAccessToken();
 
       if (token != null && token.isNotEmpty) {
         headers["Authorization"] = "Bearer $token";
       }
-    } */
+    } 
 
     return headers;
   }
@@ -77,7 +77,7 @@ class ApiService {
         headers: await _headers(auth: auth),
       );
 
-      /*  if (response.statusCode == 401 && auth) {
+       if (response.statusCode == 401 && auth) {
         final refreshed = await AuthService.refreshAccessToken();
 
         if (refreshed) {
@@ -89,7 +89,39 @@ class ApiService {
           await AuthService.clearTokens();
           return Left(ServerFailure("Session expired, please login again"));
         }
-      } */
+      } 
+
+      if (_isSuccess(response.statusCode)) {
+        return Right(_decode(response.body));
+      }
+
+      return Left(ServerFailure("Server error: ${response.statusCode}"));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  Future<Either<Failure, dynamic>> uploadImage(
+    String url,
+    String imagePath, {
+    bool auth = false,
+  }) async {
+    try {
+      if (!await NetworkChecker.hasInternet()) {
+        return Left(NetworkFailure("No internet connection"));
+      }
+
+      var request = http.MultipartRequest('POST', Uri.parse(url));
+
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'file', // نفس اسم IFormFile file في C#
+          imagePath,
+        ),
+      );
+
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
 
       if (_isSuccess(response.statusCode)) {
         return Right(_decode(response.body));
@@ -112,12 +144,14 @@ class ApiService {
       }
 
       var response = await http.post(
+        
         Uri.parse(url),
         headers: await _headers(auth: auth),
         body: jsonEncode(data),
       );
-
-      /*   if (response.statusCode == 401 && auth) {
+print("Status Code: ${response.statusCode}");
+print("Body: ${response.body}");
+      if (response.statusCode == 401 && auth) {
         final refreshed = await AuthService.refreshAccessToken();
 
         if (refreshed) {
@@ -131,7 +165,7 @@ class ApiService {
           return Left(ServerFailure("Session expired, please login again"));
         }
       }
- */
+
       if (_isSuccess(response.statusCode)) {
         return Right(_decode(response.body));
       }
@@ -158,7 +192,7 @@ class ApiService {
         body: jsonEncode(data),
       );
 
-      /*     if (response.statusCode == 401 && auth) {
+           if (response.statusCode == 401 && auth) {
         final refreshed = await AuthService.refreshAccessToken();
 
         if (refreshed) {
@@ -171,7 +205,7 @@ class ApiService {
           await AuthService.clearTokens();
           return Left(ServerFailure("Session expired, please login again"));
         }
-      } */
+      } 
 
       if (_isSuccess(response.statusCode)) {
         return Right(_decode(response.body));
@@ -197,7 +231,7 @@ class ApiService {
         headers: await _headers(auth: auth),
       );
 
-      /*     if (response.statusCode == 401 && auth) {
+           if (response.statusCode == 401 && auth) {
         final refreshed = await AuthService.refreshAccessToken();
 
         if (refreshed) {
@@ -209,7 +243,7 @@ class ApiService {
           await AuthService.clearTokens();
           return Left(ServerFailure("Session expired, please login again"));
         }
-      } */
+      } 
 
       if (_isSuccess(response.statusCode)) {
         return Right(_decode(response.body));

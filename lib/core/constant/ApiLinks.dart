@@ -1,5 +1,5 @@
 class ApiLinks {
-  static const String server = "http://10.0.2.2:5004/api";
+  static const String server = "http://192.168.8.4:5210/api";
 
   // Auth
   static const String login = "$server/Auth/login";
@@ -9,7 +9,7 @@ class ApiLinks {
   // Users
   static const String users = "$server/Users";
   static String userById(int id) => "$server/Users/$id";
-
+  static const String adduser = "$server/Users/register";
   // Doctors
   static const String doctors = "$server/Doctors";
   static String doctorById(int id) => "$server/Doctors/$id";
@@ -45,7 +45,13 @@ class ApiLinks {
   static const String prescriptions = "$server/Prescriptions";
   static String prescriptionById(int id) => "$server/Prescriptions/$id";
 
+  // Roles
+  static const String roles = "$server/Role";
+
+  //country
+  static const String countries = "$server/Country";
+
   //Images
-  static const String images =
-      "http://192.168.8.4:5210/api/Images/GetImage/a7f5a107-9b50-449c-bec3-91bf5d49af83.jpg";
+  static const String images = "http://192.168.8.4:5210/api/Images/GetImage/";
+  static String uploadImage = "http://192.168.8.4:5210/api/Images/UploadImage";
 }

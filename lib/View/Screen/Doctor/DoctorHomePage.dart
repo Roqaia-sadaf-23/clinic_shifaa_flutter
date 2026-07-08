@@ -29,15 +29,17 @@ class DoctorHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Get.put(DoctorController());
+    Get.put(DoctorHomeController());
 
-    return GetBuilder<DoctorController>(
+    return GetBuilder<DoctorHomeController>(
       builder: (controller) {
         return Scaffold(
-          backgroundColor: const Color(0xffF4F7FB),
+          backgroundColor: Color(
+            0xFF1A1A2E,
+          ), //const Color.fromARGB(255, 215, 215, 232),
 
           floatingActionButton: FloatingActionButton(
-            backgroundColor: const Color(0xff0D6EFD),
+            backgroundColor: Color(0xFF1A1A2E),
             shape: const CircleBorder(),
             onPressed: () {},
             child: const Icon(Icons.add, color: Colors.white, size: 30),
@@ -222,12 +224,13 @@ class NavItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool active;
-
+  final void Function()? ontapicon;
   const NavItem({
     super.key,
     required this.icon,
     required this.label,
     this.active = false,
+    this.ontapicon,
   });
 
   @override
@@ -235,7 +238,11 @@ class NavItem extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(icon, color: active ? const Color(0xff0D6EFD) : Colors.grey),
+        IconButton(
+          icon: Icon(icon),
+          color: active ? const Color(0xff0D6EFD) : Colors.grey,
+          onPressed: ontapicon,
+        ),
         const SizedBox(height: 4),
         Text(
           label,

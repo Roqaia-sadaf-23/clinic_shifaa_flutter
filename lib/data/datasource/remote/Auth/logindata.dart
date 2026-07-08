@@ -1,5 +1,5 @@
 import '../../../../core/class/ApiService.dart';
-import '/core/constant/Applinkapi.dart';
+import '../../../../core/constant/ApiLinks.dart';
 
 class login_data {
   //crud _crud = crud();
@@ -7,7 +7,7 @@ class login_data {
   login_data(this._crud);
 
   postIsuserexit(String email, String password) async {
-    var response = await _crud.post(Applinkapi.login, {
+    var response = await _crud.post(ApiLinks.login, {
       "email": email,
       "password": password,
     });

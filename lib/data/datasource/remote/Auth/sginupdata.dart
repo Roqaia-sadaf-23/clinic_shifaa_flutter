@@ -1,26 +1,15 @@
 import '../../../../core/class/ApiService.dart';
-import '/core/constant/Applinkapi.dart';
+import '../../../../core/constant/ApiLinks.dart';
+import '../../../model/registermodel.dart';
 
-class sginup_data {
-  //crud _crud = crud();
-  ApiService _crud = ApiService();
+class SignupData {
+  final ApiService _crud = ApiService();
 
-  sginup_data(this._crud);
+  Future<dynamic> postDataUser(RegisterModel model) async {
+    var response = await _crud.post(ApiLinks.adduser, model.toJson());
 
-  postDatauser(
-    String username,
-    String email,
-    String phone,
-    String password,
-  ) async {
-    var response = await _crud.post(Applinkapi.adduser, {
-      "name": username,
-      "email": email,
-      "phone": phone,
-      "password": password,
-    });
-    print("===================  data $response");
-    // التعامل مع الاستجابة
-    return response.fold((L) => L, (R) => R);
+    print("=================== data $response");
+
+    return response;
   }
 }

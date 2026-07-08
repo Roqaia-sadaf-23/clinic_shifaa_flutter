@@ -1,9 +1,9 @@
 import 'package:clinic_shifaa/View/Screen/Auth/Register/RegisterScreen.dart';
+import 'package:clinic_shifaa/generated/l10n.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'Bindings/initialBinding.dart';
-
-import 'View/Screen/Doctor/DoctorDetailsPage.dart';
-import 'View/Screen/Doctor/DoctorHomePage.dart' show DoctorHomePage;
+import 'View/Screen/Auth/Login/Loginpage.dart';
 import 'core/localization/translation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -39,10 +39,16 @@ class MyApp extends StatelessWidget {
 
       locale: controllerlang.languege,
       theme: controllerlang.Apptheme,
-
+      localizationsDelegates: [
+        S.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: S.delegate.supportedLocales,
       // theme:
-      home: const DoctorDetailsPage(),
-      //DoctorHomePage(), //SplashScreen(),
+      home: LoginPage(), //DoctorDetailsPage(),
+      ////SplashScreen(),
       //RegisterScreen(),
       // RegisterPage(),
 
