@@ -2,6 +2,9 @@ import '../View/Screen/Languege.dart';
 import '../core/MiddelWere/mymiddleware%20.dart';
 import 'package:get/get.dart';
 
+import 'View/Screen/Auth/Login/Loginpage.dart';
+import 'core/constant/Approutes.dart';
+
 //import '../core/localization/translation.dart';
 /* import 'package:testproject/core/MiddelWere/mymiddleware%20.dart';
 import 'package:testproject/view/screen/Address/Addadress.dart';
@@ -31,11 +34,11 @@ List<GetPage<dynamic>>? routes = [
     name: "/",
     page: () => const Languege(),
     middlewares: [MyMiddleWare()],
-  ) /* 
+  ),
 
-  GetPage(name: Approutes.login, page: () => const login()),
-  GetPage(name: Approutes.Signup, page: () => const Signup()),
-  GetPage(name: Approutes.VarfiyCode, page: () => const VerfiyCode()),
+  GetPage(name: Approutes.login, page: () => const LoginPage()),
+  //GetPage(name: Approutes.Signup, page: () => const Signup()),
+  /*   GetPage(name: Approutes.VarfiyCode, page: () => const VerfiyCode()),
   GetPage(name: Approutes.ResetPassword, page: () => const Resetpassword()),
   GetPage(
     name: Approutes.SuccessReSetPassword,
@@ -46,15 +49,15 @@ List<GetPage<dynamic>>? routes = [
     name: Approutes.VarfiyCodeSginUp,
     page: () => const VerfiyCodeSginUp(),
   ),
-
+ */
   //OnBoarding
-  GetPage(name: Approutes.OnBoarding, page: () => const OnBoarding()),
+  // GetPage(name: Approutes.OnBoarding, page: () => const OnBoarding()),
 
-  //home
-  GetPage(name: Approutes.HomeScreen, page: () => const HomeScreen()),
+  //home/*
+  // GetPage(name: Approutes.HomeScreen, page: () => const HomeScreen()),
 
   //items
-  GetPage(name: Approutes.items, page: () => const Items()),
+  /* GetPage(name: Approutes.items, page: () => const Items()),
 
   //Productdetails
   GetPage(name: Approutes.Productdetails, page: () => const Productdetails()),
@@ -76,5 +79,5 @@ List<GetPage<dynamic>>? routes = [
   GetPage(name: Approutes.Addressview, page: () => const Addressview()),
 
   GetPage(name: Approutes.Addaddress, page: () => const Addaddress()),
-  GetPage(name: Approutes.CheckOut, page: () => const CheckOut()), */,
+  GetPage(name: Approutes.CheckOut, page: () => const CheckOut()), */
 ];
