@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
-import '/core/services/serveses.dart';
+import '../services/serveses.dart';
 import '../constant/Approutes.dart';
 
 class MyMiddleWare extends GetMiddleware {

@@ -48,6 +48,9 @@ class ApiLinks {
   // Roles
   static const String roles = "$server/Role";
 
+  // Specialties
+  static const String specialties = "$server/Specialties";
+
   //country
   static const String countries = "$server/Country";
 

@@ -10,6 +10,7 @@ import 'package:get/get.dart';
 
 import 'core/localization/changelocal.dart';
 import 'core/services/serveses.dart';
+import 'routes.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,8 +47,9 @@ class MyApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: S.delegate.supportedLocales,
+      getPages: routes,
       // theme:
-      home: LoginPage(), //DoctorDetailsPage(),
+      home: const LoginPage(), //DoctorDetailsPage(),
       ////SplashScreen(),
       //RegisterScreen(),
       // RegisterPage(),

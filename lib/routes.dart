@@ -1,9 +1,12 @@
-import '../View/Screen/Languege.dart';
-import '../core/MiddelWere/mymiddleware%20.dart';
 import 'package:get/get.dart';
 
+import 'Bindings/CompleteProfileBinding.dart';
+import 'View/Screen/Auth/Register/RegisterScreen.dart';
+import 'View/Screen/CompleteProfile/CompleteProfileScreen.dart';
+import 'View/Screen/Languege.dart';
 import 'View/Screen/Auth/Login/Loginpage.dart';
 import 'core/constant/Approutes.dart';
+import 'core/MiddelWere/mymiddleware%20.dart';
 
 //import '../core/localization/translation.dart';
 /* import 'package:testproject/core/MiddelWere/mymiddleware%20.dart';
@@ -28,7 +31,7 @@ import 'package:testproject/view/screen/product%20details.dart'; */
 
 //import 'core/constant/Approutes.dart';
 
-List<GetPage<dynamic>>? routes = [
+final List<GetPage<dynamic>> routes = [
   //Auth
   GetPage(
     name: "/",
@@ -37,7 +40,12 @@ List<GetPage<dynamic>>? routes = [
   ),
 
   GetPage(name: Approutes.login, page: () => const LoginPage()),
-  //GetPage(name: Approutes.Signup, page: () => const Signup()),
+  GetPage(name: Approutes.Signup, page: () => RegisterScreen()),
+  GetPage(
+    name: Approutes.completeProfile,
+    page: () => const CompleteProfileScreen(),
+    binding: CompleteProfileBinding(),
+  ),
   /*   GetPage(name: Approutes.VarfiyCode, page: () => const VerfiyCode()),
   GetPage(name: Approutes.ResetPassword, page: () => const Resetpassword()),
   GetPage(

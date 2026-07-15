@@ -1,6 +1,6 @@
-import '/View/Widget/languege/Custumbottunlang.dart';
+import '../Widget/languege/Custumbottunlang.dart';
 import '../../core/constant/Approutes.dart';
-import '/core/localization/changelocal.dart';
+import '../../core/localization/changelocal.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

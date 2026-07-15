@@ -1,7 +1,8 @@
 class Approutes {
   //Auth
-  static const String login = '/login';
+  static const String login = '/LoginPage';
   static const String Signup = '/Signup';
+  static const String completeProfile = '/complete-profile';
   static const String ForgetPassword = '/ForgetPassword';
   static const String VarfiyCode = '/varifyCode';
   static const String ResetPassword = '/ResetPassword';
@@ -14,32 +15,31 @@ class Approutes {
 
   //home
   static const String Homepage = '/Homepage';
-  static const String HomeScreen="/HomeScreen" ;
+  static const String HomeScreen = "/HomeScreen";
 
-//items
-  static const String items="/items" ;
+  //items
+  static const String items = "/items";
 
-// Productdetails 
-static const String Productdetails="/Productdetails";
+  // Productdetails
+  static const String Productdetails = "/Productdetails";
 
+  //Favorite
 
-//Favorite 
+  static const String Favoritepage = "/Favoritepage";
 
-static const String Favoritepage="/Favoritepage";
+  //Settings
 
-//Settings
+  static const String Settingpage = "/Setting";
 
-static const String Settingpage="/Setting";
+  //cart
 
-//cart
+  static const String Cart = "/Cart";
 
-static const String Cart ="/Cart";
+  //Address
 
-//Address
+  static const String Addressview = "/Addressview";
+  static const String Addaddress = "/Addaddress";
+  //chickout
 
-static const String Addressview ="/Addressview";
-static const String Addaddress="/Addaddress";
- //chickout
-
- static const String CheckOut="/CheckOut";
+  static const String CheckOut = "/CheckOut";
 }

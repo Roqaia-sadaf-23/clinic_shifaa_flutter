@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/Error/Failure.dart';
+import '../../../core/constant/Approutes.dart';
 import '../../../data/datasource/remote/Auth/sginupdata.dart';
 import '../../../data/datasource/remote/Countries/CountryData.dart';
 import '../../../data/datasource/remote/Role/roleData.dart';
@@ -229,6 +230,7 @@ class RegisterController extends GetxController
           colorText: Colors.white,
           snackPosition: SnackPosition.BOTTOM,
         );
+        Get.offNamed(Approutes.completeProfile);
       },
     );
   }

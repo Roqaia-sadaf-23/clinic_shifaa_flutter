@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/constant/Appcolor.dart';
+import '../../../core/constant/Approutes.dart';
 
 Widget buildRegisterRow() {
   return Row(
@@ -14,7 +15,7 @@ Widget buildRegisterRow() {
       ),
       TextButton(
         onPressed: () {
-          Get.toNamed('/register');
+          Get.toNamed(Approutes.Signup);
         },
         child: ShaderMask(
           shaderCallback: (bounds) => LinearGradient(

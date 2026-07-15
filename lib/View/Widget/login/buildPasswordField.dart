@@ -11,13 +11,11 @@ class buildPasswordField extends GetView<LoginController> {
 const buildPasswordField({super.key});  
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<bool>(
-      valueListenable: controller.obscurePassword,
-      builder: (context, obscure, _) {
+    return Obx(() {
         return InputWrapper(
           child: TextFormField(
             controller: controller.passwordController,
-            obscureText: obscure,
+            obscureText: controller.obscurePassword.value,
             style: const TextStyle(color: Colors.white),
             decoration: InputDecoration(
               hintText: 'كلمة المرور',
@@ -28,7 +26,7 @@ const buildPasswordField({super.key});
               ),
               suffixIcon: IconButton(
                 icon: Icon(
-                  obscure
+                  controller.obscurePassword.value
                       ? Icons.visibility_off_outlined
                       : Icons.visibility_outlined,
                   color: Appcolor.subTextColor,
@@ -44,7 +42,6 @@ const buildPasswordField({super.key});
             validator: controller.validatePassword,
           ),
         );
-      },
-    );
+    });
   }
 }

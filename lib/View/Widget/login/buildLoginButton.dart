@@ -1,7 +1,5 @@
-import 'package:clinic_shifaa/View/Widget/login/handleLogin.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../View/Screen/Auth/Login/Loginpage.dart';
 import '../../../Controller/Auth/LoginPage/LoginController.dart';
 import '../../../core/constant/Appcolor.dart';
 
@@ -30,7 +28,7 @@ class buildLoginButton extends GetView<LoginController> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () => handleLogin(context),
+          onTap: controller.login,
           child: const Center(
             child: Text(
               'تسجيل الدخول',

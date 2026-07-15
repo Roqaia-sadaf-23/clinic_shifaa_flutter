@@ -1,18 +1,25 @@
+import '../../../../core/Error/Failure.dart';
 import '../../../../core/class/ApiService.dart';
 import '../../../../core/constant/ApiLinks.dart';
+import '../../../model/TokenModel.dart';
 
-class login_data {
-  //crud _crud = crud();
-  ApiService _crud = ApiService();
-  login_data(this._crud);
+class LoginData {
+  final ApiService _apiService;
 
-  postIsuserexit(String email, String password) async {
-    var response = await _crud.post(ApiLinks.login, {
-      "email": email,
-      "password": password,
+  LoginData(this._apiService);
+
+  Future<Either<Failure, TokenModel>> login({
+    required String email,
+    required String password,
+  }) async {
+    final result = await _apiService.post(ApiLinks.login, {
+      'login': email,
+      'password': password,
     });
-    print("===================  data $response");
-    // التعامل مع الاستجابة
-    return response.fold((L) => L, (R) => R);
+
+    return result.fold(
+      (failure) => Left(failure),
+      (json) => Right(TokenModel.fromJson(json as Map<String, dynamic>)),
+    );
   }
 }
