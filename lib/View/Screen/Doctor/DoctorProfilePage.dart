@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -38,9 +40,8 @@ class _ProfileContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final metrics = DoctorProfileMetrics.of(context);
-    final bottomPadding = 80 +
-        MediaQuery.paddingOf(context).bottom +
-        metrics.sectionSpacing;
+    final bottomPadding =
+        80 + MediaQuery.paddingOf(context).bottom + metrics.sectionSpacing;
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
@@ -59,7 +60,10 @@ class _ProfileContent extends StatelessWidget {
             children: [
               AuthenticatedDoctorProfileHeader(
                 doctor: doctor,
-                onEdit: controller.showUnavailable,
+                localImagePath: controller.localImagePath,
+                isUpdatingImage:
+                    controller.isUploadingImage || controller.isSaving,
+                onEdit: controller.openEditProfile,
                 onChangePhoto: controller.changeProfileImage,
               ),
               if (controller.failure != null) ...[
@@ -106,15 +110,14 @@ class _ProfileContent extends StatelessWidget {
                   DoctorInformationRowData(
                     icon: Icons.workspace_premium_outlined,
                     label: 'experienceYears'.tr,
-                    value:
-                        '${doctor.experienceYears} ${'yearsExperience'.tr}',
+                    value: '${doctor.experienceYears} ${'yearsExperience'.tr}',
                   ),
                 ],
               ),
               SizedBox(height: metrics.sectionSpacing),
               DoctorProfileActions(
                 isBusy: controller.isSaving,
-                onEdit: controller.showUnavailable,
+                onEdit: controller.openEditProfile,
                 onPhoto: controller.changeProfileImage,
                 onLanguage: () => _showLanguageSheet(context, controller),
                 onTheme: controller.showUnavailable,
@@ -207,11 +210,15 @@ class AuthenticatedDoctorProfileHeader extends StatelessWidget {
   const AuthenticatedDoctorProfileHeader({
     super.key,
     required this.doctor,
+    required this.localImagePath,
+    required this.isUpdatingImage,
     required this.onEdit,
     required this.onChangePhoto,
   });
 
   final CurrentDoctorModel doctor;
+  final String? localImagePath;
+  final bool isUpdatingImage;
   final VoidCallback onEdit;
   final VoidCallback onChangePhoto;
 
@@ -278,6 +285,8 @@ class AuthenticatedDoctorProfileHeader extends StatelessWidget {
           DoctorProfileAvatar(
             doctor: doctor,
             diameter: avatarSize,
+            localImagePath: localImagePath,
+            isUpdating: isUpdatingImage,
             onTap: onChangePhoto,
           ),
           const SizedBox(height: 14),
@@ -327,11 +336,15 @@ class DoctorProfileAvatar extends StatelessWidget {
     super.key,
     required this.doctor,
     required this.diameter,
+    required this.localImagePath,
+    required this.isUpdating,
     required this.onTap,
   });
 
   final CurrentDoctorModel doctor;
   final double diameter;
+  final String? localImagePath;
+  final bool isUpdating;
   final VoidCallback onTap;
 
   @override
@@ -380,6 +393,24 @@ class DoctorProfileAvatar extends StatelessWidget {
                 ),
               ),
             ),
+            if (isUpdating)
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Appcolor.secondary.withValues(alpha: .58),
+                  ),
+                  child: const Center(
+                    child: SizedBox.square(
+                      dimension: 26,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: Appcolor.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -387,6 +418,19 @@ class DoctorProfileAvatar extends StatelessWidget {
   }
 
   Widget _image() {
+    if (localImagePath != null) {
+      return Image.file(
+        File(localImagePath!),
+        width: diameter - 14,
+        height: diameter - 14,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => _serverImage(),
+      );
+    }
+    return _serverImage();
+  }
+
+  Widget _serverImage() {
     if (!doctor.hasImage) return _ProfileInitials(doctor: doctor);
     final path = doctor.imagePath!;
     final uri = Uri.tryParse(path);
@@ -449,30 +493,30 @@ class _HeaderChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.sizeOf(context).width - 80,
+    constraints: BoxConstraints(
+      maxWidth: MediaQuery.sizeOf(context).width - 80,
+    ),
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: .09),
+      borderRadius: BorderRadius.circular(22),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: Appcolor.textLight, size: 15),
+        const SizedBox(width: 6),
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: Appcolor.white, fontSize: 12),
+          ),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: .09),
-          borderRadius: BorderRadius.circular(22),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: Appcolor.textLight, size: 15),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Appcolor.white, fontSize: 12),
-              ),
-            ),
-          ],
-        ),
-      );
+      ],
+    ),
+  );
 }
 
 class DoctorProfileStatistics extends StatelessWidget {
@@ -501,7 +545,7 @@ class DoctorProfileStatistics extends StatelessWidget {
             final columns = metrics.compact || metrics.largeText ? 1 : 2;
             final width =
                 (constraints.maxWidth - (metrics.itemSpacing * (columns - 1))) /
-                    columns;
+                columns;
             return Wrap(
               spacing: metrics.itemSpacing,
               runSpacing: metrics.itemSpacing,
@@ -545,59 +589,59 @@ class _StatisticCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-        color: DoctorProfileColors.surface(context),
-        borderRadius: BorderRadius.circular(18),
-        child: InkWell(
+    color: DoctorProfileColors.surface(context),
+    borderRadius: BorderRadius.circular(18),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18),
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: DoctorProfileColors.border(context)),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: .12),
-                    borderRadius: BorderRadius.circular(13),
-                  ),
-                  child: Icon(icon, color: color, size: 21),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '—',
-                        style: TextStyle(
-                          color: DoctorProfileColors.text(context),
-                          fontSize: 19,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Text(
-                        label,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Appcolor.textLight,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+          border: Border.all(color: DoctorProfileColors.border(context)),
         ),
-      );
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: .12),
+                borderRadius: BorderRadius.circular(13),
+              ),
+              child: Icon(icon, color: color, size: 21),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '—',
+                    style: TextStyle(
+                      color: DoctorProfileColors.text(context),
+                      fontSize: 19,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  Text(
+                    label,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Appcolor.textLight,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 class DoctorInformationRowData {
@@ -624,38 +668,38 @@ class DoctorInformationSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _ProfileSectionTitle(icon: icon, title: title),
-          const SizedBox(height: 13),
-          Container(
-            decoration: BoxDecoration(
-              color: DoctorProfileColors.surface(context),
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: DoctorProfileColors.border(context)),
-            ),
-            child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _ProfileSectionTitle(icon: icon, title: title),
+      const SizedBox(height: 13),
+      Container(
+        decoration: BoxDecoration(
+          color: DoctorProfileColors.surface(context),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: DoctorProfileColors.border(context)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(rows.length, (index) {
+            final row = rows[index];
+            return Column(
               mainAxisSize: MainAxisSize.min,
-              children: List.generate(rows.length, (index) {
-                final row = rows[index];
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    DoctorInformationRow(data: row),
-                    if (index != rows.length - 1)
-                      Divider(
-                        height: 1,
-                        indent: 58,
-                        endIndent: 16,
-                        color: DoctorProfileColors.border(context),
-                      ),
-                  ],
-                );
-              }),
-            ),
-          ),
-        ],
-      );
+              children: [
+                DoctorInformationRow(data: row),
+                if (index != rows.length - 1)
+                  Divider(
+                    height: 1,
+                    indent: 58,
+                    endIndent: 16,
+                    color: DoctorProfileColors.border(context),
+                  ),
+              ],
+            );
+          }),
+        ),
+      ),
+    ],
+  );
 }
 
 class DoctorInformationRow extends StatelessWidget {
@@ -731,60 +775,60 @@ class DoctorProfileActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _ProfileSectionTitle(
-            icon: Icons.tune_rounded,
-            title: 'profileActions'.tr,
-          ),
-          const SizedBox(height: 13),
-          Container(
-            decoration: BoxDecoration(
-              color: DoctorProfileColors.surface(context),
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: DoctorProfileColors.border(context)),
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _ProfileSectionTitle(
+        icon: Icons.tune_rounded,
+        title: 'profileActions'.tr,
+      ),
+      const SizedBox(height: 13),
+      Container(
+        decoration: BoxDecoration(
+          color: DoctorProfileColors.surface(context),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: DoctorProfileColors.border(context)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _ActionTile(
+              icon: Icons.edit_outlined,
+              label: 'editProfile'.tr,
+              onTap: onEdit,
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _ActionTile(
-                  icon: Icons.edit_outlined,
-                  label: 'editProfile'.tr,
-                  onTap: onEdit,
-                ),
-                _ActionTile(
-                  icon: Icons.add_a_photo_outlined,
-                  label: 'changePhoto'.tr,
-                  onTap: onPhoto,
-                ),
-                _ActionTile(
-                  icon: Icons.language_rounded,
-                  label: 'language'.tr,
-                  onTap: onLanguage,
-                ),
-                _ActionTile(
-                  icon: Icons.dark_mode_outlined,
-                  label: 'theme'.tr,
-                  onTap: onTheme,
-                ),
-                _ActionTile(
-                  icon: Icons.logout_rounded,
-                  label: 'logout'.tr,
-                  color: Appcolor.error,
-                  trailing: isBusy
-                      ? const SizedBox.square(
-                          dimension: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : null,
-                  onTap: isBusy ? null : onLogout,
-                  showDivider: false,
-                ),
-              ],
+            _ActionTile(
+              icon: Icons.add_a_photo_outlined,
+              label: 'changePhoto'.tr,
+              onTap: onPhoto,
             ),
-          ),
-        ],
-      );
+            _ActionTile(
+              icon: Icons.language_rounded,
+              label: 'language'.tr,
+              onTap: onLanguage,
+            ),
+            _ActionTile(
+              icon: Icons.dark_mode_outlined,
+              label: 'theme'.tr,
+              onTap: onTheme,
+            ),
+            _ActionTile(
+              icon: Icons.logout_rounded,
+              label: 'logout'.tr,
+              color: Appcolor.error,
+              trailing: isBusy
+                  ? const SizedBox.square(
+                      dimension: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : null,
+              onTap: isBusy ? null : onLogout,
+              showDivider: false,
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
 }
 
 class _ActionTile extends StatelessWidget {
@@ -805,41 +849,39 @@ class _ActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 3,
-            ),
-            leading: Icon(icon, color: color),
-            title: Text(
-              label,
-              style: TextStyle(
-                color: color == Appcolor.error
-                    ? color
-                    : DoctorProfileColors.text(context),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            trailing: trailing ??
-                Icon(
-                  Directionality.of(context) == TextDirection.rtl
-                      ? Icons.chevron_left_rounded
-                      : Icons.chevron_right_rounded,
-                  color: Appcolor.textLight,
-                ),
-            onTap: onTap,
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
+        leading: Icon(icon, color: color),
+        title: Text(
+          label,
+          style: TextStyle(
+            color: color == Appcolor.error
+                ? color
+                : DoctorProfileColors.text(context),
+            fontWeight: FontWeight.w600,
           ),
-          if (showDivider)
-            Divider(
-              height: 1,
-              indent: 56,
-              endIndent: 16,
-              color: DoctorProfileColors.border(context),
+        ),
+        trailing:
+            trailing ??
+            Icon(
+              Directionality.of(context) == TextDirection.rtl
+                  ? Icons.chevron_left_rounded
+                  : Icons.chevron_right_rounded,
+              color: Appcolor.textLight,
             ),
-        ],
-      );
+        onTap: onTap,
+      ),
+      if (showDivider)
+        Divider(
+          height: 1,
+          indent: 56,
+          endIndent: 16,
+          color: DoctorProfileColors.border(context),
+        ),
+    ],
+  );
 }
 
 class _ProfileSectionTitle extends StatelessWidget {
@@ -849,21 +891,21 @@ class _ProfileSectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-        children: [
-          Icon(icon, color: Appcolor.gold, size: 21),
-          const SizedBox(width: 9),
-          Expanded(
-            child: Text(
-              title,
-              style: TextStyle(
-                color: DoctorProfileColors.text(context),
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
+    children: [
+      Icon(icon, color: Appcolor.gold, size: 21),
+      const SizedBox(width: 9),
+      Expanded(
+        child: Text(
+          title,
+          style: TextStyle(
+            color: DoctorProfileColors.text(context),
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
           ),
-        ],
-      );
+        ),
+      ),
+    ],
+  );
 }
 
 class _RefreshFailureBanner extends StatelessWidget {
@@ -873,21 +915,21 @@ class _RefreshFailureBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Appcolor.error.withValues(alpha: .1),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Appcolor.error.withValues(alpha: .3)),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.info_outline, color: Appcolor.error),
-            const SizedBox(width: 10),
-            Expanded(child: Text(message, maxLines: 3)),
-            TextButton(onPressed: onRetry, child: Text('retry'.tr)),
-          ],
-        ),
-      );
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: Appcolor.error.withValues(alpha: .1),
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: Appcolor.error.withValues(alpha: .3)),
+    ),
+    child: Row(
+      children: [
+        const Icon(Icons.info_outline, color: Appcolor.error),
+        const SizedBox(width: 10),
+        Expanded(child: Text(message, maxLines: 3)),
+        TextButton(onPressed: onRetry, child: Text('retry'.tr)),
+      ],
+    ),
+  );
 }
 
 class DoctorProfileSkeleton extends StatelessWidget {
@@ -910,9 +952,9 @@ class DoctorProfileSkeleton extends StatelessWidget {
               width: metrics.compact
                   ? double.infinity
                   : (MediaQuery.sizeOf(context).width -
-                          (metrics.horizontalPadding * 2) -
-                          metrics.itemSpacing) /
-                      2,
+                            (metrics.horizontalPadding * 2) -
+                            metrics.itemSpacing) /
+                        2,
               child: _box(context, 76),
             ),
           ),
@@ -924,12 +966,12 @@ class DoctorProfileSkeleton extends StatelessWidget {
   }
 
   Widget _box(BuildContext context, double height) => Container(
-        height: height,
-        decoration: BoxDecoration(
-          color: DoctorProfileColors.surface(context),
-          borderRadius: BorderRadius.circular(22),
-        ),
-      );
+    height: height,
+    decoration: BoxDecoration(
+      color: DoctorProfileColors.surface(context),
+      borderRadius: BorderRadius.circular(22),
+    ),
+  );
 }
 
 class DoctorProfileErrorState extends StatelessWidget {
@@ -943,32 +985,28 @@ class DoctorProfileErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.person_off_outlined,
-                size: 56,
-                color: Appcolor.gold,
-              ),
-              const SizedBox(height: 14),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: TextStyle(color: DoctorProfileColors.text(context)),
-              ),
-              const SizedBox(height: 18),
-              FilledButton.icon(
-                onPressed: onRetry,
-                icon: const Icon(Icons.refresh_rounded),
-                label: Text('retry'.tr),
-              ),
-            ],
+    child: Padding(
+      padding: const EdgeInsets.all(28),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.person_off_outlined, size: 56, color: Appcolor.gold),
+          const SizedBox(height: 14),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: DoctorProfileColors.text(context)),
           ),
-        ),
-      );
+          const SizedBox(height: 18),
+          FilledButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh_rounded),
+            label: Text('retry'.tr),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class DoctorProfileMetrics {
@@ -1001,16 +1039,16 @@ class DoctorProfileMetrics {
 abstract final class DoctorProfileColors {
   static Color surface(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark
-          ? Appcolor.secondary
-          : Colors.white;
+      ? Appcolor.secondary
+      : Colors.white;
 
   static Color text(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark
-          ? Appcolor.white
-          : Appcolor.secondary;
+      ? Appcolor.white
+      : Appcolor.secondary;
 
   static Color border(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark
-          ? Colors.white.withValues(alpha: .08)
-          : Appcolor.primary.withValues(alpha: .08);
+      ? Colors.white.withValues(alpha: .08)
+      : Appcolor.primary.withValues(alpha: .08);
 }

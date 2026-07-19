@@ -16,10 +16,16 @@ class DoctorHomeController extends GetxController {
   int selectedTab = 0;
 
   @override
-  void onInit() { super.onInit(); loadCurrentDoctor(); }
+  void onInit() {
+    super.onInit();
+    loadCurrentDoctor();
+  }
+
   Future<void> loadCurrentDoctor() => _load(refreshing: false);
   Future<void> refreshCurrentDoctor() => _load(refreshing: true);
-  void retry() { if (!_requestInProgress) loadCurrentDoctor(); }
+  void retry() {
+    if (!_requestInProgress) loadCurrentDoctor();
+  }
 
   void selectTab(int index) {
     if (index == 0 || index == 3) {
@@ -31,6 +37,12 @@ class DoctorHomeController extends GetxController {
   }
 
   void handleAction(int index) => showComingSoon();
+
+  void replaceDoctor(CurrentDoctorModel value) {
+    doctor = value;
+    failure = null;
+    if (!_disposed) update();
+  }
 
   void showComingSoon() {
     Get.snackbar(
@@ -44,17 +56,30 @@ class DoctorHomeController extends GetxController {
     if (_requestInProgress || _disposed) return;
     _requestInProgress = true;
     failure = null;
-    if (refreshing) { isRefreshing = true; } else { isLoading = true; }
+    if (refreshing) {
+      isRefreshing = true;
+    } else {
+      isLoading = true;
+    }
     update();
     try {
       final result = await _doctorData.getCurrentDoctor();
       if (_disposed) return;
-      result.fold((value) {
-        doctor = null;
-        failure = value.statusCode == 404
-            ? const ServerFailure('Doctor profile was not found.', statusCode: 404)
-            : value;
-      }, (value) { doctor = value; failure = null; });
+      result.fold(
+        (value) {
+          doctor = null;
+          failure = value.statusCode == 404
+              ? const ServerFailure(
+                  'Doctor profile was not found.',
+                  statusCode: 404,
+                )
+              : value;
+        },
+        (value) {
+          doctor = value;
+          failure = null;
+        },
+      );
     } finally {
       _requestInProgress = false;
       isLoading = false;
@@ -64,5 +89,8 @@ class DoctorHomeController extends GetxController {
   }
 
   @override
-  void onClose() { _disposed = true; super.onClose(); }
+  void onClose() {
+    _disposed = true;
+    super.onClose();
+  }
 }

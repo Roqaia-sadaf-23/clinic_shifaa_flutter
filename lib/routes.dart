@@ -2,9 +2,11 @@ import 'package:get/get.dart';
 
 import 'Bindings/CompleteProfileBinding.dart';
 import 'Bindings/DoctorHomeBinding.dart';
+import 'Bindings/DoctorEditProfileBinding.dart';
 import 'View/Screen/Auth/Register/RegisterScreen.dart';
 import 'View/Screen/CompleteProfile/CompleteProfileScreen.dart';
 import 'View/Screen/Doctor/DoctorHomePage.dart';
+import 'View/Screen/Doctor/DoctorEditProfilePage.dart';
 import 'View/Screen/Languege.dart';
 import 'View/Screen/Auth/Login/Loginpage.dart';
 import 'core/constant/Approutes.dart';
@@ -52,6 +54,11 @@ final List<GetPage<dynamic>> routes = [
     name: Approutes.doctorHome,
     page: () => const DoctorHomePage(),
     binding: DoctorHomeBinding(),
+  ),
+  GetPage(
+    name: Approutes.doctorEditProfile,
+    page: () => const DoctorEditProfilePage(),
+    binding: DoctorEditProfileBinding(),
   ),
   /*   GetPage(name: Approutes.VarfiyCode, page: () => const VerfiyCode()),
   GetPage(name: Approutes.ResetPassword, page: () => const Resetpassword()),

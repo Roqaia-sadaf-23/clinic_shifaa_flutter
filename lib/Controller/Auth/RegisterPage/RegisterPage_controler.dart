@@ -21,7 +21,7 @@ class RegisterController extends GetxController
     with GetTickerProviderStateMixin {
   final formKey = GlobalKey<FormState>();
 
-  final imagesdta imageData = Get.put(imagesdta());
+  final ImagesData imageData = Get.put(ImagesData());
   final RoleData roleData = Get.put(RoleData());
   final CountryData countryData = Get.put(CountryData());
 
@@ -95,7 +95,6 @@ class RegisterController extends GetxController
       roleId = selectedRole!.Id;
     }
 
-    print("Roles count: ${roles.length}");
     update();
   }
 
@@ -111,7 +110,6 @@ class RegisterController extends GetxController
       nationalityCountryId = selectedCountry!.Id;
     }
 
-    print("Countries count: ${countries.length}");
     update();
   }
 
@@ -182,10 +180,7 @@ class RegisterController extends GetxController
 
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
-    if (image == null) {
-      print('No image selected');
-      return;
-    }
+    if (image == null) return;
 
     profileImage = File(image.path);
     update();
@@ -193,8 +188,6 @@ class RegisterController extends GetxController
     final result = await imageData.uploadImage(image.path);
 
     uploadedImageName = result["imageName"];
-
-    print("Encrypted image name: $uploadedImageName");
 
     update();
   }

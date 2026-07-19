@@ -1,3 +1,5 @@
+// ignore_for_file: constant_identifier_names
+
 class Approutes {
   //Auth
   static const String login = '/LoginPage';
@@ -17,6 +19,7 @@ class Approutes {
   static const String Homepage = '/Homepage';
   static const String HomeScreen = "/HomeScreen";
   static const String doctorHome = '/doctor-home';
+  static const String doctorEditProfile = '/doctor-edit-profile';
 
   //items
   static const String items = "/items";

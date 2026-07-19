@@ -1,4 +1,5 @@
 // ignore: file_names
+import 'package:image_picker/image_picker.dart';
 import 'package:get/get.dart';
 
 import '../../core/Error/Failure.dart';
@@ -7,11 +8,14 @@ import '../../core/constant/Approutes.dart';
 import '../../core/localization/changelocal.dart';
 import '../../data/datasource/remote/Doctors/DactorData.dart';
 import '../../data/model/CurrentDoctorModel.dart';
+import '../../data/datasource/remote/images/imagesdta.dart';
+import 'DoctorHome_Controller.dart';
 
 class DoctorProfileController extends GetxController {
-  DoctorProfileController(this._doctorData);
+  DoctorProfileController(this._doctorData, this._imageData);
 
   final DoctorData _doctorData;
+  final ImagesData _imageData;
 
   CurrentDoctorModel? doctor;
   Failure? failure;
@@ -20,6 +24,7 @@ class DoctorProfileController extends GetxController {
   bool isEditing = false;
   bool isSaving = false;
   bool isUploadingImage = false;
+  String? localImagePath;
 
   bool _requestInProgress = false;
   bool _disposed = false;
@@ -40,7 +45,97 @@ class DoctorProfileController extends GetxController {
 
   Future<void> updateProfile() async => showUnavailable();
 
-  Future<void> changeProfileImage() async => showUnavailable();
+  void openEditProfile() => Get.toNamed(Approutes.doctorEditProfile);
+
+  void replaceDoctor(CurrentDoctorModel value) {
+    doctor = value;
+    failure = null;
+    if (!_disposed) update();
+  }
+
+  Future<void> changeProfileImage() async {
+    if (isUploadingImage || isSaving || _disposed) return;
+
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (picked == null || _disposed) return;
+
+    localImagePath = picked.path;
+    failure = null;
+    isUploadingImage = true;
+    update();
+
+    try {
+      final uploadResult = await _imageData.uploadAuthenticatedImageName(
+        picked.path,
+      );
+      if (_disposed) return;
+
+      String? uploadedName;
+      Failure? operationFailure;
+      uploadResult.fold(
+        (value) => operationFailure = value,
+        (value) => uploadedName = value,
+      );
+      if (operationFailure != null) {
+        _imageOperationFailed(operationFailure!);
+        return;
+      }
+
+      isUploadingImage = false;
+      isSaving = true;
+      update();
+
+      final updateResult = await _doctorData.updateCurrentPersonImage(
+        uploadedName!,
+      );
+      if (_disposed) return;
+      updateResult.fold((value) => operationFailure = value, (_) {});
+      if (operationFailure != null) {
+        _imageOperationFailed(operationFailure!);
+        return;
+      }
+
+      final refreshed = await _doctorData.getCurrentDoctor();
+      if (_disposed) return;
+      refreshed.fold(
+        (value) {
+          failure = value;
+          Get.snackbar(
+            'doctorProfile'.tr,
+            value.message,
+            snackPosition: SnackPosition.BOTTOM,
+          );
+        },
+        (value) {
+          doctor = value;
+          failure = null;
+          localImagePath = null;
+          if (Get.isRegistered<DoctorHomeController>()) {
+            Get.find<DoctorHomeController>().replaceDoctor(value);
+          }
+          Get.snackbar(
+            'doctorProfile'.tr,
+            'profileImageUpdated'.tr,
+            snackPosition: SnackPosition.BOTTOM,
+          );
+        },
+      );
+    } finally {
+      isUploadingImage = false;
+      isSaving = false;
+      if (!_disposed) update();
+    }
+  }
+
+  void _imageOperationFailed(Failure value) {
+    failure = value;
+    localImagePath = null;
+    Get.snackbar(
+      'changePhoto'.tr,
+      value.message,
+      snackPosition: SnackPosition.BOTTOM,
+    );
+  }
 
   void showUnavailable() {
     Get.snackbar(

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../Error/Failure.dart';
@@ -37,7 +38,8 @@ class Right<L, R> extends Either<L, R> {
   const Right(this.value);
 
   @override
-  T fold<T>(T Function(L value) left, T Function(R value) right) => right(value);
+  T fold<T>(T Function(L value) left, T Function(R value) right) =>
+      right(value);
 
   @override
   bool get isLeft => false;
@@ -86,7 +88,10 @@ class ApiService {
         if (!refreshed) {
           await AuthService.clearTokens();
           return const Left(
-            ServerFailure('Session expired, please login again', statusCode: 401),
+            ServerFailure(
+              'Session expired, please login again',
+              statusCode: 401,
+            ),
           );
         }
         response = await request();
@@ -107,7 +112,9 @@ class ApiService {
       try {
         return Right(_decodeSuccessBody(response.body));
       } on FormatException catch (error) {
-        return Left(ServerFailure(error.message, statusCode: response.statusCode));
+        return Left(
+          ServerFailure(error.message, statusCode: response.statusCode),
+        );
       }
     }
 
@@ -116,7 +123,8 @@ class ApiService {
 
   Failure _failureFromResponse(http.Response response) {
     final statusCode = response.statusCode;
-    final message = _backendMessage(response.body) ?? _defaultMessage(statusCode);
+    final message =
+        _backendMessage(response.body) ?? _defaultMessage(statusCode);
     return ServerFailure(message, statusCode: statusCode);
   }
 
@@ -176,6 +184,9 @@ class ApiService {
     Map<String, dynamic> data, {
     bool auth = false,
   }) {
+    debugPrint('URL: $url');
+    debugPrint('REQUEST BODY: ${jsonEncode(data)}');
+
     return _send(
       () async => http.post(
         Uri.parse(url),
@@ -191,6 +202,9 @@ class ApiService {
     Map<String, dynamic> data, {
     bool auth = false,
   }) {
+    debugPrint('URL: $url');
+    debugPrint('REQUEST BODY: ${jsonEncode(data)}');
+
     return _send(
       () async => http.put(
         Uri.parse(url),
@@ -203,7 +217,8 @@ class ApiService {
 
   Future<Either<Failure, dynamic>> delete(String url, {bool auth = false}) {
     return _send(
-      () async => http.delete(Uri.parse(url), headers: await _headers(auth: auth)),
+      () async =>
+          http.delete(Uri.parse(url), headers: await _headers(auth: auth)),
       auth: auth,
     );
   }
