@@ -56,6 +56,7 @@ class ApiLinks {
   static const String countries = "$server/Country";
 
   //Images
+  static const String updateCurrentPersonImage = "$server/Person/me/image";
   static const String images = "$server/Images/GetImage/";
   static String uploadImage = "$server/Images/UploadImage";
 }
