@@ -16,7 +16,7 @@ class DoctorDetailsController extends GetxController {
   List<DateTime> availableDates = [];
   List<TimeOfDay> availableTimes = [];
   final today = DateTime.now();
-
+  /*
   @override
   void onInit() {
     super.onInit();
@@ -34,7 +34,6 @@ class DoctorDetailsController extends GetxController {
     update();
   }
 
-  /* 
   void generateAvailableDates() {
     final today = DateTime.now();
 

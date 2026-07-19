@@ -327,11 +327,7 @@ class _DoctorForm extends StatelessWidget {
           },
         ),
       ],
-      onContinue: () {
-        if (controller.canContinueDoctor()) {
-          Get.snackbar('Profile complete', 'Doctor details are ready to save.');
-        }
-      },
+      onContinue: controller.submitDoctor,
     );
   }
 }
@@ -355,14 +351,7 @@ class _PatientForm extends StatelessWidget {
           onChanged: controller.selectBloodType,
         ),
       ],
-      onContinue: () {
-        if (controller.canContinuePatient()) {
-          Get.snackbar(
-            'Profile complete',
-            'Patient details are ready to save.',
-          );
-        }
-      },
+      onContinue: controller.submitPatient,
     );
   }
 }

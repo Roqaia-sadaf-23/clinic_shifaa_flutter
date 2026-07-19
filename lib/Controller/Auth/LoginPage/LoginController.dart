@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/class/ApiService.dart';
+import '../../../core/class/AuthService.dart';
 import '../../../core/constant/Approutes.dart';
-import '../../../core/services/serveses.dart';
 import '../../../data/datasource/remote/Auth/logindata.dart';
+import '../../../data/datasource/remote/Doctors/DactorData.dart';
 
 class LoginController extends GetxController {
   final formKey = GlobalKey<FormState>();
-  final emailController = TextEditingController();
+  final loginController = TextEditingController();
   final passwordController = TextEditingController();
 
   final RxBool obscurePassword = true.obs;
@@ -16,12 +17,14 @@ class LoginController extends GetxController {
   final RxBool isLoading = false.obs;
 
   late final LoginData _loginData;
+  late final DoctorData _doctorData;
   bool _isDisposed = false;
 
   @override
   void onInit() {
     super.onInit();
     _loginData = LoginData(Get.find<ApiService>());
+    _doctorData = DoctorData(Get.find<ApiService>());
   }
 
   void toggleObscurePassword() => obscurePassword.toggle();
@@ -30,12 +33,9 @@ class LoginController extends GetxController {
     rememberMe.value = value ?? false;
   }
 
-  String? validateEmail(String? value) {
+  String? validateLogin(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'Email is required';
-    }
-    if (!GetUtils.isEmail(value.trim())) {
-      return 'Enter a valid email address';
+      return 'Email or username is required';
     }
     return null;
   }
@@ -58,6 +58,41 @@ class LoginController extends GetxController {
     return isValid;
   }
 
+  Future<void> _navigateByRole(String roleName) async {
+    switch (roleName.toLowerCase()) {
+      case 'doctor':
+        await _openDoctorHome();
+        break;
+
+      case 'patient':
+        Get.offAllNamed(Approutes.HomeScreen);
+        break;
+
+      case 'admin':
+        await AuthService.clearTokens();
+
+        if (_isDisposed) return;
+
+        Get.snackbar(
+          'Admin account',
+          'Please use the web administration dashboard.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        break;
+
+      default:
+        await AuthService.clearTokens();
+
+        if (_isDisposed) return;
+
+        Get.snackbar(
+          'Login failed',
+          'Unsupported account role.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+    }
+  }
+
   Future<void> login() async {
     if (isLoading.value) return;
 
@@ -68,13 +103,13 @@ class LoginController extends GetxController {
       isLoading.value = true;
 
       final result = await _loginData.login(
-        email: emailController.text.trim(),
+        login: loginController.text.trim(),
         password: passwordController.text,
       );
 
-      if (isClosed) return;
+      if (_isDisposed) return;
 
-      await result.fold(
+      await result.fold<Future<void>>(
         (failure) async {
           Get.snackbar(
             'Login failed',
@@ -83,9 +118,14 @@ class LoginController extends GetxController {
           );
         },
         (token) async {
-          if (!token.isSuccess ||
-              token.accessToken.isEmpty ||
-              token.refreshToken.isEmpty) {
+          final roleName = token.roleName.trim();
+
+          final hasValidTokens =
+              token.isSuccess &&
+              token.accessToken.isNotEmpty &&
+              token.refreshToken.isNotEmpty;
+
+          if (!hasValidTokens) {
             Get.snackbar(
               'Login failed',
               token.message ?? 'Unable to login',
@@ -94,45 +134,81 @@ class LoginController extends GetxController {
             return;
           }
 
-          final myServices = Get.find<Myservices>();
+          if (roleName.isEmpty) {
+            Get.snackbar(
+              'Login failed',
+              'The account role was not returned.',
+              snackPosition: SnackPosition.BOTTOM,
+            );
+            return;
+          }
 
-          await myServices.sharedPreferences?.setString(
-            'accessToken',
-            token.accessToken,
+          await AuthService.clearTokens();
+
+          await AuthService.saveSession(
+            accessToken: token.accessToken,
+            refreshToken: token.refreshToken,
+            email: loginController.text.trim(),
+            roleName: roleName,
           );
 
-          await myServices.sharedPreferences?.setString(
-            'refreshToken',
-            token.refreshToken,
-          );
+          if (_isDisposed) return;
 
-          await myServices.sharedPreferences?.setBool('isLoggedIn', true);
-
-          Get.offAllNamed(Approutes.completeProfile);
+          await _navigateByRole(roleName);
         },
       );
     } catch (error, stackTrace) {
       debugPrint('Unexpected login error: $error');
       debugPrintStack(stackTrace: stackTrace);
 
-      if (!isClosed) {
+      if (!_isDisposed) {
         Get.snackbar(
           'Error',
-          'An unexpected error occurred',
+          'An unexpected error occurred.',
           snackPosition: SnackPosition.BOTTOM,
         );
       }
     } finally {
-      if (!isClosed) {
+      if (!_isDisposed) {
         isLoading.value = false;
       }
     }
   }
 
+  Future<void> _openDoctorHome() async {
+    final doctorResult = await _doctorData.getCurrentDoctor();
+
+    if (_isDisposed) return;
+
+    await doctorResult.fold<Future<void>>(
+      (failure) async {
+        if (failure.statusCode == 404) {
+          Get.snackbar(
+            'Profile unavailable',
+            'Your Doctor profile has not been completed.',
+            snackPosition: SnackPosition.BOTTOM,
+          );
+
+          // لا تنتقلي إلى CompleteProfile هنا إلا إذا كان personId متاحًا.
+          return;
+        }
+
+        Get.snackbar(
+          'Profile unavailable',
+          failure.message,
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      },
+      (_) async {
+        Get.offAllNamed(Approutes.doctorHome);
+      },
+    );
+  }
+
   @override
   void onClose() {
     _isDisposed = true;
-    emailController.dispose();
+    loginController.dispose();
     passwordController.dispose();
     super.onClose();
   }

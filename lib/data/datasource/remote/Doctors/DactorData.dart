@@ -1,33 +1,23 @@
-import 'package:clinic_shifaa/data/model/DoctorModel.dart';
-
+import '../../../../core/Error/Failure.dart';
 import '../../../../core/class/ApiService.dart';
 import '../../../../core/constant/ApiLinks.dart';
+import '../../../model/CurrentDoctorModel.dart';
 
 class DoctorData {
-  ApiService _crud;
-  DoctorData(this._crud);
+  DoctorData(this._apiService);
+  final ApiService _apiService;
 
-  getdata() async {
-    var response = await _crud.get(ApiLinks.doctorById(6));
-
-    return response.fold(
-      (failure) {
-        print("ERROR = $failure");
-        return null;
-      },
-      (data) {
-        print("DATA = $data");
-        return DoctorDetailsModel.fromJson(data);
-      },
-    );
+  Future<Either<Failure, CurrentDoctorModel>> getCurrentDoctor() async {
+    final response = await _apiService.get(ApiLinks.currentDoctor, auth: true);
+    return response.fold((failure) => Left(failure), (json) {
+      if (json is! Map) {
+        return const Left(ServerFailure('Invalid Doctor profile response from the server.'));
+      }
+      try {
+        return Right(CurrentDoctorModel.fromJson(Map<String, dynamic>.from(json)));
+      } catch (_) {
+        return const Left(ServerFailure('Invalid Doctor profile response from the server.'));
+      }
+    });
   }
 }
-  /* g etsearch(String search) async {
-    var response = await _crud.get("${Applinkapi.search}/$search");
-    print("===================  data $response");
-    // التعامل مع الاستجابة
-    return response.fold((L) => L, (R) => R);
-  } */
-
-
-// data/datasource/remote/Doctors/DoctorData.dart

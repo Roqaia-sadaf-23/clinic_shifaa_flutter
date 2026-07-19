@@ -11,8 +11,9 @@ class ApiLinks {
   static String userById(int id) => "$server/Users/$id";
   static const String adduser = "$server/Users/register";
   // Doctors
-  static const String doctors = "$server/Doctors";
+  static const String Adddoctors = "$server/Doctors/create";
   static String doctorById(int id) => "$server/Doctors/$id";
+  static const String currentDoctor = "$server/Doctors/me";
 
   // Patients
   static const String patients = "$server/Patients";
@@ -55,6 +56,6 @@ class ApiLinks {
   static const String countries = "$server/Country";
 
   //Images
-  static const String images = "http://192.168.8.4:5210/api/Images/GetImage/";
-  static String uploadImage = "http://192.168.8.4:5210/api/Images/UploadImage";
+  static const String images = "$server/Images/GetImage/";
+  static String uploadImage = "$server/Images/UploadImage";
 }

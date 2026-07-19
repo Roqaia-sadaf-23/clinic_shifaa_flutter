@@ -9,17 +9,30 @@ class LoginData {
   LoginData(this._apiService);
 
   Future<Either<Failure, TokenModel>> login({
-    required String email,
+    required String login,
     required String password,
   }) async {
     final result = await _apiService.post(ApiLinks.login, {
-      'login': email,
+      'login': login,
       'password': password,
     });
 
     return result.fold(
       (failure) => Left(failure),
-      (json) => Right(TokenModel.fromJson(json as Map<String, dynamic>)),
+      (json) {
+        try {
+          if (json is! Map) {
+            return const Left(
+              ServerFailure('Invalid login response received from the server.'),
+            );
+          }
+          return Right(TokenModel.fromJson(Map<String, dynamic>.from(json)));
+        } catch (_) {
+          return const Left(
+            ServerFailure('Unable to parse the login response from the server.'),
+          );
+        }
+      },
     );
   }
 }

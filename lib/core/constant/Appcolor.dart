@@ -14,6 +14,10 @@ class Appcolor {
   static const Color inputBg = Color(0xFF16213E);
   static const Color white = Colors.white;
   static const Color textLight = Color(0xFFB0BEC5);
+  static const Color success = Color(0xFF2ECC71);
+  static const Color warning = Color(0xFFF39C12);
+  static const Color error = Color(0xFFE74C3C);
+  static const Color info = Color(0xFF3498DB);
 
   static const Color grey = Color.fromARGB(255, 117, 116, 116);
   static const Color orange = Color.fromARGB(255, 231, 132, 50);

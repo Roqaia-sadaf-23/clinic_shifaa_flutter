@@ -1,4 +1,4 @@
-// ignore: file_names
+ /*/ ignore: file_names
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -189,7 +189,7 @@ class DoctorDetailsPage extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 16),
-                /*
+             
                 // المواعيد
                 Container(
                   width: double.infinity,
@@ -420,7 +420,7 @@ class DoctorDetailsPage extends StatelessWidget {
                     ),
                   ),
                 ),
- */
+
                 const SizedBox(height: 20),
               ],
             ),
@@ -430,3 +430,4 @@ class DoctorDetailsPage extends StatelessWidget {
     );
   }
 }
+ */

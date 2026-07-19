@@ -1,34 +1,68 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../View/Screen/Doctor/DoctorHomePage.dart' show AppointmentModel;
+import '../../core/Error/Failure.dart';
+import '../../data/datasource/remote/Doctors/DactorData.dart';
+import '../../data/model/CurrentDoctorModel.dart';
 
 class DoctorHomeController extends GetxController {
+  DoctorHomeController(this._doctorData);
+  final DoctorData _doctorData;
+  CurrentDoctorModel? doctor;
+  Failure? failure;
   bool isLoading = false;
-  final List<AppointmentModel> appointments = const [
-    AppointmentModel(
-      name: "سارة أحمد",
-      type: "استشارة عامة",
-      time: "09:30",
-      status: "قيد الانتظار",
-      statusColor: Color(0xffFFF1D8),
-      textColor: Color(0xff8A8A8A),
-    ),
-    AppointmentModel(
-      name: "علي حسن",
-      type: "متابعة",
-      time: "10:15",
-      status: "تم",
-      statusColor: Color(0xffDDF8F2),
-      textColor: Color(0xff0F9D58),
-    ),
-    AppointmentModel(
-      name: "منى صالح",
-      type: "فحص دوري",
-      time: "11:00",
-      status: "ملغي",
-      statusColor: Color(0xffF8D7DA),
-      textColor: Color(0xffD32F2F),
-    ),
-  ];
+  bool isRefreshing = false;
+  bool _requestInProgress = false;
+  bool _disposed = false;
+  int selectedTab = 0;
+
+  @override
+  void onInit() { super.onInit(); loadCurrentDoctor(); }
+  Future<void> loadCurrentDoctor() => _load(refreshing: false);
+  Future<void> refreshCurrentDoctor() => _load(refreshing: true);
+  void retry() { if (!_requestInProgress) loadCurrentDoctor(); }
+
+  void selectTab(int index) {
+    if (index == 0 || index == 3) {
+      selectedTab = index;
+      update();
+      return;
+    }
+    showComingSoon();
+  }
+
+  void handleAction(int index) => showComingSoon();
+
+  void showComingSoon() {
+    Get.snackbar(
+      'comingSoon'.tr,
+      'featureNotAvailable'.tr,
+      snackPosition: SnackPosition.BOTTOM,
+    );
+  }
+
+  Future<void> _load({required bool refreshing}) async {
+    if (_requestInProgress || _disposed) return;
+    _requestInProgress = true;
+    failure = null;
+    if (refreshing) { isRefreshing = true; } else { isLoading = true; }
+    update();
+    try {
+      final result = await _doctorData.getCurrentDoctor();
+      if (_disposed) return;
+      result.fold((value) {
+        doctor = null;
+        failure = value.statusCode == 404
+            ? const ServerFailure('Doctor profile was not found.', statusCode: 404)
+            : value;
+      }, (value) { doctor = value; failure = null; });
+    } finally {
+      _requestInProgress = false;
+      isLoading = false;
+      isRefreshing = false;
+      if (!_disposed) update();
+    }
+  }
+
+  @override
+  void onClose() { _disposed = true; super.onClose(); }
 }

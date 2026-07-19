@@ -3,9 +3,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-
+import '../../../data/datasource/remote/Auth/logindata.dart';
+import '../../../core/class/AuthService.dart';
 import '../../../core/Error/Failure.dart';
+import '../../../core/class/ApiService.dart';
 import '../../../core/constant/Approutes.dart';
+import '../../../core/helpers/failure_display.dart';
 import '../../../data/datasource/remote/Auth/sginupdata.dart';
 import '../../../data/datasource/remote/Countries/CountryData.dart';
 import '../../../data/datasource/remote/Role/roleData.dart';
@@ -21,7 +24,9 @@ class RegisterController extends GetxController
   final imagesdta imageData = Get.put(imagesdta());
   final RoleData roleData = Get.put(RoleData());
   final CountryData countryData = Get.put(CountryData());
-  final SignupData signupData = Get.put(SignupData());
+
+  late final SignupData signupData;
+  late final LoginData loginData;
 
   final firstNameCtrl = TextEditingController();
   final lastNameCtrl = TextEditingController();
@@ -52,6 +57,7 @@ class RegisterController extends GetxController
 
   bool isActive = true;
   bool obscurePassword = true;
+  bool isLoading = false;
 
   int gender = 0;
   int roleId = 0;
@@ -61,6 +67,9 @@ class RegisterController extends GetxController
   @override
   void onInit() {
     super.onInit();
+
+    signupData = SignupData(Get.find<ApiService>());
+    loginData = LoginData(Get.find<ApiService>());
 
     _initAnimations();
 
@@ -190,7 +199,8 @@ class RegisterController extends GetxController
     update();
   }
 
-  void submit() async {
+  Future<void> submit() async {
+    if (isLoading) return;
     if (!formKey.currentState!.validate()) return;
 
     final registerModel = RegisterModel(
@@ -210,29 +220,94 @@ class RegisterController extends GetxController
       imagePath: uploadedImageName ?? "",
       note: noteCtrl.text,
     );
-    final response = await signupData.postDataUser(registerModel);
+    isLoading = true;
+    update();
+    try {
+      final response = await signupData.postDataUser(registerModel);
 
-    response.fold(
-      (failure) {
-        Get.snackbar(
-          "Error",
-          failure.message,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-        );
-      },
-      (data) {
-        Get.snackbar(
-          "Success",
-          "تم إنشاء الحساب بنجاح",
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-        );
-        Get.offNamed(Approutes.completeProfile);
-      },
-    );
+      await response.fold<Future<void>>(
+        (failure) async {
+          showFailure(
+            failure,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
+        },
+        (response) async {
+          final personId = response.personId;
+          if (personId == null || personId <= 0) {
+            showFailure(
+              const ServerFailure(
+                'Registration succeeded but no valid personId was returned.',
+              ),
+              backgroundColor: Colors.red,
+              colorText: Colors.white,
+            );
+            return;
+          }
+
+          final loginResult = await loginData.login(
+            login: userNameCtrl.text.trim(),
+            password: passwordCtrl.text,
+          );
+
+          var sessionSaved = false;
+          await loginResult.fold<Future<void>>(
+            (failure) async {
+              showFailure(
+                failure,
+                backgroundColor: Colors.red,
+                colorText: Colors.white,
+              );
+            },
+            (token) async {
+              if (!token.isSuccess ||
+                  token.accessToken.isEmpty ||
+                  token.refreshToken.isEmpty) {
+                showFailure(
+                  ServerFailure(token.message ?? 'Unable to login.'),
+                  backgroundColor: Colors.red,
+                  colorText: Colors.white,
+                );
+                return;
+              }
+
+              await AuthService.saveTokens(
+                accessToken: token.accessToken,
+                refreshToken: token.refreshToken,
+                email: emailCtrl.text.trim(),
+              );
+              await AuthService.setLoggedIn(true);
+              sessionSaved = true;
+            },
+          );
+
+          if (!sessionSaved) return;
+          Get.snackbar(
+            "Success",
+            "تم إنشاء الحساب بنجاح",
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+            snackPosition: SnackPosition.BOTTOM,
+          );
+          Get.offNamed(
+            Approutes.completeProfile,
+            arguments: {'personId': personId},
+          );
+        },
+      );
+    } catch (error, stackTrace) {
+      debugPrint('Unexpected registration error: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      showFailure(
+        const ServerFailure('An unexpected error occurred.'),
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      isLoading = false;
+      update();
+    }
   }
 
   @override
