@@ -1,13 +1,21 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 import '../../core/Error/Failure.dart';
+import '../../core/class/ApiService.dart';
 import '../../data/datasource/remote/Doctors/DactorData.dart';
+import '../../data/datasource/remote/Appointments/DoctorAppointmentData.dart';
+import '../../data/model/AppointmentModel.dart';
 import '../../data/model/CurrentDoctorModel.dart';
+import '../../data/model/DoctorAppointmentSummary.dart';
 
 class DoctorHomeController extends GetxController {
-  DoctorHomeController(this._doctorData);
+  DoctorHomeController(this._doctorData, this._appointmentData);
   final DoctorData _doctorData;
+  final DoctorAppointmentData _appointmentData;
   CurrentDoctorModel? doctor;
+  DoctorAppointmentSummary? summary;
+  List<AppointmentModel> todayAppointments = const [];
   Failure? failure;
   bool isLoading = false;
   bool isRefreshing = false;
@@ -18,17 +26,19 @@ class DoctorHomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    loadCurrentDoctor();
+    loadDashboard();
   }
 
-  Future<void> loadCurrentDoctor() => _load(refreshing: false);
-  Future<void> refreshCurrentDoctor() => _load(refreshing: true);
+  Future<void> loadCurrentDoctor() => loadDashboard();
+  Future<void> loadDashboard() => _load(refreshing: false);
+  Future<void> refreshCurrentDoctor() => refreshDashboard();
+  Future<void> refreshDashboard() => _load(refreshing: true);
   void retry() {
     if (!_requestInProgress) loadCurrentDoctor();
   }
 
   void selectTab(int index) {
-    if (index == 0 || index == 3) {
+    if (index >= 0 && index <= 3) {
       selectedTab = index;
       update();
       return;
@@ -36,7 +46,13 @@ class DoctorHomeController extends GetxController {
     showComingSoon();
   }
 
-  void handleAction(int index) => showComingSoon();
+  void handleAction(int index) {
+    if (index == 0 || index == 1) {
+      selectTab(1);
+    } else {
+      selectTab(2);
+    }
+  }
 
   void replaceDoctor(CurrentDoctorModel value) {
     doctor = value;
@@ -63,9 +79,13 @@ class DoctorHomeController extends GetxController {
     }
     update();
     try {
-      final result = await _doctorData.getCurrentDoctor();
+      final results = await Future.wait([
+        _doctorData.getCurrentDoctor(),
+        _appointmentData.getDoctorSummary(),
+        _appointmentData.getTodayDoctorAppointments(),
+      ]);
       if (_disposed) return;
-      result.fold(
+      (results[0] as Either<Failure, CurrentDoctorModel>).fold(
         (value) {
           doctor = null;
           failure = value.statusCode == 404
@@ -80,6 +100,33 @@ class DoctorHomeController extends GetxController {
           failure = null;
         },
       );
+      results[1].fold((value) => failure ??= value, (value) {
+        try {
+          if (kDebugMode) {
+            debugPrint('Doctor summary raw response: $value');
+            debugPrint('Doctor summary response type: ${value.runtimeType}');
+          }
+          summary = DoctorAppointmentSummary.fromResponse(value);
+        } catch (_) {
+          failure ??= const ServerFailure('Invalid appointment summary.');
+        }
+      });
+      results[2].fold((value) => failure ??= value, (value) {
+        try {
+          if (value is! List) throw const FormatException();
+          todayAppointments = value
+              .map(
+                (item) => AppointmentModel.fromJson(
+                  Map<String, dynamic>.from(item as Map),
+                ),
+              )
+              .toList(growable: false);
+        } catch (_) {
+          failure ??= const ServerFailure(
+            'Invalid today appointments response.',
+          );
+        }
+      });
     } finally {
       _requestInProgress = false;
       isLoading = false;

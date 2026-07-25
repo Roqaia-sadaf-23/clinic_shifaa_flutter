@@ -4,8 +4,13 @@ import 'package:get/get.dart';
 import '../../../Controller/Doctor/DoctorHome_Controller.dart';
 import '../../../core/constant/ApiLinks.dart';
 import '../../../core/constant/Appcolor.dart';
+import '../../../core/constant/Approutes.dart';
+import '../../../data/model/AppointmentModel.dart';
 import '../../../data/model/CurrentDoctorModel.dart';
+import '../../../data/model/DoctorAppointmentSummary.dart';
 import 'DoctorProfilePage.dart';
+import 'DoctorAppointmentsPage.dart';
+import 'DoctorPatientsPage.dart';
 
 class DoctorHomePage extends StatelessWidget {
   const DoctorHomePage({super.key});
@@ -25,6 +30,12 @@ class DoctorHomePage extends StatelessWidget {
   Widget _body(BuildContext context, DoctorHomeController controller) {
     if (controller.selectedTab == 3) {
       return const DoctorProfileView();
+    }
+    if (controller.selectedTab == 1) {
+      return const DoctorAppointmentsPage();
+    }
+    if (controller.selectedTab == 2) {
+      return const DoctorPatientsPage();
     }
     if (controller.isLoading && controller.doctor == null) {
       return const DoctorHomeSkeleton();
@@ -70,9 +81,10 @@ class DoctorHomePage extends StatelessWidget {
               const SizedBox(height: 20),
               DoctorActionGrid(onAction: controller.handleAction),
               const SizedBox(height: 28),
-              const AppointmentSummaryRow(),
+              AppointmentSummaryRow(summary: controller.summary),
               const SizedBox(height: 28),
               TodayAppointmentsSection(
+                appointments: controller.todayAppointments,
                 onViewAll: () => controller.handleAction(0),
               ),
               const SizedBox(height: 24),
@@ -134,7 +146,7 @@ class DoctorProfileHeader extends StatelessWidget {
               badge: true,
             ),
             const SizedBox(width: 8),
-            HeaderAction(icon: Icons.settings_outlined, onTap: onAction),
+            //  HeaderAction(icon: Icons.settings_outlined, onTap: onAction),
           ],
         ),
         Transform.translate(
@@ -363,7 +375,7 @@ class DoctorActionGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final actions = [
       (Icons.calendar_month_rounded, 'allAppointments'),
-      (Icons.add_circle_outline_rounded, 'addAppointment'),
+      //(Icons.add_circle_outline_rounded, 'addAppointment'),
       (Icons.today_rounded, 'todayAppointments'),
       (Icons.people_alt_rounded, 'myPatients'),
     ];
@@ -441,15 +453,25 @@ class DoctorActionItem extends StatelessWidget {
 }
 
 class AppointmentSummaryRow extends StatelessWidget {
-  const AppointmentSummaryRow({super.key});
+  const AppointmentSummaryRow({super.key, this.summary});
+  final DoctorAppointmentSummary? summary;
 
   @override
   Widget build(BuildContext context) {
     final cards = [
-      (Icons.today_outlined, 'todayAppointments', Appcolor.info),
-      (Icons.event_available_outlined, 'upcoming', Appcolor.accent),
-      (Icons.task_alt_rounded, 'completed', Appcolor.success),
-      (Icons.pending_actions_rounded, 'pending', Appcolor.warning),
+      (
+        Icons.pending_actions_rounded,
+        'pending',
+        Appcolor.warning,
+        summary?.pending,
+      ),
+      (
+        Icons.task_alt_rounded,
+        'completed',
+        Appcolor.success,
+        summary?.completed,
+      ),
+      (Icons.cancel_outlined, 'cancelled', Appcolor.error, summary?.cancelled),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -473,6 +495,7 @@ class AppointmentSummaryRow extends StatelessWidget {
                     icon: cards[index].$1,
                     label: cards[index].$2.tr,
                     color: cards[index].$3,
+                    value: cards[index].$4,
                   ),
                 );
               }),
@@ -490,10 +513,12 @@ class AppointmentSummaryCard extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.color,
+    this.value,
   });
   final IconData icon;
   final String label;
   final Color color;
+  final int? value;
 
   @override
   Widget build(BuildContext context) => SurfaceCard(
@@ -515,7 +540,7 @@ class AppointmentSummaryCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '—',
+                value?.toString() ?? '—',
                 style: TextStyle(
                   color: DoctorHomeColors.text(context),
                   fontSize: 18,
@@ -541,18 +566,38 @@ class AppointmentSummaryCard extends StatelessWidget {
 }
 
 class TodayAppointmentsSection extends StatelessWidget {
-  const TodayAppointmentsSection({super.key, required this.onViewAll});
+  const TodayAppointmentsSection({
+    super.key,
+    required this.onViewAll,
+    this.appointments = const [],
+  });
   final VoidCallback onViewAll;
+  final List<AppointmentModel> appointments;
 
   @override
   Widget build(BuildContext context) => Column(
     children: [
       SectionTitle(title: 'todayAppointments'.tr, onViewAll: onViewAll),
       const SizedBox(height: 13),
-      NeutralAppointmentState(
-        icon: Icons.event_busy_rounded,
-        title: 'noAppointmentsToday'.tr,
-      ),
+      if (appointments.isEmpty)
+        NeutralAppointmentState(
+          icon: Icons.event_busy_rounded,
+          title: 'noAppointmentsToday'.tr,
+          subtitle: 'pullToRefresh'.tr,
+        )
+      else
+        ...appointments.map(
+          (item) => Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: DoctorAppointmentCard(
+              appointment: item,
+              onTap: () => Get.toNamed(
+                Approutes.doctorAppointmentDetails,
+                arguments: item.id,
+              ),
+            ),
+          ),
+        ),
     ],
   );
 }
@@ -579,9 +624,11 @@ class NeutralAppointmentState extends StatelessWidget {
     super.key,
     required this.icon,
     required this.title,
+    this.subtitle,
   });
   final IconData icon;
   final String title;
+  final String? subtitle;
 
   @override
   Widget build(BuildContext context) => SurfaceCard(
@@ -599,7 +646,7 @@ class NeutralAppointmentState extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'appointmentsUnavailable'.tr,
+          subtitle ?? 'appointmentsUnavailable'.tr,
           textAlign: TextAlign.center,
           style: const TextStyle(
             color: Appcolor.textLight,

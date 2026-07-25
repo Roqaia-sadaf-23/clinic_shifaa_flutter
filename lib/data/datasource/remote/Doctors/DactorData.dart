@@ -57,14 +57,15 @@ class DoctorData {
     required int experienceYears,
     required String specialization,
   }) async {
-    final response = await _apiService.put(ApiLinks.currentDoctor, {
-      'firstName': firstName,
-      'lastName': lastName,
-      'age': age,
-      'note': note,
-      'experienceYears': experienceYears,
-      'specialization': specialization,
-    }, auth: true);
+    final response = await _apiService
+        .put(ApiLinks.updateCurrentDoctorProfile, {
+          'firstName': firstName,
+          'lastName': lastName,
+          'age': age,
+          'note': note,
+          'experienceYears': experienceYears,
+          'specialization': specialization,
+        }, auth: true);
 
     Failure? requestFailure;
     Object? responseBody;

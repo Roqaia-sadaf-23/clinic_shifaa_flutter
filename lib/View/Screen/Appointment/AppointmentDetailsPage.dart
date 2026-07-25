@@ -1,134 +1,121 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+
+import '../../../Controller/Doctor/DoctorAppointmentDetailsController.dart';
+import '../../../core/constant/Appcolor.dart';
+import '../Doctor/DoctorHomePage.dart';
 
 class AppointmentDetailsPage extends StatelessWidget {
   const AppointmentDetailsPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("تفاصيل الموعد"),
-        centerTitle: true,
-        leading: const Icon(Icons.arrow_back),
-        elevation: 0,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            // 👨‍⚕️ Doctor Info Card
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  const CircleAvatar(
-                    radius: 35,
-                    backgroundImage: AssetImage("assets/doctor.png"),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        "د. محمد السبيعي",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text("استشاري قلب"),
-                      SizedBox(height: 6),
-                      Text("القادم", style: TextStyle(color: Colors.green)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // 📋 Details Card
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                children: [
-                  _row("التاريخ", "30 مارس 2024"),
-                  _row("الوقت", "10:00 ص"),
-                  _row("الموقع", "مستشفى المملكة - عيادة 5"),
-                  _row("الرسوم", "215 ر.س"),
-                  _row("ملاحظات", "مراجعة نتائج التحاليل"),
-                ],
-              ),
-            ),
-
-            const Spacer(),
-
-            // ❌ Cancel Button
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.red),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  "إلغاء الموعد",
-                  style: TextStyle(color: Colors.red),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            // ✏️ Edit Button
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text("تعديل الموعد"),
-              ),
-            ),
-          ],
+  Widget build(BuildContext context) =>
+      GetBuilder<DoctorAppointmentDetailsController>(
+        builder: (controller) => Scaffold(
+          backgroundColor: DoctorHomeColors.background(context),
+          appBar: AppBar(title: Text('appointmentDetails'.tr)),
+          body: _body(context, controller),
         ),
-      ),
-    );
-  }
+      );
 
-  Widget _row(String title, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(title, style: const TextStyle(color: Colors.grey)),
-          Flexible(
-            child: Text(
-              value,
-              textAlign: TextAlign.end,
-              style: const TextStyle(fontWeight: FontWeight.w500),
-            ),
+  Widget _body(
+    BuildContext context,
+    DoctorAppointmentDetailsController controller,
+  ) {
+    if (controller.isLoading && controller.appointment == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (controller.failure != null && controller.appointment == null) {
+      return DoctorEmptyState(
+        message: 'appointmentLoadError'.tr,
+        onRetry: controller.load,
+      );
+    }
+    final item = controller.appointment;
+    if (item == null) {
+      return DoctorEmptyState(
+        message: 'appointmentNotFound'.tr,
+        onRetry: controller.load,
+      );
+    }
+    final busy = controller.isCancelling || controller.isCompleting;
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        SurfaceCard(
+          child: Column(
+            children: [
+              _row('appointmentId'.tr, '${item.id}'),
+              _row('doctorId'.tr, '${item.doctorId}'),
+              _row('patientId'.tr, '${item.patientId}'),
+              _row(
+                'appointmentDate'.tr,
+                DateFormat.yMMMMd(
+                  Get.locale?.languageCode,
+                ).add_jm().format(item.appointmentDate.toLocal()),
+              ),
+              _row('status'.tr, item.status.toLowerCase().tr),
+              if (item.lastStatusDate != null)
+                _row(
+                  'lastStatusDate'.tr,
+                  DateFormat.yMMMMd(
+                    Get.locale?.languageCode,
+                  ).add_jm().format(item.lastStatusDate!.toLocal()),
+                ),
+              if (item.medicalRecordId != null)
+                _row('medicalRecordId'.tr, '${item.medicalRecordId}'),
+              if (item.notes != null) _row('notes'.tr, item.notes!),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        if (controller.canComplete)
+          FilledButton.icon(
+            onPressed: busy ? null : () => controller.complete(context),
+            icon: controller.isCompleting
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.task_alt_rounded),
+            label: Text('completeAppointment'.tr),
+          ),
+        if (controller.canCancel) ...[
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: busy ? null : () => controller.cancel(context),
+            style: OutlinedButton.styleFrom(foregroundColor: Appcolor.error),
+            icon: controller.isCancelling
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.cancel_outlined),
+            label: Text('cancelAppointment'.tr),
           ),
         ],
-      ),
+      ],
     );
   }
+
+  Widget _row(String label, String value) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 8),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Text(label, style: const TextStyle(color: Appcolor.grey)),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ),
+      ],
+    ),
+  );
 }

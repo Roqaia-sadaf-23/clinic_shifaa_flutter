@@ -42,7 +42,7 @@ void main() {
             await tester.pump();
 
             expect(tester.takeException(), isNull);
-            expect(find.text('—'), findsNWidgets(4));
+            expect(find.text('—'), findsNWidgets(3));
           },
         );
       }

@@ -15,6 +15,7 @@ class ApiLinks {
   static const String Adddoctors = "$server/Doctors/create";
   static String doctorById(int id) => "$server/Doctors/$id";
   static const String currentDoctor = "$server/Doctors/me";
+  static const String updateCurrentDoctorProfile = "$server/Doctors/updateme";
   static const String updateCurrentPersonImage = "$server/Person/me/image";
   //http://192.168.8.4:5210/api/Person/me/image
   // Patients
@@ -35,6 +36,13 @@ class ApiLinks {
 
   static String completeAppointment(int id) =>
       "$server/Appointments/$id/complete";
+  static const String doctorAppointmentSummary =
+      "$server/Appointments/doctor/me/summary";
+  static const String todayDoctorAppointments =
+      "$server/Appointments/doctor/me/today";
+  static const String doctorAppointments = "$server/Appointments/doctor/me";
+  static const String doctorPatients =
+      "$server/Appointments/doctor/me/patients";
 
   // Medical Records
   static const String medicalRecords = "$server/MedicalRecords";
