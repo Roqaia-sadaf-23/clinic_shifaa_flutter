@@ -21,15 +21,28 @@ class AppointmentModel {
 
   factory AppointmentModel.fromJson(Map<String, dynamic> json) {
     return AppointmentModel(
-      id: _int(json['id'], 'id'),
-      doctorId: _int(json['doctorId'], 'doctorId'),
-      patientId: _int(json['patientId'], 'patientId'),
-      appointmentDate: _date(json['appointmentDate'], 'appointmentDate')!,
-      status: _string(json['status'], 'status'),
-      lastStatusDate: _date(json['lastStatusDate'], 'lastStatusDate'),
-      medicalRecordId: _nullableInt(json['medicalRecordId']),
-      notes: _nullableString(json['notes']),
+      id: _int(_value(json, 'id'), 'id'),
+      doctorId: _int(_value(json, 'doctorId'), 'doctorId'),
+      patientId: _int(_value(json, 'patientId'), 'patientId'),
+      appointmentDate: _date(
+        _value(json, 'appointmentDate'),
+        'appointmentDate',
+      )!,
+      status: _string(_value(json, 'status'), 'status'),
+      lastStatusDate: _date(_value(json, 'lastStatusDate'), 'lastStatusDate'),
+      medicalRecordId: _nullableInt(_value(json, 'medicalRecordId')),
+      notes: _nullableString(_value(json, 'notes')),
     );
+  }
+
+  static List<AppointmentModel> listFromResponse(Object? response) {
+    final values = _responseList(response);
+    return values
+        .map(
+          (item) =>
+              AppointmentModel.fromJson(Map<String, dynamic>.from(item as Map)),
+        )
+        .toList(growable: false);
   }
 
   Map<String, dynamic> toJson() {
@@ -69,5 +82,43 @@ class AppointmentModel {
   static String? _nullableString(Object? value) {
     if (value is! String || value.trim().isEmpty) return null;
     return value.trim();
+  }
+
+  static Object? _value(Map<String, dynamic> json, String name) {
+    for (final entry in json.entries) {
+      if (entry.key.toLowerCase() == name.toLowerCase()) return entry.value;
+    }
+    return null;
+  }
+
+  static List<dynamic> _responseList(Object? response) {
+    if (response == null) return const [];
+    var current = response;
+    for (var depth = 0; depth < 5; depth++) {
+      if (current is List) return current;
+      if (current == null) return const [];
+      if (current is! Map) break;
+      final nested = _firstValue(current, const [
+        'data',
+        'result',
+        'items',
+        'appointments',
+        r'$values',
+      ]);
+      if (nested == null) break;
+      current = nested;
+    }
+    throw const FormatException('Appointments response must contain a list.');
+  }
+
+  static Object? _firstValue(Map<dynamic, dynamic> map, List<String> names) {
+    for (final entry in map.entries) {
+      final key = entry.key;
+      if (key is String &&
+          names.any((name) => key.toLowerCase() == name.toLowerCase())) {
+        return entry.value;
+      }
+    }
+    return null;
   }
 }

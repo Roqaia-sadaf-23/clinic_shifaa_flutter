@@ -39,7 +39,7 @@ class AppointmentDetailsPage extends StatelessWidget {
         onRetry: controller.load,
       );
     }
-    final busy = controller.isCancelling || controller.isCompleting;
+    final busy = controller.isBusy;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [

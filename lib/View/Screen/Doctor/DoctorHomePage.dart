@@ -40,16 +40,10 @@ class DoctorHomePage extends StatelessWidget {
     if (controller.isLoading && controller.doctor == null) {
       return const DoctorHomeSkeleton();
     }
-    if (controller.failure != null) {
-      return DoctorEmptyState(
-        message: controller.failure!.message,
-        onRetry: controller.retry,
-      );
-    }
     final doctor = controller.doctor;
     if (doctor == null) {
       return DoctorEmptyState(
-        message: 'doctorProfileNotFound'.tr,
+        message: controller.failure?.message ?? 'doctorProfileNotFound'.tr,
         onRetry: controller.retry,
       );
     }
@@ -80,6 +74,13 @@ class DoctorHomePage extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               DoctorActionGrid(onAction: controller.handleAction),
+              if (controller.appointmentsFailure != null) ...[
+                const SizedBox(height: 24),
+                AppointmentLoadError(
+                  isRetrying: controller.isRefreshing,
+                  onRetry: controller.refreshAppointments,
+                ),
+              ],
               const SizedBox(height: 28),
               AppointmentSummaryRow(summary: controller.summary),
               const SizedBox(height: 28),
@@ -386,19 +387,21 @@ class DoctorActionGrid extends StatelessWidget {
         final spacing = layout.itemSpacing;
         final itemWidth =
             (constraints.maxWidth - (spacing * (columns - 1))) / columns;
-        return Wrap(
-          spacing: spacing,
-          runSpacing: 16,
-          children: List.generate(actions.length, (index) {
-            return SizedBox(
-              width: itemWidth,
-              child: DoctorActionItem(
-                icon: actions[index].$1,
-                label: actions[index].$2.tr,
-                onTap: () => onAction(index),
-              ),
-            );
-          }),
+        return Center(
+          child: Wrap(
+            spacing: spacing,
+            runSpacing: 16,
+            children: List.generate(actions.length, (index) {
+              return SizedBox(
+                width: itemWidth,
+                child: DoctorActionItem(
+                  icon: actions[index].$1,
+                  label: actions[index].$2.tr,
+                  onTap: () => onAction(index),
+                ),
+              );
+            }),
+          ),
         );
       },
     );
@@ -507,6 +510,40 @@ class AppointmentSummaryRow extends StatelessWidget {
   }
 }
 
+class AppointmentLoadError extends StatelessWidget {
+  const AppointmentLoadError({
+    super.key,
+    required this.isRetrying,
+    required this.onRetry,
+  });
+
+  final bool isRetrying;
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) => SurfaceCard(
+    child: Row(
+      children: [
+        const Icon(Icons.cloud_off_rounded, color: Appcolor.error),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            'appointmentsLoadError'.tr,
+            style: TextStyle(
+              color: DoctorHomeColors.text(context),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        TextButton(
+          onPressed: isRetrying ? null : onRetry,
+          child: Text('retry'.tr),
+        ),
+      ],
+    ),
+  );
+}
+
 class AppointmentSummaryCard extends StatelessWidget {
   const AppointmentSummaryCard({
     super.key,
@@ -591,10 +628,15 @@ class TodayAppointmentsSection extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 10),
             child: DoctorAppointmentCard(
               appointment: item,
-              onTap: () => Get.toNamed(
-                Approutes.doctorAppointmentDetails,
-                arguments: item.id,
-              ),
+              onTap: () {
+                if (Get.currentRoute == Approutes.doctorAppointmentDetails) {
+                  return;
+                }
+                Get.toNamed(
+                  Approutes.doctorAppointmentDetails,
+                  arguments: item.id,
+                );
+              },
             ),
           ),
         ),
@@ -611,9 +653,23 @@ class AllAppointmentsPreview extends StatelessWidget {
     children: [
       SectionTitle(title: 'allAppointments'.tr, onViewAll: onViewAll),
       const SizedBox(height: 13),
-      NeutralAppointmentState(
-        icon: Icons.calendar_month_outlined,
-        title: 'appointmentsNotConnected'.tr,
+      SurfaceCard(
+        child: ListTile(
+          onTap: onViewAll,
+          leading: const Icon(
+            Icons.calendar_month_outlined,
+            color: Appcolor.info,
+          ),
+          title: Text(
+            'appointments'.tr,
+            style: TextStyle(
+              color: DoctorHomeColors.text(context),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          subtitle: Text('viewAll'.tr),
+          trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+        ),
       ),
     ],
   );

@@ -28,6 +28,4 @@ class HomeData {
   } */
 }
 
-
 // data/datasource/remote/Home/HomeData.dart
-

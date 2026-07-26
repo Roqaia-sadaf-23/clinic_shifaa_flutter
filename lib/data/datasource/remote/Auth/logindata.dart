@@ -17,22 +17,19 @@ class LoginData {
       'password': password,
     });
 
-    return result.fold(
-      (failure) => Left(failure),
-      (json) {
-        try {
-          if (json is! Map) {
-            return const Left(
-              ServerFailure('Invalid login response received from the server.'),
-            );
-          }
-          return Right(TokenModel.fromJson(Map<String, dynamic>.from(json)));
-        } catch (_) {
+    return result.fold((failure) => Left(failure), (json) {
+      try {
+        if (json is! Map) {
           return const Left(
-            ServerFailure('Unable to parse the login response from the server.'),
+            ServerFailure('Invalid login response received from the server.'),
           );
         }
-      },
-    );
+        return Right(TokenModel.fromJson(Map<String, dynamic>.from(json)));
+      } catch (_) {
+        return const Left(
+          ServerFailure('Unable to parse the login response from the server.'),
+        );
+      }
+    });
   }
 }

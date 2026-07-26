@@ -13,6 +13,7 @@ class DoctorPatientsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GetBuilder<DoctorPatientsController>(
+    autoRemove: false,
     builder: (controller) {
       if (controller.isLoading && controller.patients.isEmpty) {
         return const Center(child: CircularProgressIndicator());

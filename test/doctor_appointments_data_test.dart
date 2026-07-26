@@ -29,6 +29,11 @@ void main() {
     expect(value.cancelled, 0);
   });
 
+  test('summary treats a successful no-content response as zero counts', () {
+    final value = DoctorAppointmentSummary.fromResponse(null);
+    expect([value.pending, value.completed, value.cancelled], [0, 0, 0]);
+  });
+
   test('summary accepts data and result wrappers', () {
     final dataValue = DoctorAppointmentSummary.fromResponse({
       'data': {'pending': '1', 'completed': 2, 'cancelled': null},
@@ -46,9 +51,36 @@ void main() {
     );
   });
 
+  test('summary accepts ASP.NET casing and count field names', () {
+    final value = DoctorAppointmentSummary.fromResponse({
+      'Data': {'PendingCount': 1, 'CompletedCount': '2', 'CancelledCount': 3},
+    });
+    expect([value.pending, value.completed, value.cancelled], [1, 2, 3]);
+  });
+
+  test('summary accepts status/count collection wrappers', () {
+    final value = DoctorAppointmentSummary.fromResponse({
+      r'$values': [
+        {'status': 'Pending', 'count': 1},
+        {'status': 'Completed', 'count': 2},
+        {'status': 'Cancelled', 'count': 3},
+      ],
+    });
+    expect([value.pending, value.completed, value.cancelled], [1, 2, 3]);
+  });
+
+  test('summary treats missing grouped statuses as zero', () {
+    final value = DoctorAppointmentSummary.fromResponse([
+      {'status': 'Pending', 'count': 2},
+    ]);
+    expect([value.pending, value.completed, value.cancelled], [2, 0, 0]);
+  });
+
   test('summary rejects genuinely malformed response', () {
     expect(
-      () => DoctorAppointmentSummary.fromResponse({'data': []}),
+      () => DoctorAppointmentSummary.fromResponse({
+        'data': ['invalid'],
+      }),
       throwsFormatException,
     );
     expect(
@@ -70,6 +102,32 @@ void main() {
     });
     expect(value.status, 'Pending');
     expect(value.lastStatusDate, isNull);
+  });
+
+  test('appointments parse wrapped lists and ASP.NET casing', () {
+    final values = AppointmentModel.listFromResponse({
+      'Data': {
+        r'$values': [
+          {
+            'Id': 1,
+            'DoctorId': 2,
+            'PatientId': 3,
+            'AppointmentDate': '2026-07-25T10:00:00',
+            'Status': 'Pending',
+            'LastStatusDate': null,
+            'MedicalRecordId': null,
+            'Notes': null,
+          },
+        ],
+      },
+    });
+    expect(values, hasLength(1));
+    expect(values.single.id, 1);
+    expect(values.single.status, 'Pending');
+  });
+
+  test('appointments treat a successful no-content response as empty', () {
+    expect(AppointmentModel.listFromResponse(null), isEmpty);
   });
 
   test('patient parses fields supplied by doctor patient DTO', () {
@@ -120,6 +178,30 @@ void main() {
     expect(uri.queryParameters['pageSize'], '10');
     expect(api.usedAuth, isTrue);
   });
+
+  test(
+    'doctor appointment reads use authenticated existing endpoints',
+    () async {
+      final api = _FakeApiService();
+      final data = DoctorAppointmentData(api);
+
+      await data.getDoctorSummary();
+      expect(api.lastUrl, endsWith('/Appointments/doctor/me/summary'));
+      expect(api.usedAuth, isTrue);
+
+      await data.getTodayDoctorAppointments();
+      expect(api.lastUrl, endsWith('/Appointments/doctor/me/today'));
+      expect(api.usedAuth, isTrue);
+
+      await data.getDoctorAppointments();
+      expect(Uri.parse(api.lastUrl!).path, endsWith('/Appointments/doctor/me'));
+      expect(api.usedAuth, isTrue);
+
+      await data.getDoctorPatients();
+      expect(api.lastUrl, endsWith('/Appointments/doctor/me/patients'));
+      expect(api.usedAuth, isTrue);
+    },
+  );
 
   test('cancel and complete propagate success and failure', () async {
     final api = _FakeApiService();

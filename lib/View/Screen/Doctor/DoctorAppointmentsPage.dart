@@ -14,6 +14,7 @@ class DoctorAppointmentsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       GetBuilder<DoctorAppointmentsController>(
+        autoRemove: false,
         builder: (controller) {
           return Column(
             children: [
@@ -79,10 +80,15 @@ class DoctorAppointmentsPage extends StatelessWidget {
             }
             return DoctorAppointmentCard(
               appointment: controller.appointments[index],
-              onTap: () => Get.toNamed(
-                Approutes.doctorAppointmentDetails,
-                arguments: controller.appointments[index].id,
-              ),
+              onTap: () {
+                if (Get.currentRoute == Approutes.doctorAppointmentDetails) {
+                  return;
+                }
+                Get.toNamed(
+                  Approutes.doctorAppointmentDetails,
+                  arguments: controller.appointments[index].id,
+                );
+              },
             );
           },
         ),
@@ -115,7 +121,7 @@ class _Filters extends StatelessWidget {
               ),
             ),
           ],
-          onChanged: controller.setStatus,
+          onChanged: controller.isBusy ? null : controller.setStatus,
         ),
         OutlinedButton.icon(
           icon: const Icon(Icons.calendar_today_outlined, size: 18),
@@ -126,20 +132,22 @@ class _Filters extends StatelessWidget {
                     Get.locale?.languageCode,
                   ).format(controller.selectedDate!),
           ),
-          onPressed: () async {
-            final selected = await showDatePicker(
-              context: context,
-              initialDate: controller.selectedDate ?? DateTime.now(),
-              firstDate: DateTime(2020),
-              lastDate: DateTime.now().add(const Duration(days: 365)),
-            );
-            if (selected != null) await controller.setDate(selected);
-          },
+          onPressed: controller.isBusy
+              ? null
+              : () async {
+                  final selected = await showDatePicker(
+                    context: context,
+                    initialDate: controller.selectedDate ?? DateTime.now(),
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (selected != null) await controller.setDate(selected);
+                },
         ),
         if (controller.selectedStatus != null ||
             controller.selectedDate != null)
           TextButton(
-            onPressed: controller.clearFilters,
+            onPressed: controller.isBusy ? null : controller.clearFilters,
             child: Text('clearFilters'.tr),
           ),
       ],

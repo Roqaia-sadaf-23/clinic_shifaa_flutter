@@ -7,7 +7,9 @@ class ServerException implements Exception {
 class CacheException implements Exception {
   final String message;
 
-  CacheException([this.message = "An error occurred while accessing the cache."]);
+  CacheException([
+    this.message = "An error occurred while accessing the cache.",
+  ]);
 }
 
 class offlineException implements Exception {
@@ -19,23 +21,31 @@ class offlineException implements Exception {
 class NetworkException implements Exception {
   final String message;
 
-  NetworkException([this.message = "An error occurred while accessing the network."]);
+  NetworkException([
+    this.message = "An error occurred while accessing the network.",
+  ]);
 }
 
 class DatabaseException implements Exception {
   final String message;
 
-  DatabaseException([this.message = "An error occurred while accessing the database."]);
+  DatabaseException([
+    this.message = "An error occurred while accessing the database.",
+  ]);
 }
 
 class AuthenticationException implements Exception {
   final String message;
 
-  AuthenticationException([this.message = "An error occurred while authenticating."]);
+  AuthenticationException([
+    this.message = "An error occurred while authenticating.",
+  ]);
 }
 
 class ValidationException implements Exception {
   final String message;
 
-  ValidationException([this.message = "An error occurred while validating the input."]);
+  ValidationException([
+    this.message = "An error occurred while validating the input.",
+  ]);
 }

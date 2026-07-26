@@ -18,4 +18,5 @@ class Appimagesassent {
   static const String loding = '$roatlottie/Animation.json';
   static const String offline = '$roatlottie/offline.json';
 }
+
 //Appimagesassent

@@ -21,18 +21,22 @@ class DoctorHomeBinding extends Bindings {
         Get.find<DoctorData>(),
         Get.find<DoctorAppointmentData>(),
       ),
+      fenix: true,
     );
     Get.lazyPut<DoctorAppointmentsController>(
       () => DoctorAppointmentsController(Get.find<DoctorAppointmentData>()),
+      fenix: true,
     );
     Get.lazyPut<DoctorPatientsController>(
       () => DoctorPatientsController(Get.find<DoctorAppointmentData>()),
+      fenix: true,
     );
     Get.lazyPut<DoctorProfileController>(
       () => DoctorProfileController(
         Get.find<DoctorData>(),
         Get.find<ImagesData>(),
       ),
+      fenix: true,
     );
   }
 }

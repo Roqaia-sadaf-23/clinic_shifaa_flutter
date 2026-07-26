@@ -19,18 +19,16 @@ class buildRememberAndForgot extends GetView<LoginController> {
             SizedBox(
               width: 24,
               height: 24,
-              child: Obx(
-                () {
-                  return Checkbox(
-                    value: controller.rememberMe.value,
-                    onChanged: controller.toggleRememberMe,
-                    activeColor: Appcolor.gradientColors[0],
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  );
-                },
-              ),
+              child: Obx(() {
+                return Checkbox(
+                  value: controller.rememberMe.value,
+                  onChanged: controller.toggleRememberMe,
+                  activeColor: Appcolor.gradientColors[0],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                );
+              }),
             ),
             const SizedBox(width: 8),
             Text(

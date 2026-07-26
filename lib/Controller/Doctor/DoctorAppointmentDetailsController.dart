@@ -15,11 +15,15 @@ class DoctorAppointmentDetailsController extends GetxController {
   bool isLoading = false;
   bool isCancelling = false;
   bool isCompleting = false;
+  bool _isConfirming = false;
   bool _disposed = false;
+  late final int _appointmentId;
+
+  bool get isBusy => isLoading || _isConfirming || isCancelling || isCompleting;
+  bool get _inactive => _disposed || isClosed;
 
   int get appointmentId {
-    final value = Get.arguments;
-    return value is int ? value : int.tryParse('$value') ?? 0;
+    return _appointmentId;
   }
 
   bool get canCancel {
@@ -40,23 +44,25 @@ class DoctorAppointmentDetailsController extends GetxController {
 
   @override
   void onInit() {
+    final value = Get.arguments;
+    _appointmentId = value is int ? value : int.tryParse('$value') ?? 0;
     super.onInit();
     load();
   }
 
   Future<void> load() async {
-    if (isLoading || _disposed || appointmentId <= 0) return;
+    if (isLoading || _inactive || appointmentId <= 0) return;
     isLoading = true;
     failure = null;
     update();
     try {
       final result = await _data.getAppointmentById(appointmentId);
-      if (_disposed) return;
+      if (_inactive) return;
       result.fold((value) => failure = value, (body) {
         try {
-          if (body is! Map) throw const FormatException();
+          final value = _responseMap(body);
           appointment = AppointmentModel.fromJson(
-            Map<String, dynamic>.from(body),
+            Map<String, dynamic>.from(value),
           );
         } catch (_) {
           failure = const ServerFailure('Invalid appointment response.');
@@ -66,20 +72,44 @@ class DoctorAppointmentDetailsController extends GetxController {
       failure = const ServerFailure('Unable to load appointment.');
     } finally {
       isLoading = false;
-      if (!_disposed && !isClosed) update();
+      if (!_inactive) update();
     }
   }
 
   Future<void> cancel(BuildContext context) async {
-    if (!canCancel || isCancelling || isCompleting) return;
-    if (!await _confirm(context, 'cancelAppointmentQuestion'.tr)) return;
-    await _changeStatus(cancel: true);
+    await _confirmAndChange(
+      context,
+      message: 'cancelAppointmentQuestion'.tr,
+      cancel: true,
+    );
   }
 
   Future<void> complete(BuildContext context) async {
-    if (!canComplete || isCancelling || isCompleting) return;
-    if (!await _confirm(context, 'completeAppointmentQuestion'.tr)) return;
-    await _changeStatus(cancel: false);
+    await _confirmAndChange(
+      context,
+      message: 'completeAppointmentQuestion'.tr,
+      cancel: false,
+    );
+  }
+
+  Future<void> _confirmAndChange(
+    BuildContext context, {
+    required String message,
+    required bool cancel,
+  }) async {
+    final allowed = cancel ? canCancel : canComplete;
+    if (!allowed || isBusy || _inactive) return;
+    _isConfirming = true;
+    update();
+    var confirmed = false;
+    try {
+      confirmed = await _confirm(context, message);
+    } finally {
+      _isConfirming = false;
+      if (!_inactive) update();
+    }
+    if (!confirmed || _inactive) return;
+    await _changeStatus(cancel: cancel);
   }
 
   Future<bool> _confirm(BuildContext context, String message) async {
@@ -104,37 +134,50 @@ class DoctorAppointmentDetailsController extends GetxController {
   }
 
   Future<void> _changeStatus({required bool cancel}) async {
+    if (_inactive || isCancelling || isCompleting) return;
     cancel ? isCancelling = true : isCompleting = true;
     update();
     try {
       final result = cancel
           ? await _data.cancelAppointment(appointmentId)
           : await _data.completeAppointment(appointmentId);
-      if (_disposed) return;
+      if (_inactive) return;
       await result.fold(
         (value) async {
           failure = value;
-          Get.snackbar('error'.tr, 'requestFailed'.tr);
+          if (!_inactive) Get.snackbar('error'.tr, 'requestFailed'.tr);
         },
         (_) async {
           await load();
+          if (_inactive) return;
           if (Get.isRegistered<DoctorAppointmentsController>()) {
             await Get.find<DoctorAppointmentsController>().refreshList();
           }
+          if (_inactive) return;
           if (Get.isRegistered<DoctorHomeController>()) {
-            await Get.find<DoctorHomeController>().refreshDashboard();
+            await Get.find<DoctorHomeController>().refreshAppointments();
           }
-          Get.snackbar('success'.tr, 'appointmentUpdated'.tr);
+          if (!_inactive) {
+            Get.snackbar('success'.tr, 'appointmentUpdated'.tr);
+          }
         },
       );
     } catch (_) {
       failure = const ServerFailure('Unable to update appointment.');
-      Get.snackbar('error'.tr, 'requestFailed'.tr);
+      if (!_inactive) Get.snackbar('error'.tr, 'requestFailed'.tr);
     } finally {
       isCancelling = false;
       isCompleting = false;
-      if (!_disposed && !isClosed) update();
+      if (!_inactive) update();
     }
+  }
+
+  Map<dynamic, dynamic> _responseMap(Object? response) {
+    if (response is! Map) throw const FormatException();
+    final nested = response['data'] ?? response['result'];
+    if (nested == null) return response;
+    if (nested is Map) return nested;
+    throw const FormatException();
   }
 
   @override

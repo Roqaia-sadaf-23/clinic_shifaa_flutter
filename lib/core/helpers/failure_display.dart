@@ -3,11 +3,7 @@ import 'package:get/get.dart';
 
 import '../Error/Failure.dart';
 
-void showFailure(
-  Failure failure, {
-  Color? backgroundColor,
-  Color? colorText,
-}) {
+void showFailure(Failure failure, {Color? backgroundColor, Color? colorText}) {
   final title = switch (failure) {
     NetworkFailure() => 'Connection error',
     _ when failure.statusCode == 401 => 'Login failed',

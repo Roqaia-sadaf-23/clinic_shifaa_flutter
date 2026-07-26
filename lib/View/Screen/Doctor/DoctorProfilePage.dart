@@ -14,6 +14,7 @@ class DoctorProfileView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetBuilder<DoctorProfileController>(
+      autoRemove: false,
       builder: (controller) {
         if (controller.isLoading && controller.doctor == null) {
           return const DoctorProfileSkeleton();

@@ -14,6 +14,8 @@ class DoctorPatientsController extends GetxController {
   bool _requesting = false;
   bool _disposed = false;
 
+  bool get _inactive => _disposed || isClosed;
+
   @override
   void onInit() {
     super.onInit();
@@ -21,19 +23,22 @@ class DoctorPatientsController extends GetxController {
   }
 
   Future<void> load({bool refreshing = false}) async {
-    if (_requesting || _disposed) return;
+    if (_requesting || _inactive) return;
     _requesting = true;
     failure = null;
-    refreshing ? isRefreshing = true : isLoading = true;
+    if (refreshing) {
+      isRefreshing = true;
+    } else {
+      isLoading = true;
+    }
     update();
     try {
       final result = await _data.getDoctorPatients();
-      if (_disposed) return;
+      if (_inactive) return;
       result.fold((value) => failure = value, (body) {
         try {
-          if (body is! List) throw const FormatException();
           final unique = <int, DoctorPatientModel>{};
-          for (final item in body) {
+          for (final item in _responseList(body)) {
             final patient = DoctorPatientModel.fromJson(
               Map<String, dynamic>.from(item as Map),
             );
@@ -50,11 +55,24 @@ class DoctorPatientsController extends GetxController {
       _requesting = false;
       isLoading = false;
       isRefreshing = false;
-      if (!_disposed && !isClosed) update();
+      if (!_inactive) update();
     }
   }
 
   Future<void> refreshPatients() => load(refreshing: true);
+
+  List<dynamic> _responseList(Object? response) {
+    if (response is List) return response;
+    if (response is Map) {
+      final nested = response['data'] ?? response['result'];
+      if (nested is List) return nested;
+      if (nested is Map && nested['items'] is List) {
+        return nested['items'] as List;
+      }
+      if (response['items'] is List) return response['items'] as List;
+    }
+    throw const FormatException();
+  }
 
   @override
   void onClose() {
