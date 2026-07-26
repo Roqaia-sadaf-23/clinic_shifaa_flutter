@@ -557,18 +557,22 @@ class _SharedDoctorProfileStatistics extends StatelessWidget {
                   patients: patientsController.hasLoaded
                       ? patientsController.uniquePatientsCount
                       : null,
+                  isAppointmentsLoading:
+                      appointmentsController.isAppointmentsTotalLoading,
+                  appointmentsHasError:
+                      appointmentsController.appointmentsTotalFailure != null,
                   isLoading:
                       homeController.isLoading ||
                       homeController.isRefreshing ||
-                      appointmentsController.isBusy ||
                       patientsController.isLoading ||
                       patientsController.isRefreshing,
                   hasError:
                       homeController.summaryFailure != null ||
-                      appointmentsController.failure != null ||
                       patientsController.failure != null,
                   onTap: controller.showUnavailable,
                   onRetry: controller.refreshStatistics,
+                  onAppointmentsRetry:
+                      appointmentsController.retryAppointmentsTotal,
                 );
               },
             ),
@@ -584,33 +588,66 @@ class DoctorProfileStatistics extends StatelessWidget {
     this.completed,
     this.today,
     this.patients,
+    this.isAppointmentsLoading = false,
+    this.appointmentsHasError = false,
     this.isLoading = false,
     this.hasError = false,
     required this.onTap,
     this.onRetry,
+    this.onAppointmentsRetry,
   });
 
   final int? appointments;
   final int? completed;
   final int? today;
   final int? patients;
+  final bool isAppointmentsLoading;
+  final bool appointmentsHasError;
   final bool isLoading;
   final bool hasError;
   final VoidCallback onTap;
   final VoidCallback? onRetry;
+  final VoidCallback? onAppointmentsRetry;
 
   @override
   Widget build(BuildContext context) {
     final items = [
       (
-        Icons.calendar_month_outlined,
-        'appointments',
-        Appcolor.info,
-        appointments,
+        icon: Icons.calendar_month_outlined,
+        label: 'appointments',
+        color: Appcolor.info,
+        value: appointments,
+        isLoading: isAppointmentsLoading,
+        hasError: appointmentsHasError,
+        onRetry: onAppointmentsRetry,
       ),
-      (Icons.task_alt_rounded, 'completed', Appcolor.success, completed),
-      (Icons.today_rounded, 'today', Appcolor.warning, today),
-      (Icons.people_alt_outlined, 'patients', Appcolor.accent, patients),
+      (
+        icon: Icons.task_alt_rounded,
+        label: 'completed',
+        color: Appcolor.success,
+        value: completed,
+        isLoading: false,
+        hasError: false,
+        onRetry: null,
+      ),
+      (
+        icon: Icons.today_rounded,
+        label: 'today',
+        color: Appcolor.warning,
+        value: today,
+        isLoading: false,
+        hasError: false,
+        onRetry: null,
+      ),
+      (
+        icon: Icons.people_alt_outlined,
+        label: 'patients',
+        color: Appcolor.accent,
+        value: patients,
+        isLoading: false,
+        hasError: false,
+        onRetry: null,
+      ),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -635,11 +672,14 @@ class DoctorProfileStatistics extends StatelessWidget {
                     (item) => SizedBox(
                       width: width,
                       child: _StatisticCard(
-                        icon: item.$1,
-                        label: item.$2.tr,
-                        color: item.$3,
-                        value: item.$4,
+                        icon: item.icon,
+                        label: item.label.tr,
+                        color: item.color,
+                        value: item.value,
+                        isLoading: item.isLoading,
+                        hasError: item.hasError,
                         onTap: onTap,
+                        onRetry: item.onRetry,
                       ),
                     ),
                   )
@@ -684,13 +724,19 @@ class _StatisticCard extends StatelessWidget {
     required this.label,
     required this.color,
     required this.value,
+    required this.isLoading,
+    required this.hasError,
     required this.onTap,
+    this.onRetry,
   });
   final IconData icon;
   final String label;
   final Color color;
   final int? value;
+  final bool isLoading;
+  final bool hasError;
   final VoidCallback onTap;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) => Material(
@@ -722,13 +768,42 @@ class _StatisticCard extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    value?.toString() ?? '—',
-                    style: TextStyle(
-                      color: DoctorProfileColors.text(context),
-                      fontSize: 19,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  Row(
+                    children: [
+                      if (isLoading)
+                        const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(
+                            color: Appcolor.gold,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      else
+                        Text(
+                          value?.toString() ?? '—',
+                          style: TextStyle(
+                            color: DoctorProfileColors.text(context),
+                            fontSize: 19,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      if (hasError && !isLoading) ...[
+                        const SizedBox(width: 6),
+                        SizedBox.square(
+                          dimension: 28,
+                          child: IconButton(
+                            padding: EdgeInsets.zero,
+                            tooltip: 'retry'.tr,
+                            onPressed: onRetry,
+                            icon: const Icon(
+                              Icons.refresh_rounded,
+                              size: 18,
+                              color: Appcolor.error,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   Text(
                     label,

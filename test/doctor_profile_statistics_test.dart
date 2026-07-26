@@ -62,6 +62,37 @@ void main() {
     );
     expect(find.text('Retry'), findsOneWidget);
   });
+
+  testWidgets('appointments failure shows only a card retry', (tester) async {
+    var retryCount = 0;
+    await tester.pumpWidget(
+      GetMaterialApp(
+        translations: MyTranslation(),
+        locale: const Locale('en'),
+        home: Scaffold(
+          body: DoctorProfileStatistics(
+            completed: 0,
+            today: 0,
+            patients: 1,
+            appointmentsHasError: true,
+            onTap: _ignore,
+            onAppointmentsRetry: () => retryCount++,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('0'), findsNWidgets(2));
+    expect(find.text('1'), findsOneWidget);
+    expect(find.text('—'), findsOneWidget);
+    expect(
+      find.text('The request could not be completed. Please try again.'),
+      findsNothing,
+    );
+
+    await tester.tap(find.byTooltip('Retry'));
+    expect(retryCount, 1);
+  });
 }
 
 void _ignore() {}

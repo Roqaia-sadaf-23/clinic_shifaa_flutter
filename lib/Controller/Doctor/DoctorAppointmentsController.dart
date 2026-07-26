@@ -19,6 +19,8 @@ class DoctorAppointmentsController extends GetxController {
   bool hasMore = true;
   bool hasLoaded = false;
   int? totalAppointments;
+  Failure? appointmentsTotalFailure;
+  bool isAppointmentsTotalLoading = false;
   bool _disposed = false;
   bool _reloadRequested = false;
   int _filterRevision = 0;
@@ -37,6 +39,31 @@ class DoctorAppointmentsController extends GetxController {
   Future<void> loadInitial() => _load(reset: true);
   Future<void> refreshList() => _load(reset: true, refreshing: true);
   Future<void> retry() => loadInitial();
+
+  Future<void> retryAppointmentsTotal() async {
+    if (_inactive || isBusy || isAppointmentsTotalLoading) return;
+    isAppointmentsTotalLoading = true;
+    appointmentsTotalFailure = null;
+    update();
+    try {
+      final result = await _data.getDoctorAppointments(
+        page: 1,
+        pageSize: pageSize,
+      );
+      if (_inactive) return;
+      result.fold((value) => appointmentsTotalFailure = value, (body) {
+        totalAppointments = _totalCount(body);
+        appointmentsTotalFailure = null;
+      });
+    } catch (_) {
+      appointmentsTotalFailure = const ServerFailure(
+        'Unable to load appointments total.',
+      );
+    } finally {
+      isAppointmentsTotalLoading = false;
+      if (!_inactive) update();
+    }
+  }
 
   Future<void> loadMore() async {
     if (_inactive || !hasMore || isBusy) return;
@@ -71,8 +98,14 @@ class DoctorAppointmentsController extends GetxController {
       if (reset) _reloadRequested = true;
       return;
     }
+    final loadsAppointmentsTotal =
+        reset && selectedStatus == null && selectedDate == null;
     if (reset) {
       failure = null;
+      if (loadsAppointmentsTotal) {
+        appointmentsTotalFailure = null;
+        isAppointmentsTotalLoading = true;
+      }
       if (refreshing) {
         isRefreshing = true;
       } else {
@@ -95,9 +128,14 @@ class DoctorAppointmentsController extends GetxController {
       result.fold(
         (value) {
           failure = value;
+          if (loadsAppointmentsTotal) appointmentsTotalFailure = value;
           if (!reset) hasMore = false;
         },
         (body) {
+          if (loadsAppointmentsTotal) {
+            totalAppointments = _totalCount(body);
+            appointmentsTotalFailure = null;
+          }
           try {
             final parsed = _parsePage(
               body,
@@ -108,9 +146,6 @@ class DoctorAppointmentsController extends GetxController {
             _page = requestedPage;
             hasMore = parsed.hasMore;
             hasLoaded = true;
-            if (selectedStatus == null && selectedDate == null) {
-              totalAppointments = parsed.totalCount;
-            }
             failure = null;
           } catch (_) {
             failure = const ServerFailure('Invalid appointments response.');
@@ -121,12 +156,18 @@ class DoctorAppointmentsController extends GetxController {
     } catch (_) {
       if (requestRevision == _filterRevision) {
         failure = const ServerFailure('Unable to load appointments.');
+        if (loadsAppointmentsTotal) {
+          appointmentsTotalFailure = const ServerFailure(
+            'Unable to load appointments total.',
+          );
+        }
         if (!reset) hasMore = false;
       }
     } finally {
       isInitialLoading = false;
       isRefreshing = false;
       isLoadingMore = false;
+      if (loadsAppointmentsTotal) isAppointmentsTotalLoading = false;
       if (!_inactive) update();
       if (_reloadRequested && !_inactive) {
         _reloadRequested = false;
@@ -142,7 +183,6 @@ class DoctorAppointmentsController extends GetxController {
     return _AppointmentPage(
       items,
       totalCount == null ? items.length == pageSize : loaded < totalCount,
-      totalCount,
     );
   }
 
@@ -188,8 +228,7 @@ class DoctorAppointmentsController extends GetxController {
 }
 
 class _AppointmentPage {
-  const _AppointmentPage(this.items, this.hasMore, this.totalCount);
+  const _AppointmentPage(this.items, this.hasMore);
   final List<AppointmentModel> items;
   final bool hasMore;
-  final int? totalCount;
 }

@@ -244,6 +244,33 @@ void main() {
     expect(controller.totalAppointments, isNull);
   });
 
+  test('appointments total failure and retry are isolated', () async {
+    final api = _FakeApiService()
+      ..getResult = const Left<Failure, dynamic>(
+        ServerFailure('Appointments failed.'),
+      );
+    final controller = DoctorAppointmentsController(DoctorAppointmentData(api));
+
+    await controller.loadInitial();
+
+    expect(controller.appointmentsTotalFailure, isNotNull);
+    expect(controller.totalAppointments, isNull);
+    expect(controller.isAppointmentsTotalLoading, isFalse);
+
+    api.getResult = const Right<Failure, dynamic>({
+      'items': <dynamic>[],
+      'totalItems': 0,
+    });
+    await controller.retryAppointmentsTotal();
+
+    expect(
+      api.lastUrl,
+      'http://192.168.8.4:5210/api/Appointments/doctor/me?page=1&pageSize=10',
+    );
+    expect(controller.appointmentsTotalFailure, isNull);
+    expect(controller.totalAppointments, 0);
+  });
+
   test('patients count is unique and successful empty list is zero', () async {
     final api = _FakeApiService()
       ..getResult = [
@@ -282,14 +309,15 @@ void main() {
 class _FakeApiService extends ApiService {
   String? lastUrl;
   bool usedAuth = false;
-  dynamic getResult = const <dynamic>[];
+  dynamic getResult = const Right<Failure, dynamic>(<dynamic>[]);
   Either<Failure, dynamic> putResult = const Right(null);
 
   @override
   Future<Either<Failure, dynamic>> get(String url, {bool auth = false}) async {
     lastUrl = url;
     usedAuth = auth;
-    return Right(getResult);
+    final result = getResult;
+    return result is Either<Failure, dynamic> ? result : Right(result);
   }
 
   @override

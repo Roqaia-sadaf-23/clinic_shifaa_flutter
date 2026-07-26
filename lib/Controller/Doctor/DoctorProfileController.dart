@@ -92,7 +92,7 @@ class DoctorProfileController extends GetxController {
     try {
       await homeController?.refreshAppointments();
       if (_disposed) return;
-      await appointmentsController?.refreshList();
+      await appointmentsController?.retryAppointmentsTotal();
       if (_disposed) return;
       await patientsController?.refreshPatients();
     } finally {

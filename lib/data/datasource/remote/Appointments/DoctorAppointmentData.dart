@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/Error/Failure.dart';
@@ -31,7 +32,23 @@ class DoctorAppointmentData {
     final uri = Uri.parse(
       ApiLinks.doctorAppointments,
     ).replace(queryParameters: query);
-    return _apiService.get(uri.toString(), auth: true);
+    final isProfileTotalRequest =
+        status == null && date == null && page == 1 && pageSize == 10;
+    if (kDebugMode && isProfileTotalRequest) {
+      debugPrint('PROFILE APPOINTMENTS URL: $uri');
+    }
+    final result = await _apiService.get(uri.toString(), auth: true);
+    if (kDebugMode && isProfileTotalRequest) {
+      result.fold(
+        (failure) =>
+            debugPrint('PROFILE APPOINTMENTS FAILURE: ${failure.message}'),
+        (data) {
+          debugPrint('PROFILE APPOINTMENTS RAW RESPONSE: $data');
+          debugPrint('PROFILE APPOINTMENTS RESPONSE TYPE: ${data.runtimeType}');
+        },
+      );
+    }
+    return result;
   }
 
   Future<Either<Failure, dynamic>> getDoctorPatients() =>
