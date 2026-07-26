@@ -96,7 +96,6 @@ class AppointmentModel {
     var current = response;
     for (var depth = 0; depth < 5; depth++) {
       if (current is List) return current;
-      if (current == null) return const [];
       if (current is! Map) break;
       final nested = _firstValue(current, const [
         'data',
