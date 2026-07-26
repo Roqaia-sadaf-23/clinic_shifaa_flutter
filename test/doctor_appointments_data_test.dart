@@ -183,6 +183,24 @@ void main() {
     expect(api.usedAuth, isTrue);
   });
 
+  test('Pending filter omits an empty date and builds the exact URL', () async {
+    final api = _FakeApiService();
+    final data = DoctorAppointmentData(api);
+
+    await data.getDoctorAppointments(status: 'Pending', page: 1, pageSize: 10);
+
+    expect(
+      api.lastUrl,
+      'http://192.168.8.4:5210/api/Appointments/doctor/me'
+      '?status=Pending&page=1&pageSize=10',
+    );
+    expect(
+      Uri.parse(api.lastUrl!).queryParameters.containsKey('date'),
+      isFalse,
+    );
+    expect(api.usedAuth, isTrue);
+  });
+
   test(
     'doctor appointment reads use authenticated existing endpoints',
     () async {

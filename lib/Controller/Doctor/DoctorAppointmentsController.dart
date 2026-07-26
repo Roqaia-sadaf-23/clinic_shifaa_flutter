@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 import '../../core/Error/Failure.dart';
@@ -147,7 +148,10 @@ class DoctorAppointmentsController extends GetxController {
             hasMore = parsed.hasMore;
             hasLoaded = true;
             failure = null;
-          } catch (_) {
+          } catch (error) {
+            if (kDebugMode) {
+              debugPrint('DOCTOR APPOINTMENTS PARSE FAILURE: $error');
+            }
             failure = const ServerFailure('Invalid appointments response.');
             if (!reset) hasMore = false;
           }

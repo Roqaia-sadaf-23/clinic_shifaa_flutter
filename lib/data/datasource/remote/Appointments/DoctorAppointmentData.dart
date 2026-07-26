@@ -32,12 +32,25 @@ class DoctorAppointmentData {
     final uri = Uri.parse(
       ApiLinks.doctorAppointments,
     ).replace(queryParameters: query);
+    if (kDebugMode) {
+      debugPrint('DOCTOR APPOINTMENTS URL: $uri');
+    }
     final isProfileTotalRequest =
         status == null && date == null && page == 1 && pageSize == 10;
     if (kDebugMode && isProfileTotalRequest) {
       debugPrint('PROFILE APPOINTMENTS URL: $uri');
     }
     final result = await _apiService.get(uri.toString(), auth: true);
+    if (kDebugMode) {
+      result.fold(
+        (failure) =>
+            debugPrint('DOCTOR APPOINTMENTS FAILURE: ${failure.message}'),
+        (data) {
+          debugPrint('DOCTOR APPOINTMENTS RESPONSE: $data');
+          debugPrint('DOCTOR APPOINTMENTS TYPE: ${data.runtimeType}');
+        },
+      );
+    }
     if (kDebugMode && isProfileTotalRequest) {
       result.fold(
         (failure) =>
