@@ -1,11 +1,37 @@
 import 'package:clinic_shifaa/View/Screen/Doctor/DoctorHomePage.dart';
 import 'package:clinic_shifaa/core/localization/translation.dart';
 import 'package:clinic_shifaa/data/model/CurrentDoctorModel.dart';
+import 'package:clinic_shifaa/data/model/DoctorAppointmentSummary.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
 void main() {
+  testWidgets('summary displays all four zero values', (tester) async {
+    await tester.pumpWidget(
+      GetMaterialApp(
+        translations: MyTranslation(),
+        locale: const Locale('en'),
+        home: const Scaffold(
+          body: Padding(
+            padding: EdgeInsets.all(20),
+            child: AppointmentSummaryRow(
+              summary: DoctorAppointmentSummary(
+                todayAppointments: 0,
+                pending: 0,
+                completed: 0,
+                cancelled: 0,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('0'), findsNWidgets(4));
+    expect(find.text('—'), findsNothing);
+  });
+
   const sizes = <Size>[
     Size(320, 568),
     Size(360, 640),
@@ -42,7 +68,7 @@ void main() {
             await tester.pump();
 
             expect(tester.takeException(), isNull);
-            expect(find.text('—'), findsNWidgets(3));
+            expect(find.text('—'), findsNWidgets(4));
           },
         );
       }

@@ -468,6 +468,7 @@ class AppointmentSummaryRow extends StatelessWidget {
         Appcolor.warning,
         summary?.pending,
       ),
+      (Icons.today_rounded, 'today', Appcolor.info, summary?.todayAppointments),
       (
         Icons.task_alt_rounded,
         'completed',
@@ -484,8 +485,9 @@ class AppointmentSummaryRow extends StatelessWidget {
         LayoutBuilder(
           builder: (context, constraints) {
             final layout = DoctorHomeLayout.of(context);
-            final columns = layout.compact || layout.largeText ? 1 : 2;
+            const columns = 2;
             final spacing = layout.itemSpacing;
+            final cardHeight = layout.largeText ? 124.0 : 92.0;
             final cardWidth =
                 (constraints.maxWidth - (spacing * (columns - 1))) / columns;
             return Wrap(
@@ -494,6 +496,7 @@ class AppointmentSummaryRow extends StatelessWidget {
               children: List.generate(cards.length, (index) {
                 return SizedBox(
                   width: cardWidth,
+                  height: cardHeight,
                   child: AppointmentSummaryCard(
                     icon: cards[index].$1,
                     label: cards[index].$2.tr,

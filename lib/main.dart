@@ -37,7 +37,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       initialBinding: initialBinding(),
-
+   
       locale: controllerlang.languege,
       theme: controllerlang.Apptheme,
       localizationsDelegates: [
