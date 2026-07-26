@@ -11,6 +11,7 @@ class DoctorPatientsController extends GetxController {
   Failure? failure;
   bool isLoading = false;
   bool isRefreshing = false;
+  bool hasLoaded = false;
   bool _requesting = false;
   bool _disposed = false;
 
@@ -45,6 +46,8 @@ class DoctorPatientsController extends GetxController {
             unique[patient.patientId] = patient;
           }
           patients = unique.values.toList(growable: false);
+          hasLoaded = true;
+          failure = null;
         } catch (_) {
           failure = const ServerFailure('Invalid patients response.');
         }
@@ -60,6 +63,9 @@ class DoctorPatientsController extends GetxController {
   }
 
   Future<void> refreshPatients() => load(refreshing: true);
+
+  int get uniquePatientsCount =>
+      patients.map((patient) => patient.patientId).toSet().length;
 
   List<dynamic> _responseList(Object? response) {
     if (response is List) return response;

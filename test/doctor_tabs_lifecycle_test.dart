@@ -72,6 +72,8 @@ void main() {
     await tester.pumpAndSettle();
     final profile = Get.find<DoctorProfileController>();
     final profileCalls = api.callsTo(ApiLinks.currentDoctor);
+    expect(find.text('4'), findsOneWidget);
+    expect(find.text('1'), findsOneWidget);
 
     home.selectTab(0);
     await tester.pump();
@@ -109,7 +111,27 @@ class _DoctorTabsApiService extends ApiService {
       });
     }
     if (endpoint == ApiLinks.doctorAppointmentSummary) {
-      return const Right({'pending': 0, 'completed': 0, 'cancelled': 0});
+      return const Right({
+        'todayAppointments': 0,
+        'pendingAppointments': 0,
+        'completedAppointments': 0,
+        'cancelledAppointments': 1,
+      });
+    }
+    if (endpoint == ApiLinks.doctorAppointments) {
+      return const Right({'items': <dynamic>[], 'totalCount': 4});
+    }
+    if (endpoint == ApiLinks.doctorPatients) {
+      return const Right([
+        {
+          'patientId': 23,
+          'patientName': 'test test',
+          'patientImage': 'test',
+          'bloodType': 'A-',
+          'appointmentsCount': 1,
+          'lastAppointmentDate': null,
+        },
+      ]);
     }
     return const Right([]);
   }

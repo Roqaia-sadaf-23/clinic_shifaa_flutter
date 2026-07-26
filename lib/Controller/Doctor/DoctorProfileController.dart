@@ -9,13 +9,24 @@ import '../../core/localization/changelocal.dart';
 import '../../data/datasource/remote/Doctors/DactorData.dart';
 import '../../data/model/CurrentDoctorModel.dart';
 import '../../data/datasource/remote/images/imagesdta.dart';
+import 'DoctorAppointmentsController.dart';
 import 'DoctorHome_Controller.dart';
+import 'DoctorPatientsController.dart';
 
 class DoctorProfileController extends GetxController {
-  DoctorProfileController(this._doctorData, this._imageData);
+  DoctorProfileController(
+    this._doctorData,
+    this._imageData, {
+    this.homeController,
+    this.appointmentsController,
+    this.patientsController,
+  });
 
   final DoctorData _doctorData;
   final ImagesData _imageData;
+  final DoctorHomeController? homeController;
+  final DoctorAppointmentsController? appointmentsController;
+  final DoctorPatientsController? patientsController;
 
   CurrentDoctorModel? doctor;
   Failure? failure;
@@ -27,17 +38,67 @@ class DoctorProfileController extends GetxController {
   String? localImagePath;
 
   bool _requestInProgress = false;
+  bool _statisticsRefreshInProgress = false;
+  bool _statisticsLoadChecked = false;
   bool _disposed = false;
 
   @override
   void onInit() {
     super.onInit();
     loadProfile();
+    ensureStatisticsLoaded();
   }
 
   Future<void> loadProfile() => _load(refreshing: false);
 
-  Future<void> refreshProfile() => _load(refreshing: true);
+  Future<void> refreshProfile() async {
+    await _load(refreshing: true);
+    if (!_disposed) await refreshStatistics();
+  }
+
+  Future<void> ensureStatisticsLoaded() async {
+    if (_statisticsLoadChecked || _disposed) return;
+    _statisticsLoadChecked = true;
+
+    final home = homeController;
+    if (home != null &&
+        home.summary == null &&
+        !home.isLoading &&
+        !home.isRefreshing) {
+      await home.refreshAppointments();
+    }
+    if (_disposed) return;
+
+    final appointments = appointmentsController;
+    if (appointments != null &&
+        !appointments.hasLoaded &&
+        !appointments.isBusy) {
+      await appointments.loadInitial();
+    }
+    if (_disposed) return;
+
+    final patients = patientsController;
+    if (patients != null &&
+        !patients.hasLoaded &&
+        !patients.isLoading &&
+        !patients.isRefreshing) {
+      await patients.load();
+    }
+  }
+
+  Future<void> refreshStatistics() async {
+    if (_statisticsRefreshInProgress || _disposed) return;
+    _statisticsRefreshInProgress = true;
+    try {
+      await homeController?.refreshAppointments();
+      if (_disposed) return;
+      await appointmentsController?.refreshList();
+      if (_disposed) return;
+      await patientsController?.refreshPatients();
+    } finally {
+      _statisticsRefreshInProgress = false;
+    }
+  }
 
   void retry() {
     if (!_requestInProgress) loadProfile();

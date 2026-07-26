@@ -1,3 +1,5 @@
+import 'package:clinic_shifaa/Controller/Doctor/DoctorAppointmentsController.dart';
+import 'package:clinic_shifaa/Controller/Doctor/DoctorPatientsController.dart';
 import 'package:clinic_shifaa/core/Error/Failure.dart';
 import 'package:clinic_shifaa/core/class/ApiService.dart';
 import 'package:clinic_shifaa/data/datasource/remote/Appointments/DoctorAppointmentData.dart';
@@ -20,13 +22,15 @@ void main() {
 
   test('summary accepts direct zero values', () {
     final value = DoctorAppointmentSummary.fromResponse({
-      'pending': 0,
-      'completed': 0,
-      'cancelled': 0,
+      'todayAppointments': 0,
+      'pendingAppointments': 0,
+      'completedAppointments': 0,
+      'cancelledAppointments': 1,
     });
+    expect(value.todayAppointments, 0);
     expect(value.pending, 0);
     expect(value.completed, 0);
-    expect(value.cancelled, 0);
+    expect(value.cancelled, 1);
   });
 
   test('summary treats a successful no-content response as zero counts', () {
@@ -214,18 +218,78 @@ void main() {
     expect((await data.completeAppointment(4)).isLeft, isTrue);
     expect(api.lastUrl, endsWith('/Appointments/4/complete'));
   });
+
+  test('appointments total uses only a backend pagination total', () async {
+    final api = _FakeApiService()
+      ..getResult = {'items': <dynamic>[], 'totalCount': 17};
+    final controller = DoctorAppointmentsController(DoctorAppointmentData(api));
+
+    await controller.loadInitial();
+
+    expect(controller.hasLoaded, isTrue);
+    expect(controller.totalAppointments, 17);
+
+    api.getResult = [
+      {
+        'id': 1,
+        'doctorId': 2,
+        'patientId': 3,
+        'appointmentDate': '2026-07-25T10:00:00',
+        'status': 'Confirmed',
+      },
+    ];
+    await controller.refreshList();
+
+    expect(controller.appointments, hasLength(1));
+    expect(controller.totalAppointments, isNull);
+  });
+
+  test('patients count is unique and successful empty list is zero', () async {
+    final api = _FakeApiService()
+      ..getResult = [
+        {
+          'patientId': 23,
+          'patientName': 'test test',
+          'patientImage': 'test',
+          'bloodType': 'A-',
+          'appointmentsCount': 1,
+          'lastAppointmentDate': '2026-07-23T20:40:00.79',
+        },
+        {
+          'patientId': 23,
+          'patientName': 'test test',
+          'patientImage': 'test',
+          'bloodType': 'A-',
+          'appointmentsCount': 1,
+          'lastAppointmentDate': '2026-07-23T20:40:00.79',
+        },
+      ];
+    final controller = DoctorPatientsController(DoctorAppointmentData(api));
+
+    await controller.load();
+
+    expect(controller.hasLoaded, isTrue);
+    expect(controller.uniquePatientsCount, 1);
+
+    api.getResult = <dynamic>[];
+    await controller.refreshPatients();
+
+    expect(controller.hasLoaded, isTrue);
+    expect(controller.uniquePatientsCount, 0);
+  });
 }
 
 class _FakeApiService extends ApiService {
   String? lastUrl;
   bool usedAuth = false;
+  dynamic getResult = const <dynamic>[];
   Either<Failure, dynamic> putResult = const Right(null);
 
   @override
   Future<Either<Failure, dynamic>> get(String url, {bool auth = false}) async {
     lastUrl = url;
     usedAuth = auth;
-    return const Right([]);
+    return Right(getResult);
   }
 
   @override

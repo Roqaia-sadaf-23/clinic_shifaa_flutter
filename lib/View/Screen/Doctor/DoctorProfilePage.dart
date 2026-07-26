@@ -3,6 +3,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../Controller/Doctor/DoctorAppointmentsController.dart';
+import '../../../Controller/Doctor/DoctorHome_Controller.dart';
+import '../../../Controller/Doctor/DoctorPatientsController.dart';
 import '../../../Controller/Doctor/DoctorProfileController.dart';
 import '../../../core/constant/ApiLinks.dart';
 import '../../../core/constant/Appcolor.dart';
@@ -75,7 +78,7 @@ class _ProfileContent extends StatelessWidget {
                 ),
               ],
               SizedBox(height: metrics.sectionSpacing),
-              DoctorProfileStatistics(onTap: controller.showUnavailable),
+              _SharedDoctorProfileStatistics(controller: controller),
               SizedBox(height: metrics.sectionSpacing),
               DoctorInformationSection(
                 title: 'personalInformation'.tr,
@@ -520,17 +523,94 @@ class _HeaderChip extends StatelessWidget {
   );
 }
 
+class _SharedDoctorProfileStatistics extends StatelessWidget {
+  const _SharedDoctorProfileStatistics({required this.controller});
+
+  final DoctorProfileController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final home = controller.homeController;
+    final appointments = controller.appointmentsController;
+    final patients = controller.patientsController;
+    if (home == null || appointments == null || patients == null) {
+      return DoctorProfileStatistics(
+        hasError: true,
+        onTap: controller.showUnavailable,
+        onRetry: controller.ensureStatisticsLoaded,
+      );
+    }
+
+    return GetBuilder<DoctorHomeController>(
+      autoRemove: false,
+      builder: (homeController) => GetBuilder<DoctorAppointmentsController>(
+        autoRemove: false,
+        builder: (appointmentsController) =>
+            GetBuilder<DoctorPatientsController>(
+              autoRemove: false,
+              builder: (patientsController) {
+                final summary = homeController.summary;
+                return DoctorProfileStatistics(
+                  appointments: appointmentsController.totalAppointments,
+                  completed: summary?.completedAppointments,
+                  today: summary?.todayAppointments,
+                  patients: patientsController.hasLoaded
+                      ? patientsController.uniquePatientsCount
+                      : null,
+                  isLoading:
+                      homeController.isLoading ||
+                      homeController.isRefreshing ||
+                      appointmentsController.isBusy ||
+                      patientsController.isLoading ||
+                      patientsController.isRefreshing,
+                  hasError:
+                      homeController.summaryFailure != null ||
+                      appointmentsController.failure != null ||
+                      patientsController.failure != null,
+                  onTap: controller.showUnavailable,
+                  onRetry: controller.refreshStatistics,
+                );
+              },
+            ),
+      ),
+    );
+  }
+}
+
 class DoctorProfileStatistics extends StatelessWidget {
-  const DoctorProfileStatistics({super.key, required this.onTap});
+  const DoctorProfileStatistics({
+    super.key,
+    this.appointments,
+    this.completed,
+    this.today,
+    this.patients,
+    this.isLoading = false,
+    this.hasError = false,
+    required this.onTap,
+    this.onRetry,
+  });
+
+  final int? appointments;
+  final int? completed;
+  final int? today;
+  final int? patients;
+  final bool isLoading;
+  final bool hasError;
   final VoidCallback onTap;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
     final items = [
-      (Icons.calendar_month_outlined, 'appointments', Appcolor.info),
-      (Icons.task_alt_rounded, 'completed', Appcolor.success),
-      (Icons.today_rounded, 'today', Appcolor.warning),
-      (Icons.people_alt_outlined, 'patients', Appcolor.accent),
+      (
+        Icons.calendar_month_outlined,
+        'appointments',
+        Appcolor.info,
+        appointments,
+      ),
+      (Icons.task_alt_rounded, 'completed', Appcolor.success, completed),
+      (Icons.today_rounded, 'today', Appcolor.warning, today),
+      (Icons.people_alt_outlined, 'patients', Appcolor.accent, patients),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -558,6 +638,7 @@ class DoctorProfileStatistics extends StatelessWidget {
                         icon: item.$1,
                         label: item.$2.tr,
                         color: item.$3,
+                        value: item.$4,
                         onTap: onTap,
                       ),
                     ),
@@ -566,11 +647,32 @@ class DoctorProfileStatistics extends StatelessWidget {
             );
           },
         ),
-        const SizedBox(height: 9),
-        Text(
-          'statisticsUnavailable'.tr,
-          style: const TextStyle(color: Appcolor.textLight, fontSize: 12),
-        ),
+        if (isLoading) ...[
+          const SizedBox(height: 10),
+          const Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: SizedBox.square(
+              dimension: 18,
+              child: CircularProgressIndicator(
+                color: Appcolor.gold,
+                strokeWidth: 2,
+              ),
+            ),
+          ),
+        ] else if (hasError) ...[
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'requestFailed'.tr,
+                  style: const TextStyle(color: Appcolor.error, fontSize: 12),
+                ),
+              ),
+              TextButton(onPressed: onRetry, child: Text('retry'.tr)),
+            ],
+          ),
+        ],
       ],
     );
   }
@@ -581,11 +683,13 @@ class _StatisticCard extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.color,
+    required this.value,
     required this.onTap,
   });
   final IconData icon;
   final String label;
   final Color color;
+  final int? value;
   final VoidCallback onTap;
 
   @override
@@ -619,7 +723,7 @@ class _StatisticCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '—',
+                    value?.toString() ?? '—',
                     style: TextStyle(
                       color: DoctorProfileColors.text(context),
                       fontSize: 19,

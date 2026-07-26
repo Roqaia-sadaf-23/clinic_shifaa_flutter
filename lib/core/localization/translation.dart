@@ -61,8 +61,6 @@ class MyTranslation extends Translations {
       'profileStatistics': 'Profile statistics',
       'profileActions': 'Profile actions',
       'authenticatedProfile': 'Authenticated profile',
-      'statisticsUnavailable':
-          'Statistics will appear when a secure Doctor statistics endpoint is available.',
       'profileEditingUnavailable':
           'Profile editing requires a secure authenticated Doctor update endpoint.',
       'profileImageUpdated': 'Profile image updated successfully.',
@@ -167,8 +165,6 @@ class MyTranslation extends Translations {
       'profileStatistics': 'إحصائيات الملف',
       'profileActions': 'إعدادات الملف',
       'authenticatedProfile': 'ملف موثّق',
-      'statisticsUnavailable':
-          'ستظهر الإحصائيات عند توفر واجهة آمنة لإحصائيات الطبيب.',
       'profileEditingUnavailable':
           'يتطلب تعديل الملف واجهة آمنة لتحديث بيانات الطبيب الحالي.',
       'profileImageUpdated': 'تم تحديث صورة الملف الشخصي بنجاح.',

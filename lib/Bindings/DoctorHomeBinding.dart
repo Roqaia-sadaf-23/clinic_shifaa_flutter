@@ -35,6 +35,9 @@ class DoctorHomeBinding extends Bindings {
       () => DoctorProfileController(
         Get.find<DoctorData>(),
         Get.find<ImagesData>(),
+        homeController: Get.find<DoctorHomeController>(),
+        appointmentsController: Get.find<DoctorAppointmentsController>(),
+        patientsController: Get.find<DoctorPatientsController>(),
       ),
       fenix: true,
     );

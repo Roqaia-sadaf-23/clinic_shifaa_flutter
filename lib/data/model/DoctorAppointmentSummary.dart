@@ -1,17 +1,24 @@
 class DoctorAppointmentSummary {
   const DoctorAppointmentSummary({
+    this.todayAppointments = 0,
     required this.pending,
     required this.completed,
     required this.cancelled,
   });
 
+  final int todayAppointments;
   final int pending;
   final int completed;
   final int cancelled;
 
+  int get pendingAppointments => pending;
+  int get completedAppointments => completed;
+  int get cancelledAppointments => cancelled;
+
   factory DoctorAppointmentSummary.fromResponse(dynamic response) {
     if (response == null) {
       return const DoctorAppointmentSummary(
+        todayAppointments: 0,
         pending: 0,
         completed: 0,
         cancelled: 0,
@@ -25,6 +32,9 @@ class DoctorAppointmentSummary {
     final summaryMap = Map<String, dynamic>.from(payload);
 
     return DoctorAppointmentSummary(
+      todayAppointments: parseInt(
+        _value(summaryMap, const ['today', 'todayCount', 'todayAppointments']),
+      ),
       pending: parseInt(
         _requiredValue(summaryMap, const [
           'pending',
@@ -85,6 +95,7 @@ class DoctorAppointmentSummary {
       counts[status.toLowerCase()] = parseInt(count);
     }
     return DoctorAppointmentSummary(
+      todayAppointments: counts['today'] ?? 0,
       pending: counts['pending'] ?? 0,
       completed: counts['completed'] ?? 0,
       cancelled: counts['cancelled'] ?? counts['canceled'] ?? 0,

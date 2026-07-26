@@ -17,6 +17,8 @@ class DoctorAppointmentsController extends GetxController {
   bool isRefreshing = false;
   bool isLoadingMore = false;
   bool hasMore = true;
+  bool hasLoaded = false;
+  int? totalAppointments;
   bool _disposed = false;
   bool _reloadRequested = false;
   int _filterRevision = 0;
@@ -105,6 +107,10 @@ class DoctorAppointmentsController extends GetxController {
             appointments.addAll(parsed.items);
             _page = requestedPage;
             hasMore = parsed.hasMore;
+            hasLoaded = true;
+            if (selectedStatus == null && selectedDate == null) {
+              totalAppointments = parsed.totalCount;
+            }
             failure = null;
           } catch (_) {
             failure = const ServerFailure('Invalid appointments response.');
@@ -136,6 +142,7 @@ class DoctorAppointmentsController extends GetxController {
     return _AppointmentPage(
       items,
       totalCount == null ? items.length == pageSize : loaded < totalCount,
+      totalCount,
     );
   }
 
@@ -150,7 +157,11 @@ class DoctorAppointmentsController extends GetxController {
         final key = entry.key;
         if (key is String) {
           final normalized = key.toLowerCase();
-          if (normalized == 'totalcount') return _int(entry.value);
+          if (normalized == 'totalcount' ||
+              normalized == 'totalitems' ||
+              normalized == 'count') {
+            return _int(entry.value);
+          }
           if (normalized == 'data' || normalized == 'result') {
             nested ??= entry.value;
           }
@@ -177,7 +188,8 @@ class DoctorAppointmentsController extends GetxController {
 }
 
 class _AppointmentPage {
-  const _AppointmentPage(this.items, this.hasMore);
+  const _AppointmentPage(this.items, this.hasMore, this.totalCount);
   final List<AppointmentModel> items;
   final bool hasMore;
+  final int? totalCount;
 }

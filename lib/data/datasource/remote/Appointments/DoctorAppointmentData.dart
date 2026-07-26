@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/Error/Failure.dart';
@@ -10,47 +9,11 @@ class DoctorAppointmentData {
   final ApiService _apiService;
 
   Future<Either<Failure, dynamic>> getDoctorSummary() async {
-    if (kDebugMode) {
-      debugPrint('SUMMARY URL: ${ApiLinks.doctorAppointmentSummary}');
-    }
-    final result = await _apiService.get(
-      ApiLinks.doctorAppointmentSummary,
-      auth: true,
-    );
-    if (kDebugMode) {
-      result.fold(
-        (failure) => debugPrint(
-          'SUMMARY FAILURE: ${failure.statusCode} ${failure.message}',
-        ),
-        (data) {
-          debugPrint('SUMMARY RESPONSE: $data');
-          debugPrint('SUMMARY TYPE: ${data.runtimeType}');
-        },
-      );
-    }
-    return result;
+    return _apiService.get(ApiLinks.doctorAppointmentSummary, auth: true);
   }
 
   Future<Either<Failure, dynamic>> getTodayDoctorAppointments() async {
-    if (kDebugMode) {
-      debugPrint('TODAY URL: ${ApiLinks.todayDoctorAppointments}');
-    }
-    final result = await _apiService.get(
-      ApiLinks.todayDoctorAppointments,
-      auth: true,
-    );
-    if (kDebugMode) {
-      result.fold(
-        (failure) => debugPrint(
-          'TODAY FAILURE: ${failure.statusCode} ${failure.message}',
-        ),
-        (data) {
-          debugPrint('TODAY RESPONSE: $data');
-          debugPrint('TODAY TYPE: ${data.runtimeType}');
-        },
-      );
-    }
-    return result;
+    return _apiService.get(ApiLinks.todayDoctorAppointments, auth: true);
   }
 
   Future<Either<Failure, dynamic>> getDoctorAppointments({
@@ -68,20 +31,7 @@ class DoctorAppointmentData {
     final uri = Uri.parse(
       ApiLinks.doctorAppointments,
     ).replace(queryParameters: query);
-    if (kDebugMode) debugPrint('APPOINTMENTS URL: $uri');
-    final result = await _apiService.get(uri.toString(), auth: true);
-    if (kDebugMode) {
-      result.fold(
-        (failure) => debugPrint(
-          'APPOINTMENTS FAILURE: ${failure.statusCode} ${failure.message}',
-        ),
-        (data) {
-          debugPrint('APPOINTMENTS RESPONSE: $data');
-          debugPrint('APPOINTMENTS TYPE: ${data.runtimeType}');
-        },
-      );
-    }
-    return result;
+    return _apiService.get(uri.toString(), auth: true);
   }
 
   Future<Either<Failure, dynamic>> getDoctorPatients() =>
