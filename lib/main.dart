@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'Bindings/initialBinding.dart';
 import 'View/Screen/Auth/Login/Loginpage.dart';
+import 'View/Screen/Splish/SplashScreen.dart';
 import 'core/localization/translation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -49,7 +50,7 @@ class MyApp extends StatelessWidget {
       supportedLocales: S.delegate.supportedLocales,
       getPages: routes,
       // theme:
-      home: const LoginPage(), //DoctorDetailsPage(),
+      home: const LoginPage(), //SplashScreen(), DoctorDetailsPage(),
       ////SplashScreen(),
       //RegisterScreen(),
       // RegisterPage(),

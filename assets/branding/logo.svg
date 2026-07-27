@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <title>Shifaa heart and ECG logo</title>
+  <defs>
+    <linearGradient id="brandBlue" x1="190" y1="220" x2="834" y2="842" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0F3460"/>
+      <stop offset="1" stop-color="#16213E"/>
+    </linearGradient>
+    <filter id="tileShadow" x="-12%" y="-12%" width="124%" height="132%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#16213E" flood-opacity="0.09"/>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="1024" fill="#FFFFFF"/>
+  <rect x="58" y="48" width="908" height="908" rx="214" fill="#FFFFFF" filter="url(#tileShadow)"/>
+
+  <g fill="none" stroke="url(#brandBlue)" stroke-width="58" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M210 492
+             C158 454 163 352 218 292
+             C288 216 405 220 512 342
+             C619 220 736 216 806 292
+             C861 352 866 454 814 492"/>
+    <path d="M210 492
+             H354
+             L410 574
+             L478 350
+             L554 674
+             L628 432
+             L684 492
+             H814"/>
+    <path d="M214 568
+             C300 690 408 786 512 844
+             C616 786 724 690 810 568"/>
+  </g>
+</svg>
