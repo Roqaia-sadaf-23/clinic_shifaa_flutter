@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import '../../../core/class/AuthService.dart';
+import '../../../core/constant/Approutes.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
+
+  Future<void> _logout() async {
+    await AuthService.clearTokens();
+    Get.offAllNamed(Approutes.login);
+  }
 
   Widget item(IconData icon, String title) {
     return Container(
@@ -104,7 +113,7 @@ class ProfileScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(18),
                     ),
                   ),
-                  onPressed: () {},
+                  onPressed: _logout,
                   icon: const Icon(Icons.logout, color: Colors.white),
                   label: const Text(
                     "تسجيل الخروج",

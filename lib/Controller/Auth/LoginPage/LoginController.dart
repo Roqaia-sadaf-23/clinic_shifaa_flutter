@@ -150,6 +150,7 @@ class LoginController extends GetxController {
             refreshToken: token.refreshToken,
             email: loginController.text.trim(),
             roleName: roleName,
+            rememberMe: rememberMe.value,
           );
 
           if (_isDisposed) return;

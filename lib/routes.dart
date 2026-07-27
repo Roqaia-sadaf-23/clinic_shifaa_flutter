@@ -8,6 +8,7 @@ import 'View/Screen/Auth/Register/RegisterScreen.dart';
 import 'View/Screen/CompleteProfile/CompleteProfileScreen.dart';
 import 'View/Screen/Doctor/DoctorHomePage.dart';
 import 'View/Screen/Doctor/DoctorEditProfilePage.dart';
+import 'View/Screen/Home/PatientHomePage.dart';
 import 'View/Screen/Appointment/AppointmentDetailsPage.dart';
 import 'View/Screen/Languege.dart';
 import 'View/Screen/Auth/Login/Loginpage.dart';
@@ -46,6 +47,10 @@ final List<GetPage<dynamic>> routes = [
   ),
 
   GetPage(name: Approutes.login, page: () => const LoginPage()),
+  GetPage(
+    name: Approutes.HomeScreen,
+    page: () => const PatientHomePage(),
+  ),
   GetPage(name: Approutes.Signup, page: () => RegisterScreen()),
   GetPage(
     name: Approutes.completeProfile,

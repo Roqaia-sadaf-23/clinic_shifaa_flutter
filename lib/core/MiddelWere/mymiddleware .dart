@@ -14,6 +14,8 @@ class MyMiddleWare extends GetMiddleware {
   RouteSettings? redirect(String? route) {
     final preferences = myservices.sharedPreferences;
 
+    final rememberMe = preferences?.getBool('rememberMe') ?? false;
+
     final isLoggedIn = preferences?.getBool('isLoggedIn') ?? false;
 
     final accessToken = preferences?.getString('accessToken');
@@ -23,17 +25,20 @@ class MyMiddleWare extends GetMiddleware {
     final roleName = preferences?.getString('roleName');
 
     final hasSession =
+        rememberMe &&
         isLoggedIn &&
         accessToken != null &&
         accessToken.isNotEmpty &&
         refreshToken != null &&
-        refreshToken.isNotEmpty;
+        refreshToken.isNotEmpty &&
+        roleName != null &&
+        roleName.trim().isNotEmpty;
 
     if (!hasSession) {
       return const RouteSettings(name: Approutes.login);
     }
 
-    switch (roleName?.toLowerCase()) {
+    switch (roleName.trim().toLowerCase()) {
       case 'doctor':
         return const RouteSettings(name: Approutes.doctorHome);
 
