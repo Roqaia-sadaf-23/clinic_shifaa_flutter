@@ -93,11 +93,11 @@ void main() {
     );
   });
 
-  test('appointment parses nullable values safely', () {
+  test('appointment details DTO parses names and nullable values', () {
     final value = AppointmentModel.fromJson({
       'id': 1,
-      'doctorId': 2,
-      'patientId': 3,
+      'doctorName': 'Dr. Rami Balowar',
+      'patientName': 'Ahmed Mohammed',
       'appointmentDate': '2026-07-25T10:00:00',
       'status': 'Pending',
       'lastStatusDate': null,
@@ -105,6 +105,8 @@ void main() {
       'notes': null,
     });
     expect(value.status, 'Pending');
+    expect(value.doctorName, 'Dr. Rami Balowar');
+    expect(value.patientName, 'Ahmed Mohammed');
     expect(value.lastStatusDate, isNull);
   });
 
@@ -114,8 +116,8 @@ void main() {
         r'$values': [
           {
             'Id': 1,
-            'DoctorId': 2,
-            'PatientId': 3,
+            'DoctorName': 'Rami Balowar',
+            'PatientName': 'Ahmed Mohammed',
             'AppointmentDate': '2026-07-25T10:00:00',
             'Status': 'Pending',
             'LastStatusDate': null,
@@ -128,6 +130,48 @@ void main() {
     expect(values, hasLength(1));
     expect(values.single.id, 1);
     expect(values.single.status, 'Pending');
+    expect(values.single.doctorName, 'Rami Balowar');
+    expect(values.single.patientName, 'Ahmed Mohammed');
+  });
+
+  test('doctor/me pagination wrapper parses AppointmentInfoDTO items', () {
+    final values = AppointmentModel.listFromResponse({
+      'items': [
+        {
+          'id': 18,
+          'doctorName': 'Dr. Rami Balowar',
+          'patientName': 'Ahmed Mohammed',
+          'appointmentDate': '2026-07-27T12:00:00',
+          'status': 'Pending',
+          'lastStatusDate': '2026-07-27T03:29:00',
+          'medicalRecordId': null,
+          'notes': null,
+        },
+      ],
+      'totalCount': 1,
+    });
+
+    expect(values, hasLength(1));
+    expect(values.single.id, 18);
+    expect(values.single.patientName, 'Ahmed Mohammed');
+  });
+
+  test('today endpoint parses a direct AppointmentInfoDTO list', () {
+    final values = AppointmentModel.listFromResponse([
+      {
+        'id': 18,
+        'doctorName': 'Dr. Rami Balowar',
+        'patientName': 'Ahmed Mohammed',
+        'appointmentDate': '2026-07-27T12:00:00',
+        'status': 'Pending',
+        'lastStatusDate': null,
+        'medicalRecordId': null,
+        'notes': null,
+      },
+    ]);
+
+    expect(values.single.doctorName, 'Dr. Rami Balowar');
+    expect(values.single.patientName, 'Ahmed Mohammed');
   });
 
   test('appointments treat a successful no-content response as empty', () {
@@ -250,8 +294,8 @@ void main() {
     api.getResult = [
       {
         'id': 1,
-        'doctorId': 2,
-        'patientId': 3,
+        'doctorName': 'Dr. Doctor One',
+        'patientName': 'Patient One',
         'appointmentDate': '2026-07-25T10:00:00',
         'status': 'Confirmed',
       },

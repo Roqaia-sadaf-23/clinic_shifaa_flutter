@@ -1,7 +1,7 @@
 class AppointmentModel {
   final int id;
-  final int doctorId;
-  final int patientId;
+  final String doctorName;
+  final String patientName;
   final DateTime appointmentDate;
   final String status;
   final DateTime? lastStatusDate;
@@ -10,8 +10,8 @@ class AppointmentModel {
 
   AppointmentModel({
     required this.id,
-    required this.doctorId,
-    required this.patientId,
+    required this.doctorName,
+    required this.patientName,
     required this.appointmentDate,
     required this.status,
     this.lastStatusDate,
@@ -22,8 +22,8 @@ class AppointmentModel {
   factory AppointmentModel.fromJson(Map<String, dynamic> json) {
     return AppointmentModel(
       id: _int(_value(json, 'id'), 'id'),
-      doctorId: _int(_value(json, 'doctorId'), 'doctorId'),
-      patientId: _int(_value(json, 'patientId'), 'patientId'),
+      doctorName: _string(_value(json, 'doctorName'), 'doctorName'),
+      patientName: _string(_value(json, 'patientName'), 'patientName'),
       appointmentDate: _date(
         _value(json, 'appointmentDate'),
         'appointmentDate',
@@ -48,8 +48,8 @@ class AppointmentModel {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'doctorId': doctorId,
-      'patientId': patientId,
+      'doctorName': doctorName,
+      'patientName': patientName,
       'appointmentDate': appointmentDate.toIso8601String(),
       'status': status,
       'lastStatusDate': lastStatusDate?.toIso8601String(),

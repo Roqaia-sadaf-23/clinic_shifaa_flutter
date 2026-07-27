@@ -88,8 +88,11 @@ class MyTranslation extends Translations {
       'appointmentId': 'Appointment ID',
       'doctorId': 'Doctor ID',
       'patientId': 'Patient ID',
+      'doctor': 'Doctor',
+      'patient': 'Patient',
       'appointmentDate': 'Appointment date',
-      'lastStatusDate': 'Last status date',
+      'appointmentTime': 'Appointment time',
+      'lastStatusDate': 'Last status update',
       'medicalRecordId': 'Medical record ID',
       'notes': 'Notes',
       'completeAppointment': 'Complete appointment',
@@ -210,6 +213,9 @@ class MyTranslation extends Translations {
       'appointmentCount': 'عدد المواعيد',
       'lastAppointment': 'آخر موعد',
       'pullToRefresh': 'اسحب للأسفل للتحديث.',
+      'doctor': 'الطبيب',
+      'patient': 'المريض',
+      'appointmentTime': 'وقت الموعد',
     },
   };
 }

@@ -46,14 +46,19 @@ class AppointmentDetailsPage extends StatelessWidget {
         SurfaceCard(
           child: Column(
             children: [
-              _row('appointmentId'.tr, '${item.id}'),
-              _row('doctorId'.tr, '${item.doctorId}'),
-              _row('patientId'.tr, '${item.patientId}'),
+              _row('patient'.tr, item.patientName),
+              _row('doctor'.tr, _doctorDisplayName(item.doctorName)),
               _row(
                 'appointmentDate'.tr,
                 DateFormat.yMMMMd(
                   Get.locale?.languageCode,
-                ).add_jm().format(item.appointmentDate.toLocal()),
+                ).format(item.appointmentDate.toLocal()),
+              ),
+              _row(
+                'appointmentTime'.tr,
+                DateFormat.jm(
+                  Get.locale?.languageCode,
+                ).format(item.appointmentDate.toLocal()),
               ),
               _row('status'.tr, item.status.toLowerCase().tr),
               if (item.lastStatusDate != null)
@@ -63,8 +68,6 @@ class AppointmentDetailsPage extends StatelessWidget {
                     Get.locale?.languageCode,
                   ).add_jm().format(item.lastStatusDate!.toLocal()),
                 ),
-              if (item.medicalRecordId != null)
-                _row('medicalRecordId'.tr, '${item.medicalRecordId}'),
               if (item.notes != null) _row('notes'.tr, item.notes!),
             ],
           ),
@@ -118,4 +121,15 @@ class AppointmentDetailsPage extends StatelessWidget {
       ],
     ),
   );
+
+  String _doctorDisplayName(String value) {
+    final name = value.trim();
+    final lowerName = name.toLowerCase();
+    if (lowerName.startsWith('dr.') ||
+        lowerName.startsWith('dr ') ||
+        name.startsWith('د.')) {
+      return name;
+    }
+    return '${'doctorTitle'.tr} $name';
+  }
 }

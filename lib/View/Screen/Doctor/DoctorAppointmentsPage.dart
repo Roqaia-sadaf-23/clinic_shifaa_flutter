@@ -186,7 +186,7 @@ class DoctorAppointmentCard extends StatelessWidget {
             Get.locale?.languageCode,
           ).add_jm().format(appointment.appointmentDate.toLocal()),
         ),
-        subtitle: Text('${'patientId'.tr}: ${appointment.patientId}'),
+        subtitle: Text('${'patient'.tr}: ${appointment.patientName}'),
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
           decoration: BoxDecoration(

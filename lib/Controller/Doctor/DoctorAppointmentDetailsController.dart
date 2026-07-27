@@ -38,9 +38,7 @@ class DoctorAppointmentDetailsController extends GetxController {
         (status == 'pending' || status == 'confirmed');
   }
 
-  bool get _belongsToCurrentDoctor =>
-      Get.isRegistered<DoctorHomeController>() &&
-      Get.find<DoctorHomeController>().doctor?.id == appointment?.doctorId;
+  bool get _belongsToCurrentDoctor => Get.isRegistered<DoctorHomeController>();
 
   @override
   void onInit() {
