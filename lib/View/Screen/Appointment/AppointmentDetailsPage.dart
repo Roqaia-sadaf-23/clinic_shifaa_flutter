@@ -68,7 +68,7 @@ class AppointmentDetailsPage extends StatelessWidget {
                     Get.locale?.languageCode,
                   ).add_jm().format(item.lastStatusDate!.toLocal()),
                 ),
-              if (item.notes != null) _row('notes'.tr, item.notes!),
+              //  if (item.notes != null) _row('notes'.tr, item.notes!),
             ],
           ),
         ),

@@ -6,7 +6,7 @@ class AppointmentModel {
   final String status;
   final DateTime? lastStatusDate;
   final int? medicalRecordId;
-  final String? notes;
+  
 
   AppointmentModel({
     required this.id,
@@ -16,8 +16,7 @@ class AppointmentModel {
     required this.status,
     this.lastStatusDate,
     this.medicalRecordId,
-    this.notes,
-  });
+    });
 
   factory AppointmentModel.fromJson(Map<String, dynamic> json) {
     return AppointmentModel(
@@ -31,7 +30,6 @@ class AppointmentModel {
       status: _string(_value(json, 'status'), 'status'),
       lastStatusDate: _date(_value(json, 'lastStatusDate'), 'lastStatusDate'),
       medicalRecordId: _nullableInt(_value(json, 'medicalRecordId')),
-      notes: _nullableString(_value(json, 'notes')),
     );
   }
 
@@ -54,7 +52,7 @@ class AppointmentModel {
       'status': status,
       'lastStatusDate': lastStatusDate?.toIso8601String(),
       'medicalRecordId': medicalRecordId,
-      'notes': notes,
+   
     };
   }
 
