@@ -5,6 +5,7 @@ import 'package:clinic_shifaa/core/class/ApiService.dart';
 import 'package:clinic_shifaa/data/datasource/remote/Appointments/DoctorAppointmentData.dart';
 import 'package:clinic_shifaa/data/model/AppointmentModel.dart';
 import 'package:clinic_shifaa/data/model/DoctorAppointmentSummary.dart';
+import 'package:clinic_shifaa/data/model/DoctorAppointmentModel.dart';
 import 'package:clinic_shifaa/data/model/DoctorPatientModel.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -156,6 +157,50 @@ void main() {
     expect(values.single.patientName, 'Ahmed Mohammed');
   });
 
+  test('real doctor/me payload parses without doctorName', () {
+    final response = DoctorAppointmentsResponse.fromJson({
+      'items': [
+        {
+          'id': 17,
+          'patientId': 23,
+          'patientName': 'test test',
+          'patientImage': 'test',
+          'appointmentDate': '2026-07-23T20:40:00.79',
+          'status': 'Cancelled',
+          'lastStatusDate': '2026-07-25T03:43:53.217',
+          'medicalRecordId': null,
+          'notes': 'test',
+        },
+        {
+          'id': 18,
+          'patientId': 24,
+          'patientName': 'pp pp',
+          'patientImage': 'patient.png',
+          'appointmentDate': '2026-07-27T12:00:00',
+          'status': 'Completed',
+          'lastStatusDate': '2026-07-27T06:55:04.06',
+          'medicalRecordId': null,
+          'notes': 'teth patient',
+        },
+      ],
+      'page': 1,
+      'pageSize': 10,
+      'totalCount': 2,
+      'totalPages': 1,
+    });
+
+    expect(response.items, hasLength(2));
+    expect(response.items.first.id, 17);
+    expect(response.items.first.patientId, 23);
+    expect(response.items.first.notes, 'test');
+    expect(response.items.last.id, 18);
+    expect(response.items.last.patientName, 'pp pp');
+    expect(response.page, 1);
+    expect(response.pageSize, 10);
+    expect(response.totalCount, 2);
+    expect(response.totalPages, 1);
+  });
+
   test('today endpoint parses a direct AppointmentInfoDTO list', () {
     final values = AppointmentModel.listFromResponse([
       {
@@ -245,6 +290,28 @@ void main() {
     expect(api.usedAuth, isTrue);
   });
 
+  test('All status is omitted from the appointment query', () async {
+    final api = _FakeApiService();
+    final data = DoctorAppointmentData(api);
+
+    await data.getDoctorAppointments(status: 'All', page: 1, pageSize: 10);
+
+    final uri = Uri.parse(api.lastUrl!);
+    expect(uri.queryParameters.containsKey('status'), isFalse);
+    expect(uri.queryParameters['page'], '1');
+    expect(uri.queryParameters['pageSize'], '10');
+  });
+
+  test('authorization normalizer never duplicates Bearer', () {
+    expect(bearerAuthorization('abc.def.ghi'), 'Bearer abc.def.ghi');
+    expect(bearerAuthorization('Bearer abc.def.ghi'), 'Bearer abc.def.ghi');
+    expect(
+      bearerAuthorization('Bearer Bearer abc.def.ghi'),
+      'Bearer abc.def.ghi',
+    );
+    expect(bearerAuthorization('  '), isNull);
+  });
+
   test(
     'doctor appointment reads use authenticated existing endpoints',
     () async {
@@ -294,6 +361,7 @@ void main() {
     api.getResult = [
       {
         'id': 1,
+        'patientId': 1,
         'doctorName': 'Dr. Doctor One',
         'patientName': 'Patient One',
         'appointmentDate': '2026-07-25T10:00:00',
@@ -303,7 +371,150 @@ void main() {
     await controller.refreshList();
 
     expect(controller.appointments, hasLength(1));
-    expect(controller.totalAppointments, isNull);
+    expect(controller.totalAppointments, 1);
+  });
+
+  test(
+    'controller assigns the real doctor/me response without error',
+    () async {
+      final api = _FakeApiService()
+        ..getResult = {
+          'items': [
+            {
+              'id': 17,
+              'patientId': 23,
+              'patientName': 'test test',
+              'patientImage': 'test',
+              'appointmentDate': '2026-07-23T20:40:00.79',
+              'status': 'Cancelled',
+              'lastStatusDate': '2026-07-25T03:43:53.217',
+              'medicalRecordId': null,
+              'notes': 'test',
+            },
+            {
+              'id': 18,
+              'patientId': 24,
+              'patientName': 'pp pp',
+              'patientImage': 'patient.png',
+              'appointmentDate': '2026-07-27T12:00:00',
+              'status': 'Completed',
+              'lastStatusDate': '2026-07-27T06:55:04.06',
+              'medicalRecordId': null,
+              'notes': 'teth patient',
+            },
+          ],
+          'page': 1,
+          'pageSize': 10,
+          'totalCount': 2,
+          'totalPages': 1,
+        };
+      final controller = DoctorAppointmentsController(
+        DoctorAppointmentData(api),
+      );
+
+      await controller.loadInitial();
+
+      expect(controller.appointments, hasLength(2));
+      expect(controller.appointments.map((item) => item.id), [17, 18]);
+      expect(controller.appointments.last.patientName, 'pp pp');
+      expect(controller.currentPage, 1);
+      expect(controller.pageSize, 10);
+      expect(controller.totalCount, 2);
+      expect(controller.totalPages, 1);
+      expect(controller.hasLoaded, isTrue);
+      expect(controller.hasError, isFalse);
+      expect(controller.failure, isNull);
+      expect(controller.isInitialLoading, isFalse);
+    },
+  );
+
+  test('controller treats a successful 204 body as empty, not error', () async {
+    final api = _FakeApiService()..getResult = null;
+    final controller = DoctorAppointmentsController(DoctorAppointmentData(api));
+
+    await controller.loadInitial();
+
+    expect(controller.appointments, isEmpty);
+    expect(controller.hasLoaded, isTrue);
+    expect(controller.hasError, isFalse);
+    expect(controller.failure, isNull);
+    expect(controller.isInitialLoading, isFalse);
+  });
+
+  test(
+    'controller appends typed pagination items and updates page values',
+    () async {
+      final api = _FakeApiService()
+        ..getResult = {
+          'items': [
+            {
+              'id': 17,
+              'patientId': 23,
+              'patientName': 'test test',
+              'patientImage': 'test',
+              'appointmentDate': '2026-07-23T20:40:00.79',
+              'status': 'Cancelled',
+              'lastStatusDate': '2026-07-25T03:43:53.217',
+              'medicalRecordId': null,
+              'notes': 'test',
+            },
+          ],
+          'page': 1,
+          'pageSize': 1,
+          'totalCount': 2,
+          'totalPages': 2,
+        };
+      final controller = DoctorAppointmentsController(
+        DoctorAppointmentData(api),
+      );
+
+      await controller.loadInitial();
+      expect(controller.hasMore, isTrue);
+
+      api.getResult = {
+        'items': [
+          {
+            'id': 18,
+            'patientId': 24,
+            'patientName': 'pp pp',
+            'patientImage': 'patient.png',
+            'appointmentDate': '2026-07-27T12:00:00',
+            'status': 'Completed',
+            'lastStatusDate': '2026-07-27T06:55:04.06',
+            'medicalRecordId': null,
+            'notes': 'teth patient',
+          },
+        ],
+        'page': 2,
+        'pageSize': 1,
+        'totalCount': 2,
+        'totalPages': 2,
+      };
+      await controller.loadMore();
+
+      expect(controller.appointments.map((item) => item.id), [17, 18]);
+      expect(controller.currentPage, 2);
+      expect(controller.pageSize, 1);
+      expect(controller.totalCount, 2);
+      expect(controller.totalPages, 2);
+      expect(controller.hasMore, isFalse);
+    },
+  );
+
+  test('controller preserves the actual server failure message', () async {
+    final api = _FakeApiService()
+      ..getResult = const Left<Failure, dynamic>(
+        ServerFailure('User is not a doctor.', statusCode: 403),
+      );
+    final controller = DoctorAppointmentsController(DoctorAppointmentData(api));
+
+    await controller.loadInitial();
+
+    expect(controller.appointments, isEmpty);
+    expect(controller.hasError, isTrue);
+    expect(controller.errorMessage, 'User is not a doctor.');
+    expect(controller.failure?.statusCode, 403);
+    expect(controller.isInitialLoading, isFalse);
   });
 
   test('appointments total failure and retry are isolated', () async {

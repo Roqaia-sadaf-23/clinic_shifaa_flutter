@@ -3,14 +3,14 @@ import 'package:get/get.dart';
 
 import '../../core/Error/Failure.dart';
 import '../../data/datasource/remote/Appointments/DoctorAppointmentData.dart';
-import '../../data/model/AppointmentModel.dart';
+import '../../data/model/DoctorAppointmentModel.dart';
 
 class DoctorAppointmentsController extends GetxController {
   DoctorAppointmentsController(this._data);
   final DoctorAppointmentData _data;
 
   static const statuses = ['Pending', 'Confirmed', 'Completed', 'Cancelled'];
-  final appointments = <AppointmentModel>[];
+  final appointments = <DoctorAppointmentModel>[];
   Failure? failure;
   String? selectedStatus;
   DateTime? selectedDate;
@@ -19,16 +19,20 @@ class DoctorAppointmentsController extends GetxController {
   bool isLoadingMore = false;
   bool hasMore = true;
   bool hasLoaded = false;
+  int currentPage = 1;
+  int pageSize = 10;
+  int totalCount = 0;
+  int totalPages = 0;
   int? totalAppointments;
   Failure? appointmentsTotalFailure;
   bool isAppointmentsTotalLoading = false;
   bool _disposed = false;
   bool _reloadRequested = false;
   int _filterRevision = 0;
-  int _page = 1;
-  static const pageSize = 10;
 
   bool get isBusy => isInitialLoading || isRefreshing || isLoadingMore;
+  bool get hasError => failure != null;
+  String get errorMessage => failure?.message ?? 'Unable to load appointments.';
   bool get _inactive => _disposed || isClosed;
 
   @override
@@ -52,8 +56,8 @@ class DoctorAppointmentsController extends GetxController {
         pageSize: pageSize,
       );
       if (_inactive) return;
-      result.fold((value) => appointmentsTotalFailure = value, (body) {
-        totalAppointments = _totalCount(body);
+      result.fold((value) => appointmentsTotalFailure = value, (response) {
+        totalAppointments = response.totalCount;
         appointmentsTotalFailure = null;
       });
     } catch (_) {
@@ -72,8 +76,15 @@ class DoctorAppointmentsController extends GetxController {
   }
 
   Future<void> setStatus(String? value) async {
-    if (selectedStatus == value) return;
-    selectedStatus = value;
+    final normalized = value?.trim();
+    final nextStatus =
+        normalized == null ||
+            normalized.isEmpty ||
+            normalized.toLowerCase() == 'all'
+        ? null
+        : normalized;
+    if (selectedStatus == nextStatus) return;
+    selectedStatus = nextStatus;
     _filterRevision++;
     await loadInitial();
   }
@@ -116,7 +127,7 @@ class DoctorAppointmentsController extends GetxController {
       isLoadingMore = true;
     }
     update();
-    final requestedPage = reset ? 1 : _page + 1;
+    final requestedPage = reset ? 1 : currentPage + 1;
     final requestRevision = _filterRevision;
     try {
       final result = await _data.getDoctorAppointments(
@@ -132,34 +143,31 @@ class DoctorAppointmentsController extends GetxController {
           if (loadsAppointmentsTotal) appointmentsTotalFailure = value;
           if (!reset) hasMore = false;
         },
-        (body) {
+        (response) {
           if (loadsAppointmentsTotal) {
-            totalAppointments = _totalCount(body);
+            totalAppointments = response.totalCount;
             appointmentsTotalFailure = null;
           }
-          try {
-            final parsed = _parsePage(
-              body,
-              alreadyLoaded: reset ? 0 : appointments.length,
-            );
-            if (reset) appointments.clear();
-            appointments.addAll(parsed.items);
-            _page = requestedPage;
-            hasMore = parsed.hasMore;
-            hasLoaded = true;
-            failure = null;
-          } catch (error) {
-            if (kDebugMode) {
-              debugPrint('DOCTOR APPOINTMENTS PARSE FAILURE: $error');
-            }
-            failure = const ServerFailure('Invalid appointments response.');
-            if (!reset) hasMore = false;
-          }
+          if (reset) appointments.clear();
+          appointments.addAll(response.items);
+          currentPage = response.page;
+          pageSize = response.pageSize;
+          totalCount = response.totalCount;
+          totalPages = response.totalPages;
+          hasMore = totalPages > 0
+              ? currentPage < totalPages
+              : appointments.length < totalCount;
+          hasLoaded = true;
+          failure = null;
         },
       );
-    } catch (_) {
+    } catch (error, stackTrace) {
+      if (kDebugMode) {
+        debugPrint('Doctor appointments error: $error');
+        debugPrintStack(stackTrace: stackTrace);
+      }
       if (requestRevision == _filterRevision) {
-        failure = const ServerFailure('Unable to load appointments.');
+        failure = ServerFailure(error.toString());
         if (loadsAppointmentsTotal) {
           appointmentsTotalFailure = const ServerFailure(
             'Unable to load appointments total.',
@@ -180,42 +188,6 @@ class DoctorAppointmentsController extends GetxController {
     }
   }
 
-  _AppointmentPage _parsePage(Object? body, {required int alreadyLoaded}) {
-    final items = AppointmentModel.listFromResponse(body);
-    final totalCount = _totalCount(body);
-    final loaded = alreadyLoaded + items.length;
-    return _AppointmentPage(
-      items,
-      totalCount == null ? items.length == pageSize : loaded < totalCount,
-    );
-  }
-
-  int? _int(Object? value) =>
-      value is int ? value : int.tryParse(value?.toString() ?? '');
-
-  int? _totalCount(Object? response) {
-    var current = response;
-    for (var depth = 0; depth < 4 && current is Map; depth++) {
-      Object? nested;
-      for (final entry in current.entries) {
-        final key = entry.key;
-        if (key is String) {
-          final normalized = key.toLowerCase();
-          if (normalized == 'totalcount' ||
-              normalized == 'totalitems' ||
-              normalized == 'count') {
-            return _int(entry.value);
-          }
-          if (normalized == 'data' || normalized == 'result') {
-            nested ??= entry.value;
-          }
-        }
-      }
-      current = nested;
-    }
-    return null;
-  }
-
   bool _sameDate(DateTime? first, DateTime? second) {
     if (identical(first, second)) return true;
     if (first == null || second == null) return false;
@@ -229,10 +201,4 @@ class DoctorAppointmentsController extends GetxController {
     _disposed = true;
     super.onClose();
   }
-}
-
-class _AppointmentPage {
-  const _AppointmentPage(this.items, this.hasMore);
-  final List<AppointmentModel> items;
-  final bool hasMore;
 }

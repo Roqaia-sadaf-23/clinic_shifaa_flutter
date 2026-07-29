@@ -1,12 +1,17 @@
-class AppointmentModel {
+import 'DoctorAppointmentModel.dart';
+
+class AppointmentModel implements AppointmentDisplayData {
+  @override
   final int id;
   final String doctorName;
+  @override
   final String patientName;
+  @override
   final DateTime appointmentDate;
+  @override
   final String status;
   final DateTime? lastStatusDate;
   final int? medicalRecordId;
-  
 
   AppointmentModel({
     required this.id,
@@ -16,7 +21,13 @@ class AppointmentModel {
     required this.status,
     this.lastStatusDate,
     this.medicalRecordId,
-    });
+  });
+
+  @override
+  String? get patientImage => null;
+
+  @override
+  String? get notes => null;
 
   factory AppointmentModel.fromJson(Map<String, dynamic> json) {
     return AppointmentModel(
@@ -52,7 +63,6 @@ class AppointmentModel {
       'status': status,
       'lastStatusDate': lastStatusDate?.toIso8601String(),
       'medicalRecordId': medicalRecordId,
-   
     };
   }
 
@@ -75,11 +85,6 @@ class AppointmentModel {
   static String _string(Object? value, String field) {
     if (value is String && value.trim().isNotEmpty) return value.trim();
     throw FormatException('Invalid $field.');
-  }
-
-  static String? _nullableString(Object? value) {
-    if (value is! String || value.trim().isEmpty) return null;
-    return value.trim();
   }
 
   static Object? _value(Map<String, dynamic> json, String name) {

@@ -925,10 +925,18 @@ abstract final class DoctorHomeColors {
       Theme.of(context).brightness == Brightness.dark
       ? Appcolor.white
       : Appcolor.secondary;
+  static Color mutedText(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+      ? Appcolor.textLight
+      : const Color(0xFF687386);
   static Color border(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark
       ? Colors.white.withValues(alpha: .08)
       : Appcolor.primary.withValues(alpha: .08);
+  static Color strongBorder(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+      ? Colors.white.withValues(alpha: .18)
+      : const Color(0xFFD7DEE8);
 }
 
 class DoctorHomeLayout {

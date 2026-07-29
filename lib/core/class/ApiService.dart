@@ -1,12 +1,23 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../Error/Failure.dart';
 import '../network/NetworkChecker .dart';
 import 'AuthService.dart';
+
+String? bearerAuthorization(String? accessToken) {
+  var token = accessToken?.trim() ?? '';
+  if (token.isEmpty) return null;
+
+  final bearerPrefix = RegExp(r'^Bearer\s+', caseSensitive: false);
+  while (bearerPrefix.hasMatch(token)) {
+    token = token.replaceFirst(bearerPrefix, '').trim();
+  }
+  return token.isEmpty ? null : 'Bearer $token';
+}
 
 abstract class Either<L, R> {
   const Either();
@@ -54,9 +65,8 @@ class ApiService {
 
     if (auth) {
       final token = await AuthService.getAccessToken();
-      if (token != null && token.isNotEmpty) {
-        headers['Authorization'] = 'Bearer $token';
-      }
+      final authorization = bearerAuthorization(token);
+      if (authorization != null) headers['Authorization'] = authorization;
     }
 
     return headers;
@@ -76,6 +86,7 @@ class ApiService {
   Future<Either<Failure, dynamic>> _send(
     Future<http.Response> Function() request, {
     required bool auth,
+    String? debugUrl,
   }) async {
     try {
       if (!await NetworkChecker.hasInternet()) {
@@ -83,6 +94,7 @@ class ApiService {
       }
 
       var response = await request();
+      _logDoctorAppointmentsResponse(debugUrl, response);
       if (response.statusCode == 401 && auth) {
         final refreshed = await AuthService.refreshAccessToken();
         if (!refreshed) {
@@ -95,6 +107,7 @@ class ApiService {
           );
         }
         response = await request();
+        _logDoctorAppointmentsResponse(debugUrl, response, isRetry: true);
       }
 
       return _parseResponse(response);
@@ -105,6 +118,26 @@ class ApiService {
     } catch (_) {
       return const Left(ServerFailure('An unexpected server error occurred.'));
     }
+  }
+
+  void _logDoctorAppointmentsResponse(
+    String? url,
+    http.Response response, {
+    bool isRetry = false,
+  }) {
+    if (!kDebugMode || url == null) return;
+    final uri = Uri.tryParse(url);
+    if (uri == null ||
+        uri.path.toLowerCase() != '/api/appointments/doctor/me') {
+      return;
+    }
+    final retryLabel = isRetry ? ' (after token refresh)' : '';
+    debugPrint(
+      'DOCTOR APPOINTMENTS HTTP STATUS$retryLabel: ${response.statusCode}',
+    );
+    debugPrint(
+      'DOCTOR APPOINTMENTS RESPONSE BODY$retryLabel: ${response.body}',
+    );
   }
 
   Either<Failure, dynamic> _parseResponse(http.Response response) {
@@ -176,6 +209,7 @@ class ApiService {
     return _send(
       () async => http.get(Uri.parse(url), headers: await _headers(auth: auth)),
       auth: auth,
+      debugUrl: url,
     );
   }
 
@@ -236,8 +270,9 @@ class ApiService {
       final request = http.MultipartRequest('POST', Uri.parse(url));
       if (auth) {
         final token = await AuthService.getAccessToken();
-        if (token != null && token.isNotEmpty) {
-          request.headers['Authorization'] = 'Bearer $token';
+        final authorization = bearerAuthorization(token);
+        if (authorization != null) {
+          request.headers['Authorization'] = authorization;
         }
       }
       request.files.add(await http.MultipartFile.fromPath('file', imagePath));
