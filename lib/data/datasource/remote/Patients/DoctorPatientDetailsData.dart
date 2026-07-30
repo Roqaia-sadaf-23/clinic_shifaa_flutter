@@ -45,6 +45,34 @@ class DoctorPatientDetailsData {
     );
   }
 
+  Future<Either<Failure, CreatedMedicalRecordResult>> createMedicalRecord(
+    CreateMedicalRecordRequest request,
+  ) async {
+    final result = await _apiService.post(
+      ApiLinks.createMedicalRecord,
+      request.toJson(),
+      auth: true,
+    );
+    return result.fold<Either<Failure, CreatedMedicalRecordResult>>(
+      Left.new,
+      (body) => Right(CreatedMedicalRecordResult.fromResponse(body)),
+    );
+  }
+
+  Future<Either<Failure, CreatedPrescriptionResult>> createPrescription(
+    CreatePrescriptionRequest request,
+  ) async {
+    final result = await _apiService.post(
+      ApiLinks.createPrescription,
+      request.toJson(),
+      auth: true,
+    );
+    return result.fold<Either<Failure, CreatedPrescriptionResult>>(
+      Left.new,
+      (body) => Right(CreatedPrescriptionResult.fromResponse(body)),
+    );
+  }
+
   Future<Either<Failure, List<T>>> _getList<T>(
     String url,
     T Function(Map<String, dynamic> json) fromJson,

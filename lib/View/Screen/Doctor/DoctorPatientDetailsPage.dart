@@ -66,6 +66,13 @@ class _AppointmentsTab extends StatelessWidget {
       itemBuilder: (item) => DoctorAppointmentCard(
         appointment: item,
         onTap: () => _openAppointment(item.appointmentId),
+        additionalAction: controller.canCreateMedicalRecordFor(item)
+            ? OutlinedButton.icon(
+                onPressed: () => controller.openMedicalRecordForm(item),
+                icon: const Icon(Icons.note_add_outlined, size: 18),
+                label: Text('createMedicalRecord'.tr),
+              )
+            : null,
       ),
     );
   }
@@ -85,7 +92,8 @@ class _MedicalRecordsTab extends StatelessWidget {
       emptyIcon: Icons.folder_off_outlined,
       emptyMessage: 'noMedicalRecords'.tr,
       errorMessageKey: 'medicalRecordsLoadError',
-      itemBuilder: (item) => _MedicalRecordCard(record: item),
+      itemBuilder: (item) =>
+          _MedicalRecordCard(controller: controller, record: item),
     );
   }
 }
@@ -331,8 +339,9 @@ class _InvalidPatientState extends StatelessWidget {
 }
 
 class _MedicalRecordCard extends StatelessWidget {
-  const _MedicalRecordCard({required this.record});
+  const _MedicalRecordCard({required this.controller, required this.record});
 
+  final DoctorPatientDetailsController controller;
   final DoctorPatientMedicalRecordModel record;
 
   @override
@@ -357,13 +366,22 @@ class _MedicalRecordCard extends StatelessWidget {
           ),
           _InfoRow(label: 'notes'.tr, value: _display(record.notes)),
           const SizedBox(height: 4),
-          Align(
-            alignment: AlignmentDirectional.centerEnd,
-            child: TextButton.icon(
-              onPressed: () => _openAppointment(record.appointmentId),
-              icon: const Icon(Icons.open_in_new_rounded, size: 18),
-              label: Text('viewAppointment'.tr),
-            ),
+          Wrap(
+            alignment: WrapAlignment.end,
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              TextButton.icon(
+                onPressed: () => _openAppointment(record.appointmentId),
+                icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                label: Text('viewAppointment'.tr),
+              ),
+              FilledButton.icon(
+                onPressed: () => controller.openPrescriptionForm(record),
+                icon: const Icon(Icons.medication_outlined, size: 18),
+                label: Text('createPrescription'.tr),
+              ),
+            ],
           ),
         ],
       ),

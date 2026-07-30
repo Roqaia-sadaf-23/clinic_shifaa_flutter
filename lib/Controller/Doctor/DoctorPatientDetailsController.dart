@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import '../../core/Error/Failure.dart';
 import '../../core/class/ApiService.dart';
+import '../../core/constant/Approutes.dart';
 import '../../data/datasource/remote/Patients/DoctorPatientDetailsData.dart';
 import '../../data/model/DoctorPatientDetailsModels.dart';
 import '../../data/model/DoctorPatientModel.dart';
@@ -34,9 +35,14 @@ class DoctorPatientDetailsController extends GetxController {
   DoctorPatientModel? patient;
   Failure? argumentFailure;
   bool _disposed = false;
+  final Set<int> _appointmentsWithCreatedMedicalRecords = <int>{};
 
   bool get hasValidPatientId => patientId > 0;
   bool get _inactive => _disposed || isClosed;
+  bool get canCheckMedicalRecordRelationships =>
+      medicalRecords.hasLoaded &&
+      !medicalRecords.isRequesting &&
+      medicalRecords.failure == null;
 
   String? get patientName {
     final argumentName = patient?.patientName.trim();
@@ -46,6 +52,125 @@ class DoctorPatientDetailsController extends GetxController {
       if (appointmentName.isNotEmpty) return appointmentName;
     }
     return null;
+  }
+
+  DoctorPatientMedicalRecordModel? medicalRecordForAppointment(
+    int appointmentId,
+  ) {
+    if (appointmentId <= 0) return null;
+    for (final record in medicalRecords.items) {
+      if (record.appointmentId == appointmentId) return record;
+    }
+    return null;
+  }
+
+  bool hasMedicalRecord(int appointmentId) {
+    return appointmentId > 0 &&
+        (_appointmentsWithCreatedMedicalRecords.contains(appointmentId) ||
+            medicalRecordForAppointment(appointmentId) != null);
+  }
+
+  bool canCreateMedicalRecordFor(
+    DoctorPatientAppointmentDetailsModel appointment,
+  ) {
+    return canCheckMedicalRecordRelationships &&
+        hasValidPatientId &&
+        appointment.patientId == patientId &&
+        appointment.appointmentId > 0 &&
+        !hasMedicalRecord(appointment.appointmentId);
+  }
+
+  bool containsMedicalRecord(DoctorPatientMedicalRecordModel record) {
+    return containsMedicalRecordId(
+      record.medicalRecordId,
+      appointmentId: record.appointmentId,
+    );
+  }
+
+  bool containsMedicalRecordId(int medicalRecordId, {int? appointmentId}) {
+    if (medicalRecordId <= 0) return false;
+    return medicalRecords.items.any(
+      (record) =>
+          record.medicalRecordId == medicalRecordId &&
+          (appointmentId == null || record.appointmentId == appointmentId),
+    );
+  }
+
+  void markAppointmentHasMedicalRecord(int appointmentId) {
+    if (appointmentId <= 0) return;
+    _appointmentsWithCreatedMedicalRecords.add(appointmentId);
+    if (!_inactive) update();
+  }
+
+  void mergeCreatedMedicalRecord(DoctorPatientMedicalRecordModel record) {
+    if (record.medicalRecordId <= 0 || record.appointmentId <= 0) return;
+    _appointmentsWithCreatedMedicalRecords.add(record.appointmentId);
+    medicalRecords.items = [
+      record,
+      ...medicalRecords.items.where(
+        (item) =>
+            item.medicalRecordId != record.medicalRecordId &&
+            item.appointmentId != record.appointmentId,
+      ),
+    ];
+    medicalRecords.hasLoaded = true;
+    medicalRecords.failure = null;
+    if (!_inactive) update();
+  }
+
+  void mergeCreatedPrescription(DoctorPatientPrescriptionModel prescription) {
+    if (prescription.prescriptionId <= 0) return;
+    prescriptions.items = [
+      prescription,
+      ...prescriptions.items.where(
+        (item) => item.prescriptionId != prescription.prescriptionId,
+      ),
+    ];
+    prescriptions.hasLoaded = true;
+    prescriptions.failure = null;
+    if (!_inactive) update();
+  }
+
+  void openMedicalRecordForm(DoctorPatientAppointmentDetailsModel appointment) {
+    if (!hasValidPatientId ||
+        appointment.patientId != patientId ||
+        appointment.appointmentId <= 0) {
+      Get.snackbar('error'.tr, 'invalidAppointment'.tr);
+      return;
+    }
+    if (!canCheckMedicalRecordRelationships) return;
+    if (hasMedicalRecord(appointment.appointmentId)) {
+      Get.snackbar('error'.tr, 'alreadyHasMedicalRecord'.tr);
+      return;
+    }
+    if (Get.currentRoute == Approutes.createMedicalRecord) return;
+    Get.toNamed(
+      Approutes.createMedicalRecord,
+      arguments: MedicalRecordFormArguments(
+        patientId: patientId,
+        appointmentId: appointment.appointmentId,
+        appointment: appointment,
+      ),
+    );
+  }
+
+  void openPrescriptionForm(DoctorPatientMedicalRecordModel medicalRecord) {
+    if (!hasValidPatientId ||
+        medicalRecord.medicalRecordId <= 0 ||
+        medicalRecord.appointmentId <= 0 ||
+        !containsMedicalRecord(medicalRecord)) {
+      Get.snackbar('error'.tr, 'medicalRecordNotFound'.tr);
+      return;
+    }
+    if (Get.currentRoute == Approutes.createPrescription) return;
+    Get.toNamed(
+      Approutes.createPrescription,
+      arguments: PrescriptionFormArguments(
+        patientId: patientId,
+        medicalRecordId: medicalRecord.medicalRecordId,
+        medicalRecord: medicalRecord,
+      ),
+    );
   }
 
   @override

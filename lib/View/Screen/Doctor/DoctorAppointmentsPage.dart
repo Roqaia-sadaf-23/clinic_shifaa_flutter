@@ -590,10 +590,12 @@ class DoctorAppointmentCard extends StatelessWidget {
     super.key,
     required this.appointment,
     this.onTap,
+    this.additionalAction,
   });
 
   final AppointmentDisplayData appointment;
   final VoidCallback? onTap;
+  final Widget? additionalAction;
 
   @override
   Widget build(BuildContext context) {
@@ -752,6 +754,10 @@ class DoctorAppointmentCard extends StatelessWidget {
                   );
                 },
               ),
+              if (additionalAction != null) ...[
+                const SizedBox(height: 8),
+                SizedBox(width: double.infinity, child: additionalAction),
+              ],
             ],
           ),
         ),

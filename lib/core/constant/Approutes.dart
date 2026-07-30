@@ -22,6 +22,8 @@ class Approutes {
   static const String doctorEditProfile = '/doctor-edit-profile';
   static const String doctorAppointmentDetails = '/doctor-appointment-details';
   static const String doctorPatientDetails = '/doctor-patient-details';
+  static const String createMedicalRecord = '/create-medical-record';
+  static const String createPrescription = '/create-prescription';
 
   //items
   static const String items = "/items";

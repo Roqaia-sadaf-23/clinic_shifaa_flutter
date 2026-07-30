@@ -49,8 +49,9 @@ class ApiLinks {
   // Medical Records
   static const String medicalRecords = "$server/MedicalRecords";
   static String medicalRecordById(int id) => "$server/MedicalRecords/$id";
+  static const String createMedicalRecord = "$server/MedicalRecordContreoler";
   static String doctorPatientMedicalRecords(int patientId) =>
-      "$server/MedicalRecord/doctor/me/patients/$patientId";
+      "$server/MedicalRecordContreoler/doctor/me/patients/$patientId";
 
   // Payments
   static const String payments = "$server/Payments";
@@ -61,8 +62,10 @@ class ApiLinks {
   // Prescriptions
   static const String prescriptions = "$server/Prescriptions";
   static String prescriptionById(int id) => "$server/Prescriptions/$id";
+  static const String createPrescription =
+      "$server/PrescriptionControler/create";
   static String doctorPatientPrescriptions(int patientId) =>
-      "$server/Prescription/doctor/me/patients/$patientId";
+      "$server/PrescriptionControler/doctor/me/patients/$patientId";
 
   // Roles
   static const String roles = "$server/Role";

@@ -1,5 +1,98 @@
 import 'DoctorAppointmentModel.dart';
 
+class CreateMedicalRecordRequest {
+  const CreateMedicalRecordRequest({
+    required this.appointmentId,
+    required this.diagnosis,
+    this.visitDescription,
+    this.notes,
+  });
+
+  final int appointmentId;
+  final String diagnosis;
+  final String? visitDescription;
+  final String? notes;
+
+  Map<String, dynamic> toJson() => {
+    'appointmentId': appointmentId,
+    'diagnosis': diagnosis,
+    'visitDescription': visitDescription,
+    'notes': notes,
+  };
+}
+
+class CreatePrescriptionRequest {
+  const CreatePrescriptionRequest({
+    required this.medicalRecordId,
+    required this.medicationName,
+    this.frequency,
+    this.dosage,
+    this.specialInstructions,
+  });
+
+  final int medicalRecordId;
+  final String medicationName;
+  final String? frequency;
+  final String? dosage;
+  final String? specialInstructions;
+
+  Map<String, dynamic> toJson() => {
+    'medicalRecordId': medicalRecordId,
+    'medicationName': medicationName,
+    'frequency': frequency,
+    'dosage': dosage,
+    'specialInstructions': specialInstructions,
+  };
+}
+
+class MedicalRecordFormArguments {
+  const MedicalRecordFormArguments({
+    required this.patientId,
+    required this.appointmentId,
+    required this.appointment,
+  });
+
+  final int patientId;
+  final int appointmentId;
+  final DoctorPatientAppointmentDetailsModel appointment;
+}
+
+class PrescriptionFormArguments {
+  const PrescriptionFormArguments({
+    required this.patientId,
+    required this.medicalRecordId,
+    required this.medicalRecord,
+  });
+
+  final int patientId;
+  final int medicalRecordId;
+  final DoctorPatientMedicalRecordModel medicalRecord;
+}
+
+class CreatedMedicalRecordResult {
+  const CreatedMedicalRecordResult({this.medicalRecordId});
+
+  final int? medicalRecordId;
+
+  factory CreatedMedicalRecordResult.fromResponse(Object? response) {
+    return CreatedMedicalRecordResult(
+      medicalRecordId: _createdId(response, const ['medicalRecordId', 'id']),
+    );
+  }
+}
+
+class CreatedPrescriptionResult {
+  const CreatedPrescriptionResult({this.prescriptionId});
+
+  final int? prescriptionId;
+
+  factory CreatedPrescriptionResult.fromResponse(Object? response) {
+    return CreatedPrescriptionResult(
+      prescriptionId: _createdId(response, const ['prescriptionId', 'id']),
+    );
+  }
+}
+
 class DoctorPatientAppointmentDetailsModel implements AppointmentDisplayData {
   const DoctorPatientAppointmentDetailsModel({
     required this.appointmentId,
@@ -234,4 +327,30 @@ DateTime _requiredDate(Object? value, String field) =>
 DateTime? _date(Object? value) {
   if (value is DateTime) return value;
   return DateTime.tryParse(value?.toString() ?? '');
+}
+
+int? _createdId(Object? response, List<String> names) {
+  final direct = _int(response);
+  if (direct != null) return direct;
+  if (response is! Map) return null;
+
+  final value = _dynamicMapValue(response, names);
+  final parsed = _int(value);
+  if (parsed != null) return parsed;
+
+  final nested = _dynamicMapValue(response, const ['data', 'result']);
+  if (identical(nested, response)) return null;
+  return _createdId(nested, names);
+}
+
+Object? _dynamicMapValue(Map<dynamic, dynamic> map, List<String> names) {
+  for (final name in names) {
+    for (final entry in map.entries) {
+      final key = entry.key;
+      if (key is String && key.toLowerCase() == name.toLowerCase()) {
+        return entry.value;
+      }
+    }
+  }
+  return null;
 }
