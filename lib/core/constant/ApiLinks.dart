@@ -43,18 +43,26 @@ class ApiLinks {
   static const String doctorAppointments = "$server/Appointments/doctor/me";
   static const String doctorPatients =
       "$server/Appointments/doctor/me/patients";
+  static String doctorPatientAppointments(int patientId) =>
+      "$server/Appointments/doctor/me/patients/$patientId/appointments";
 
   // Medical Records
   static const String medicalRecords = "$server/MedicalRecords";
   static String medicalRecordById(int id) => "$server/MedicalRecords/$id";
+  static String doctorPatientMedicalRecords(int patientId) =>
+      "$server/MedicalRecord/doctor/me/patients/$patientId";
 
   // Payments
   static const String payments = "$server/Payments";
   static String paymentById(int id) => "$server/Payments/$id";
+  static String doctorPatientPayments(int patientId) =>
+      "$server/Payment/doctor/me/patients/$patientId";
 
   // Prescriptions
   static const String prescriptions = "$server/Prescriptions";
   static String prescriptionById(int id) => "$server/Prescriptions/$id";
+  static String doctorPatientPrescriptions(int patientId) =>
+      "$server/Prescription/doctor/me/patients/$patientId";
 
   // Roles
   static const String roles = "$server/Role";

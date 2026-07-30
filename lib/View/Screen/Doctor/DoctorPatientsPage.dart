@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../Controller/Doctor/DoctorPatientsController.dart';
 import '../../../core/constant/ApiLinks.dart';
 import '../../../core/constant/Appcolor.dart';
+import '../../../core/constant/Approutes.dart';
 import '../../../data/model/DoctorPatientModel.dart';
 import 'DoctorHomePage.dart';
 
@@ -73,29 +74,38 @@ class _PatientCard extends StatelessWidget {
         : '${ApiLinks.images}$image';
     return Card(
       color: DoctorHomeColors.surface(context),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _PatientImage(url: url),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    patient.patientName,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                  for (final detail in details) ...[
-                    const SizedBox(height: 4),
-                    Text(detail, style: const TextStyle(fontSize: 13)),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () {
+          if (Get.currentRoute == Approutes.doctorPatientDetails) return;
+          Get.toNamed(Approutes.doctorPatientDetails, arguments: patient);
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _PatientImage(url: url),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      patient.patientName,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    for (final detail in details) ...[
+                      const SizedBox(height: 4),
+                      Text(detail, style: const TextStyle(fontSize: 13)),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-          ],
+              const SizedBox(width: 8),
+              const Icon(Icons.chevron_right_rounded),
+            ],
+          ),
         ),
       ),
     );

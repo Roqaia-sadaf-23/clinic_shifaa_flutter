@@ -21,6 +21,7 @@ class Approutes {
   static const String doctorHome = '/doctor-home';
   static const String doctorEditProfile = '/doctor-edit-profile';
   static const String doctorAppointmentDetails = '/doctor-appointment-details';
+  static const String doctorPatientDetails = '/doctor-patient-details';
 
   //items
   static const String items = "/items";

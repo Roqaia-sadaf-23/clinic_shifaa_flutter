@@ -4,12 +4,14 @@ import 'Bindings/CompleteProfileBinding.dart';
 import 'Bindings/DoctorHomeBinding.dart';
 import 'Bindings/DoctorEditProfileBinding.dart';
 import 'Bindings/DoctorAppointmentDetailsBinding.dart';
+import 'Bindings/DoctorPatientDetailsBinding.dart';
 import 'View/Screen/Auth/Register/RegisterScreen.dart';
 import 'View/Screen/CompleteProfile/CompleteProfileScreen.dart';
 import 'View/Screen/Doctor/DoctorHomePage.dart';
 import 'View/Screen/Doctor/DoctorEditProfilePage.dart';
 import 'View/Screen/Home/PatientHomePage.dart';
 import 'View/Screen/Appointment/AppointmentDetailsPage.dart';
+import 'View/Screen/Doctor/DoctorPatientDetailsPage.dart';
 import 'View/Screen/Languege.dart';
 import 'View/Screen/Auth/Login/Loginpage.dart';
 import 'core/constant/Approutes.dart';
@@ -47,10 +49,7 @@ final List<GetPage<dynamic>> routes = [
   ),
 
   GetPage(name: Approutes.login, page: () => const LoginPage()),
-  GetPage(
-    name: Approutes.HomeScreen,
-    page: () => const PatientHomePage(),
-  ),
+  GetPage(name: Approutes.HomeScreen, page: () => const PatientHomePage()),
   GetPage(name: Approutes.Signup, page: () => RegisterScreen()),
   GetPage(
     name: Approutes.completeProfile,
@@ -71,6 +70,11 @@ final List<GetPage<dynamic>> routes = [
     name: Approutes.doctorAppointmentDetails,
     page: () => const AppointmentDetailsPage(),
     binding: DoctorAppointmentDetailsBinding(),
+  ),
+  GetPage(
+    name: Approutes.doctorPatientDetails,
+    page: () => const DoctorPatientDetailsPage(),
+    binding: DoctorPatientDetailsBinding(),
   ),
   /*   GetPage(name: Approutes.VarfiyCode, page: () => const VerfiyCode()),
   GetPage(name: Approutes.ResetPassword, page: () => const Resetpassword()),
