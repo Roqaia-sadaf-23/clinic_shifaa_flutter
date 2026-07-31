@@ -11,6 +11,7 @@ class ApiLinks {
   static String userById(int id) => "$server/Users/$id";
   static const String adduser = "$server/Users/register";
   // Doctors
+  static const String doctors = "$server/Doctors";
   // ignore: constant_identifier_names
   static const String Adddoctors = "$server/Doctors/create";
   static String doctorById(int id) => "$server/Doctors/$id";

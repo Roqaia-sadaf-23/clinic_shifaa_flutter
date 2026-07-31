@@ -18,6 +18,7 @@ class Approutes {
   //home
   static const String Homepage = '/Homepage';
   static const String HomeScreen = "/HomeScreen";
+  static const String patientResource = '/patient-resource';
   static const String doctorHome = '/doctor-home';
   static const String doctorEditProfile = '/doctor-edit-profile';
   static const String doctorAppointmentDetails = '/doctor-appointment-details';

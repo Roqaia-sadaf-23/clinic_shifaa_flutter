@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import 'Bindings/CompleteProfileBinding.dart';
 import 'Bindings/DoctorHomeBinding.dart';
+import 'Bindings/PatientHomeBinding.dart';
 import 'Bindings/DoctorEditProfileBinding.dart';
 import 'Bindings/DoctorAppointmentDetailsBinding.dart';
 import 'Bindings/DoctorPatientDetailsBinding.dart';
@@ -10,6 +11,7 @@ import 'View/Screen/CompleteProfile/CompleteProfileScreen.dart';
 import 'View/Screen/Doctor/DoctorHomePage.dart';
 import 'View/Screen/Doctor/DoctorEditProfilePage.dart';
 import 'View/Screen/Home/PatientHomePage.dart';
+import 'View/Screen/Home/PatientResourcePage.dart';
 import 'View/Screen/Appointment/AppointmentDetailsPage.dart';
 import 'View/Screen/Doctor/CreateMedicalRecordPage.dart';
 import 'View/Screen/Doctor/CreatePrescriptionPage.dart';
@@ -51,7 +53,16 @@ final List<GetPage<dynamic>> routes = [
   ),
 
   GetPage(name: Approutes.login, page: () => const LoginPage()),
-  GetPage(name: Approutes.HomeScreen, page: () => const PatientHomePage()),
+  GetPage(
+    name: Approutes.HomeScreen,
+    page: () => const PatientHomePage(),
+    binding: PatientHomeBinding(),
+  ),
+  GetPage(
+    name: Approutes.patientResource,
+    page: () => const PatientResourcePage(),
+    binding: PatientHomeBinding(),
+  ),
   GetPage(name: Approutes.Signup, page: () => RegisterScreen()),
   GetPage(
     name: Approutes.completeProfile,

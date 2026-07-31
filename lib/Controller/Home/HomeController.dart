@@ -1,123 +1,226 @@
-import '/core/Error/Failure.dart';
-import '/core/services/serveses.dart';
-import '/data/datasource/remote/Home/HomeData.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class SearchMIXController extends GetxController {
-  Failure? failure;
+import '../../core/Error/Failure.dart';
+import '../../core/constant/Approutes.dart';
+import '../../data/datasource/remote/Home/HomeData.dart';
+import '../../data/model/AppointmentModel.dart';
+import '../../data/model/DoctorModel.dart';
+import '../../data/model/PatientHomeProfileModel.dart';
 
-  TextEditingController? search;
-  bool isSearch = false;
+class PatientHomeControllerImp extends GetxController {
+  PatientHomeControllerImp(this._homeData, {this.autoLoad = true});
 
-  HomeData homeData = HomeData(Get.find());
+  final HomeData _homeData;
+  final bool autoLoad;
+  final TextEditingController searchController = TextEditingController();
 
-  checksearch(val) {
-    if (val == "") {
-      failure = null;
-      isSearch = false;
-      update();
-    }
+  PatientHomeProfileModel? patient;
+  List<DoctorDetailsModel> doctors = const [];
+  List<AppointmentModel> appointments = const [];
+  Failure? profileFailure;
+  Failure? doctorsFailure;
+  Failure? appointmentsFailure;
+  bool isLoading = false;
+  bool isRefreshing = false;
+  bool _loading = false;
+  bool _disposed = false;
+  int selectedTab = 0;
+  String searchQuery = '';
+
+  final Map<PatientResourceType, List<Map<String, dynamic>>> resourceItems = {};
+  final Map<PatientResourceType, Failure> resourceFailures = {};
+  final Set<PatientResourceType> loadingResources = {};
+
+  bool get _inactive => _disposed || isClosed;
+  bool get hasDashboardData =>
+      patient != null || doctors.isNotEmpty || appointments.isNotEmpty;
+
+  List<DoctorDetailsModel> get filteredDoctors {
+    final query = searchQuery.trim().toLowerCase();
+    if (query.isEmpty) return doctors;
+    return doctors
+        .where(
+          (doctor) =>
+              doctor.fullName.toLowerCase().contains(query) ||
+              doctor.specialization.toLowerCase().contains(query),
+        )
+        .toList(growable: false);
   }
 
-  oncearchItem() {
-    isSearch = true;
-    update();
+  AppointmentModel? get upcomingAppointment {
+    final now = DateTime.now();
+    final eligible =
+        appointments.where((appointment) {
+          final status = appointment.status.trim().toLowerCase();
+          final active =
+              status != 'completed' &&
+              status != 'cancelled' &&
+              status != 'canceled';
+          return active && !appointment.appointmentDate.isBefore(now);
+        }).toList()..sort(
+          (first, second) =>
+              first.appointmentDate.compareTo(second.appointmentDate),
+        );
+    return eligible.isEmpty ? null : eligible.first;
   }
 
-  GotoFavoritePage() {}
-}
-
-abstract class HomeController extends SearchMIXController {
-  ItemsDatawithdescunt();
-  CategoryData();
-  Gotoitmes(List categorles, int selectedcat, int CatogoryID);
-  GotopageProductdetails(var ItesModel);
-}
-
-class PatientHomeControllerImp extends HomeController {
-  Myservices myservices = Get.find();
-
-  final GlobalKey<FormState> formstate = GlobalKey<FormState>();
-
-  List Categorydata = [];
-  List Itemsdata = [];
-
-  HomeData homeData = HomeData(Get.find());
+  int get unreadNotificationsCount => 0;
 
   @override
   void onInit() {
-    search = TextEditingController();
-    ItemsDatawithdescunt();
-    CategoryData();
     super.onInit();
+    if (autoLoad) loadDashboard();
   }
 
-  @override
-  CategoryData() async {
-    failure = null;
+  Future<void> loadDashboard() => _load(refreshing: false);
+  Future<void> refreshDashboard() => _load(refreshing: true);
+
+  Future<void> _load({required bool refreshing}) async {
+    if (_loading || _inactive) return;
+    _loading = true;
+    if (refreshing) {
+      isRefreshing = true;
+    } else {
+      isLoading = true;
+    }
+    profileFailure = null;
+    doctorsFailure = null;
+    appointmentsFailure = null;
     update();
 
-    var response = await homeData.getdata();
+    try {
+      final role = (await _homeData.getAuthenticatedRole())
+          ?.trim()
+          .toLowerCase();
+      if (role == 'doctor') {
+        Get.offAllNamed(Approutes.doctorHome);
+        return;
+      }
+      final userId = await _homeData.getAuthenticatedUserId();
+      final email = await _homeData.getAuthenticatedEmail();
+      if (_inactive) return;
+      if (userId == null || userId <= 0) {
+        const failure = ServerFailure(
+          'Unable to identify the authenticated patient.',
+          statusCode: 401,
+        );
+        profileFailure = failure;
+        appointmentsFailure = failure;
+        await _loadDoctors();
+        return;
+      }
 
-    print("== Category Response from API ==");
-    print(response);
+      await Future.wait([
+        _loadProfile(userId, email),
+        _loadDoctors(),
+        _loadAppointments(userId),
+      ]);
+    } finally {
+      _loading = false;
+      isLoading = false;
+      isRefreshing = false;
+      if (!_inactive) update();
+    }
+  }
 
-    response.fold(
-      (fail) {
-        failure = fail;
-      },
-      (data) {
-        Categorydata.clear();
-
-        if (data is List) {
-          Categorydata.addAll(data);
-        } else if (data is Map && data["value"] is List) {
-          Categorydata.addAll(data["value"]);
-        }
-
-        failure = null;
-      },
+  Future<void> _loadProfile(int userId, String? email) async {
+    final result = await _homeData.getPatientProfile(
+      userId: userId,
+      email: email,
     );
+    if (_inactive) return;
+    result.fold((failure) => profileFailure = failure, (value) {
+      patient = value;
+      profileFailure = null;
+    });
+  }
 
+  Future<void> _loadDoctors() async {
+    final result = await _homeData.getDoctors();
+    if (_inactive) return;
+    result.fold((failure) => doctorsFailure = failure, (value) {
+      doctors = value;
+      doctorsFailure = null;
+    });
+  }
+
+  Future<void> _loadAppointments(int userId) async {
+    final result = await _homeData.getPatientAppointments(userId);
+    if (_inactive) return;
+    result.fold((failure) => appointmentsFailure = failure, (value) {
+      appointments = value;
+      appointmentsFailure = null;
+    });
+  }
+
+  void selectTab(int index) {
+    if (_inactive || index < 0 || index > 4 || index == selectedTab) return;
+    selectedTab = index;
     update();
   }
 
-  @override
-  ItemsDatawithdescunt() async {
-    failure = null;
+  void findDoctor() => selectTab(1);
+  void showAppointments() => selectTab(2);
+  void showNotifications() => selectTab(3);
+  void showProfile() => selectTab(4);
+
+  void updateSearch(String value) {
+    if (searchQuery == value) return;
+    searchQuery = value;
     update();
+  }
 
-    var response = await homeData.GetAllcateforyItemswithdescount();
+  void submitSearch(String value) {
+    updateSearch(value);
+    selectTab(1);
+  }
 
-    print("== Items Response from API ==");
-    print(response);
+  void clearSearch() {
+    searchController.clear();
+    updateSearch('');
+  }
 
-    response.fold(
-      (fail) {
-        failure = fail;
-      },
-      (data) {
-        Itemsdata.clear();
+  Future<void> openResource(PatientResourceType type) async {
+    await loadResource(type);
+    if (_inactive) return;
+    await Get.toNamed(Approutes.patientResource, arguments: type.name);
+  }
 
-        if (data is List) {
-          Itemsdata.addAll(data);
-        } else if (data is Map && data["value"] is List) {
-          Itemsdata.addAll(data["value"]);
-        }
-
-        failure = null;
-      },
+  Future<void> loadResource(
+    PatientResourceType type, {
+    bool force = false,
+  }) async {
+    if (_inactive || loadingResources.contains(type)) return;
+    if (!force && resourceItems.containsKey(type)) return;
+    loadingResources.add(type);
+    resourceFailures.remove(type);
+    update();
+    final result = await _homeData.getPatientResource(
+      type,
+      patientId: patient?.patientId,
     );
-
+    if (_inactive) return;
+    result.fold((failure) => resourceFailures[type] = failure, (items) {
+      resourceItems[type] = items;
+      resourceFailures.remove(type);
+    });
+    loadingResources.remove(type);
     update();
   }
 
-  @override
-  Gotoitmes(categorles, selectedcat, CatogoryID) {}
+  PatientResourceType? resourceFromArguments(Object? value) {
+    final name = value?.toString();
+    for (final type in PatientResourceType.values) {
+      if (type.name == name) return type;
+    }
+    return null;
+  }
 
   @override
-  GotopageProductdetails(ItesModel) {
-    print("🟢 Sending to Productdetails: $ItesModel");
+  void onClose() {
+    _disposed = true;
+    searchController.dispose();
+    super.onClose();
   }
 }

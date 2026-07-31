@@ -4,6 +4,10 @@ class AppointmentModel implements AppointmentDisplayData {
   @override
   final int id;
   final String doctorName;
+  final int? doctorId;
+  final int? patientId;
+  final String? doctorSpecialization;
+  final String? doctorImage;
   @override
   final String patientName;
   @override
@@ -12,27 +16,41 @@ class AppointmentModel implements AppointmentDisplayData {
   final String status;
   final DateTime? lastStatusDate;
   final int? medicalRecordId;
+  final String? appointmentNotes;
 
   AppointmentModel({
     required this.id,
     required this.doctorName,
+    this.doctorId,
+    this.patientId,
+    this.doctorSpecialization,
+    this.doctorImage,
     required this.patientName,
     required this.appointmentDate,
     required this.status,
     this.lastStatusDate,
     this.medicalRecordId,
+    this.appointmentNotes,
   });
 
   @override
   String? get patientImage => null;
 
   @override
-  String? get notes => null;
+  String? get notes => appointmentNotes;
 
   factory AppointmentModel.fromJson(Map<String, dynamic> json) {
     return AppointmentModel(
       id: _int(_value(json, 'id'), 'id'),
       doctorName: _string(_value(json, 'doctorName'), 'doctorName'),
+      doctorId: _nullableInt(_value(json, 'doctorId')),
+      patientId: _nullableInt(_value(json, 'patientId')),
+      doctorSpecialization: _nullableString(
+        _firstValue(json, const ['doctorSpecialization', 'specialization']),
+      ),
+      doctorImage: _nullableString(
+        _firstValue(json, const ['doctorImage', 'imagePath']),
+      ),
       patientName: _string(_value(json, 'patientName'), 'patientName'),
       appointmentDate: _date(
         _value(json, 'appointmentDate'),
@@ -41,6 +59,9 @@ class AppointmentModel implements AppointmentDisplayData {
       status: _string(_value(json, 'status'), 'status'),
       lastStatusDate: _date(_value(json, 'lastStatusDate'), 'lastStatusDate'),
       medicalRecordId: _nullableInt(_value(json, 'medicalRecordId')),
+      appointmentNotes: _nullableString(
+        _firstValue(json, const ['notes', 'note']),
+      ),
     );
   }
 
@@ -58,11 +79,16 @@ class AppointmentModel implements AppointmentDisplayData {
     return {
       'id': id,
       'doctorName': doctorName,
+      'doctorId': doctorId,
+      'patientId': patientId,
+      'doctorSpecialization': doctorSpecialization,
+      'doctorImage': doctorImage,
       'patientName': patientName,
       'appointmentDate': appointmentDate.toIso8601String(),
       'status': status,
       'lastStatusDate': lastStatusDate?.toIso8601String(),
       'medicalRecordId': medicalRecordId,
+      'notes': appointmentNotes,
     };
   }
 
@@ -85,6 +111,11 @@ class AppointmentModel implements AppointmentDisplayData {
   static String _string(Object? value, String field) {
     if (value is String && value.trim().isNotEmpty) return value.trim();
     throw FormatException('Invalid $field.');
+  }
+
+  static String? _nullableString(Object? value) {
+    final text = value?.toString().trim();
+    return text == null || text.isEmpty ? null : text;
   }
 
   static Object? _value(Map<String, dynamic> json, String name) {
