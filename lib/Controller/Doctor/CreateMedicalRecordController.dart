@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../core/Error/Failure.dart';
 import '../../data/datasource/remote/Patients/DoctorPatientDetailsData.dart';
 import '../../data/model/DoctorPatientDetailsModels.dart';
+import 'DoctorAppointmentsController.dart';
 import 'DoctorPatientDetailsController.dart';
 
 class CreateMedicalRecordController extends GetxController {
@@ -35,17 +36,13 @@ class CreateMedicalRecordController extends GetxController {
   void onInit() {
     super.onInit();
     final arguments = Get.arguments;
-    final parent = _patientDetailsController;
     if (arguments is! MedicalRecordFormArguments ||
         arguments.patientId <= 0 ||
         arguments.appointmentId <= 0 ||
         arguments.appointment.patientId <= 0 ||
         arguments.appointment.patientId != arguments.patientId ||
         arguments.appointment.appointmentId <= 0 ||
-        arguments.appointment.appointmentId != arguments.appointmentId ||
-        parent == null ||
-        !parent.hasValidPatientId ||
-        parent.patientId != arguments.patientId) {
+        arguments.appointment.appointmentId != arguments.appointmentId) {
       argumentErrorKey = 'invalidAppointment';
       return;
     }
@@ -53,7 +50,8 @@ class CreateMedicalRecordController extends GetxController {
     patientId = arguments.patientId;
     appointmentId = arguments.appointmentId;
     appointment = arguments.appointment;
-    if (parent.hasMedicalRecord(appointmentId)) {
+    if (_matchingPatientDetailsController?.hasMedicalRecord(appointmentId) ??
+        false) {
       argumentErrorKey = 'alreadyHasMedicalRecord';
     }
   }
@@ -77,8 +75,8 @@ class CreateMedicalRecordController extends GetxController {
 
   Future<void> submit() async {
     if (isSubmitting || _disposed || !hasValidArguments) return;
-    final parent = _patientDetailsController;
-    if (parent == null || parent.hasMedicalRecord(appointmentId)) {
+    final parent = _matchingPatientDetailsController;
+    if (parent?.hasMedicalRecord(appointmentId) ?? false) {
       argumentErrorKey = 'alreadyHasMedicalRecord';
       update();
       return;
@@ -108,28 +106,39 @@ class CreateMedicalRecordController extends GetxController {
       });
       if (!succeeded) {
         failure = requestFailure;
+        if (requestFailure?.statusCode == 409 &&
+            Get.isRegistered<DoctorAppointmentsController>()) {
+          await Get.find<DoctorAppointmentsController>().refreshList();
+          if (_disposed) return;
+        }
         Get.snackbar('error'.tr, _messageForFailure(requestFailure!));
         return;
       }
 
-      parent.markAppointmentHasMedicalRecord(appointmentId);
       final createdId = createdRecord?.medicalRecordId;
-      final sourceAppointment = appointment;
-      if (createdId != null && createdId > 0 && sourceAppointment != null) {
-        parent.mergeCreatedMedicalRecord(
-          DoctorPatientMedicalRecordModel(
-            medicalRecordId: createdId,
-            appointmentId: appointmentId,
-            appointmentDate: sourceAppointment.appointmentDate,
-            diagnosis: request.diagnosis,
-            visitDescription: request.visitDescription,
-            notes: request.notes,
-          ),
-        );
+      if (parent != null) {
+        parent.markAppointmentHasMedicalRecord(appointmentId);
+        final sourceAppointment = appointment;
+        if (createdId != null && createdId > 0 && sourceAppointment != null) {
+          parent.mergeCreatedMedicalRecord(
+            DoctorPatientMedicalRecordModel(
+              medicalRecordId: createdId,
+              appointmentId: appointmentId,
+              appointmentDate: sourceAppointment.appointmentDate,
+              diagnosis: request.diagnosis,
+              visitDescription: request.visitDescription,
+              notes: request.notes,
+            ),
+          );
+        }
+        await parent.refreshMedicalRecords();
+        if (_disposed) return;
       }
-      await parent.refreshMedicalRecords();
-      if (_disposed) return;
-      Get.back();
+      Get.back(
+        result:
+            createdRecord ??
+            const CreatedMedicalRecordResult(medicalRecordId: null),
+      );
       Get.snackbar(
         'success'.tr,
         'medicalRecordCreatedSuccessfully'.tr,
@@ -161,6 +170,19 @@ class CreateMedicalRecordController extends GetxController {
   String? _optional(String value) {
     final text = value.trim();
     return text.isEmpty ? null : text;
+  }
+
+  DoctorPatientDetailsController? get _matchingPatientDetailsController {
+    final parent = _patientDetailsController;
+    if (parent == null || parent.isClosed) return null;
+    try {
+      if (!parent.hasValidPatientId || parent.patientId != patientId) {
+        return null;
+      }
+      return parent;
+    } catch (_) {
+      return null;
+    }
   }
 
   @override

@@ -24,9 +24,7 @@ class CreateMedicalRecordBinding extends Bindings {
     Get.lazyPut(
       () => CreateMedicalRecordController(
         Get.find<DoctorPatientDetailsData>(),
-        Get.isRegistered<DoctorPatientDetailsController>()
-            ? Get.find<DoctorPatientDetailsController>()
-            : null,
+        _patientDetailsControllerOrNull(),
       ),
     );
   }
@@ -50,5 +48,14 @@ class CreatePrescriptionBinding extends Bindings {
 void _ensurePatientDetailsData() {
   if (!Get.isRegistered<DoctorPatientDetailsData>()) {
     Get.lazyPut(() => DoctorPatientDetailsData(Get.find<ApiService>()));
+  }
+}
+
+DoctorPatientDetailsController? _patientDetailsControllerOrNull() {
+  if (!Get.isRegistered<DoctorPatientDetailsController>()) return null;
+  try {
+    return Get.find<DoctorPatientDetailsController>();
+  } catch (_) {
+    return null;
   }
 }

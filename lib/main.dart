@@ -54,7 +54,7 @@ class MyApp extends StatelessWidget {
       // RegisterPage(),
 
       // DoctorDetailsPage(),
-      //DoctorDetailsPage(), //PatientHomePage(), //AppointmentDetailsPage(), //IntroScreen(),
+      //DoctorDetailsPage(), // PatientHomePage(), //AppointmentDetailsPage(), //IntroScreen(),
       //SplashScreen(),
       //Center(child: Text("data")),
       //routes: routes,.3

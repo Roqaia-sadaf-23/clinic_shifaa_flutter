@@ -14,6 +14,95 @@ void main() {
   setUp(() => Get.testMode = true);
   tearDown(Get.reset);
 
+  final eligibilityCases = <_MedicalRecordEligibilityCase>[
+    const _MedicalRecordEligibilityCase(
+      name: 'completed appointment without a medical record shows action',
+      appointmentId: 1,
+      patientId: 10,
+      status: 'Completed',
+      medicalRecordId: null,
+      expectsAction: true,
+    ),
+    const _MedicalRecordEligibilityCase(
+      name: 'completed appointment with a medical record hides action',
+      appointmentId: 2,
+      patientId: 10,
+      status: 'Completed',
+      medicalRecordId: 44,
+      expectsAction: false,
+    ),
+    const _MedicalRecordEligibilityCase(
+      name: 'pending appointment hides action',
+      appointmentId: 3,
+      patientId: 10,
+      status: 'Pending',
+      medicalRecordId: null,
+      expectsAction: false,
+    ),
+    const _MedicalRecordEligibilityCase(
+      name: 'confirmed appointment hides action',
+      appointmentId: 4,
+      patientId: 10,
+      status: 'Confirmed',
+      medicalRecordId: null,
+      expectsAction: false,
+    ),
+    const _MedicalRecordEligibilityCase(
+      name: 'cancelled appointment hides action',
+      appointmentId: 5,
+      patientId: 10,
+      status: 'Cancelled',
+      medicalRecordId: null,
+      expectsAction: false,
+    ),
+    const _MedicalRecordEligibilityCase(
+      name: 'canceled appointment spelling hides action',
+      appointmentId: 6,
+      patientId: 10,
+      status: 'Canceled',
+      medicalRecordId: null,
+      expectsAction: false,
+    ),
+    const _MedicalRecordEligibilityCase(
+      name: 'invalid patient ID hides action',
+      appointmentId: 7,
+      patientId: 0,
+      status: 'Completed',
+      medicalRecordId: null,
+      expectsAction: false,
+    ),
+    const _MedicalRecordEligibilityCase(
+      name: 'invalid appointment ID hides action',
+      appointmentId: 0,
+      patientId: 10,
+      status: 'Completed',
+      medicalRecordId: null,
+      expectsAction: false,
+    ),
+  ];
+
+  for (final eligibilityCase in eligibilityCases) {
+    testWidgets(eligibilityCase.name, (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 1200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      Get.put(
+        DoctorAppointmentsController(
+          DoctorAppointmentData(_SingleAppointmentUiApi(eligibilityCase)),
+        ),
+        permanent: true,
+      );
+
+      await tester.pumpWidget(_testApp());
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Create Medical Record'),
+        eligibilityCase.expectsAction ? findsOneWidget : findsNothing,
+      );
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   testWidgets('appointments page supports patient name and ID search', (
     tester,
   ) async {
@@ -185,6 +274,53 @@ class _EmptyAppointmentsUiApi extends ApiService {
       'pageSize': 10,
       'totalCount': 0,
       'totalPages': 0,
+    });
+  }
+}
+
+class _MedicalRecordEligibilityCase {
+  const _MedicalRecordEligibilityCase({
+    required this.name,
+    required this.appointmentId,
+    required this.patientId,
+    required this.status,
+    required this.medicalRecordId,
+    required this.expectsAction,
+  });
+
+  final String name;
+  final int appointmentId;
+  final int patientId;
+  final String status;
+  final int? medicalRecordId;
+  final bool expectsAction;
+}
+
+class _SingleAppointmentUiApi extends ApiService {
+  _SingleAppointmentUiApi(this.eligibilityCase);
+
+  final _MedicalRecordEligibilityCase eligibilityCase;
+
+  @override
+  Future<Either<Failure, dynamic>> get(String url, {bool auth = false}) async {
+    return Right({
+      'items': [
+        {
+          'id': eligibilityCase.appointmentId,
+          'patientId': eligibilityCase.patientId,
+          'patientName': 'Eligibility patient',
+          'patientImage': null,
+          'appointmentDate': '2026-07-27T12:00:00',
+          'status': eligibilityCase.status,
+          'lastStatusDate': null,
+          'medicalRecordId': eligibilityCase.medicalRecordId,
+          'notes': null,
+        },
+      ],
+      'page': 1,
+      'pageSize': 10,
+      'totalCount': 1,
+      'totalPages': 1,
     });
   }
 }

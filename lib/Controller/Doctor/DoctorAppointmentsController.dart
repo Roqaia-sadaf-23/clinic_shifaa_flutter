@@ -2,8 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 import '../../core/Error/Failure.dart';
+import '../../core/constant/Approutes.dart';
 import '../../data/datasource/remote/Appointments/DoctorAppointmentData.dart';
 import '../../data/model/DoctorAppointmentModel.dart';
+import '../../data/model/DoctorPatientDetailsModels.dart';
+import 'DoctorHome_Controller.dart';
 
 class DoctorAppointmentsController extends GetxController {
   DoctorAppointmentsController(this._data);
@@ -28,9 +31,11 @@ class DoctorAppointmentsController extends GetxController {
   bool isAppointmentsTotalLoading = false;
   bool _disposed = false;
   bool _reloadRequested = false;
+  bool _isOpeningCreateMedicalRecord = false;
   int _filterRevision = 0;
 
   bool get isBusy => isInitialLoading || isRefreshing || isLoadingMore;
+  bool get isOpeningCreateMedicalRecord => _isOpeningCreateMedicalRecord;
   bool get hasError => failure != null;
   String get errorMessage => failure?.message ?? 'Unable to load appointments.';
   bool get _inactive => _disposed || isClosed;
@@ -73,6 +78,60 @@ class DoctorAppointmentsController extends GetxController {
   Future<void> loadMore() async {
     if (_inactive || !hasMore || isBusy) return;
     await _load(reset: false);
+  }
+
+  bool canCreateMedicalRecord(DoctorAppointmentModel appointment) {
+    return appointment.id > 0 &&
+        appointment.patientId > 0 &&
+        appointment.status.trim().toLowerCase() == 'completed' &&
+        (appointment.medicalRecordId == null ||
+            appointment.medicalRecordId! <= 0);
+  }
+
+  Future<void> openCreateMedicalRecord(
+    DoctorAppointmentModel appointment,
+  ) async {
+    if (_inactive ||
+        _isOpeningCreateMedicalRecord ||
+        !canCreateMedicalRecord(appointment) ||
+        Get.currentRoute == Approutes.createMedicalRecord) {
+      return;
+    }
+
+    final formAppointment = DoctorPatientAppointmentDetailsModel(
+      appointmentId: appointment.id,
+      patientId: appointment.patientId,
+      patientName: appointment.patientName,
+      patientImage: appointment.patientImage,
+      appointmentDate: appointment.appointmentDate,
+      status: appointment.status,
+      lastStatusDate: appointment.lastStatusDate,
+      note: appointment.notes,
+    );
+    final arguments = MedicalRecordFormArguments(
+      patientId: appointment.patientId,
+      appointmentId: appointment.id,
+      appointment: formAppointment,
+    );
+
+    _isOpeningCreateMedicalRecord = true;
+    update();
+    try {
+      final result = await Get.toNamed(
+        Approutes.createMedicalRecord,
+        arguments: arguments,
+      );
+      if (_inactive || result is! CreatedMedicalRecordResult) return;
+
+      await refreshList();
+      if (_inactive) return;
+      if (Get.isRegistered<DoctorHomeController>()) {
+        await Get.find<DoctorHomeController>().refreshAppointments();
+      }
+    } finally {
+      _isOpeningCreateMedicalRecord = false;
+      if (!_inactive) update();
+    }
   }
 
   Future<void> setStatus(String? value) async {

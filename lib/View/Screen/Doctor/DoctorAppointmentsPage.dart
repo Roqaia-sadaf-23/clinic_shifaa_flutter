@@ -93,6 +93,7 @@ class _DoctorAppointmentsPageState extends State<DoctorAppointmentsPage> {
                         appointments: appointments,
                         isLoadingMore: controller.isLoadingMore,
                         onAppointmentTap: _openDetails,
+                        controller: controller,
                       ),
                     const SliverToBoxAdapter(child: SizedBox(height: 32)),
                   ],
@@ -539,11 +540,13 @@ class AppointmentCardsSliver extends StatelessWidget {
     required this.appointments,
     required this.isLoadingMore,
     required this.onAppointmentTap,
+    required this.controller,
   });
 
   final List<DoctorAppointmentModel> appointments;
   final bool isLoadingMore;
   final ValueChanged<DoctorAppointmentModel> onAppointmentTap;
+  final DoctorAppointmentsController controller;
 
   @override
   Widget build(BuildContext context) {
@@ -567,6 +570,17 @@ class AppointmentCardsSliver extends StatelessWidget {
                 key: ValueKey(appointment.id),
                 appointment: appointment,
                 onTap: () => onAppointmentTap(appointment),
+                additionalAction: controller.canCreateMedicalRecord(appointment)
+                    ? OutlinedButton.icon(
+                        onPressed: controller.isOpeningCreateMedicalRecord
+                            ? null
+                            : () => controller.openCreateMedicalRecord(
+                                appointment,
+                              ),
+                        icon: const Icon(Icons.note_add_outlined, size: 18),
+                        label: Text('createMedicalRecord'.tr),
+                      )
+                    : null,
               )
               .animate(delay: Duration(milliseconds: math.min(index * 55, 275)))
               .fadeIn(
