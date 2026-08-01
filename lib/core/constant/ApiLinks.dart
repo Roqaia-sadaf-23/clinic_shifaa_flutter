@@ -20,15 +20,14 @@ class ApiLinks {
   static const String updateCurrentPersonImage = "$server/Person/me/image";
   //http://192.168.8.4:5210/api/Person/me/image
   // Patients
-  static const String patients = "$server/Patients";
-  static String patientById(int id) => "$server/Patients/$id";
+  static const String patients = "$server/Patient";
+  static const String createPatient = "$server/Patient/create";
+  static String patientById(int id) => "$server/Patient/$id";
 
   // Appointments
-  static const String appointments = "$server/Appointments";
+  static const String createAppointment = "$server/Appointments/create";
+  static const String patientAppointments = "$server/Appointments/patient/me";
   static String appointmentById(int id) => "$server/Appointments/$id";
-
-  static String appointmentsByUserId(int userId) =>
-      "$server/Appointments/user/$userId";
 
   static String availableSlots({required int doctorId, required String date}) =>
       "$server/Appointments/available-slots?doctorId=$doctorId&date=$date";
@@ -48,21 +47,22 @@ class ApiLinks {
       "$server/Appointments/doctor/me/patients/$patientId/appointments";
 
   // Medical Records
-  static const String medicalRecords = "$server/MedicalRecords";
-  static String medicalRecordById(int id) => "$server/MedicalRecords/$id";
+  static const String medicalRecords = "$server/MedicalRecordContreoler/All";
+  static String medicalRecordById(int id) =>
+      "$server/MedicalRecordContreoler/$id,GetMedicalRecordById";
   static const String createMedicalRecord = "$server/MedicalRecordContreoler";
   static String doctorPatientMedicalRecords(int patientId) =>
       "$server/MedicalRecordContreoler/doctor/me/patients/$patientId";
 
   // Payments
-  static const String payments = "$server/Payments";
-  static String paymentById(int id) => "$server/Payments/$id";
+  static const String payments = "$server/Payment/All";
+  static String paymentById(int id) => "$server/Payment/$id";
   static String doctorPatientPayments(int patientId) =>
       "$server/Payment/doctor/me/patients/$patientId";
 
   // Prescriptions
-  static const String prescriptions = "$server/Prescriptions";
-  static String prescriptionById(int id) => "$server/Prescriptions/$id";
+  static const String prescriptions = "$server/PrescriptionControler";
+  static String prescriptionById(int id) => "$server/PrescriptionControler/$id";
   static const String createPrescription =
       "$server/PrescriptionControler/create";
   static String doctorPatientPrescriptions(int patientId) =>

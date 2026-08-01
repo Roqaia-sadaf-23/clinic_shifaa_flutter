@@ -114,7 +114,7 @@ class PatientHomeControllerImp extends GetxController {
       await Future.wait([
         _loadProfile(userId, email),
         _loadDoctors(),
-        _loadAppointments(userId),
+        _loadAppointments(),
       ]);
     } finally {
       _loading = false;
@@ -145,8 +145,8 @@ class PatientHomeControllerImp extends GetxController {
     });
   }
 
-  Future<void> _loadAppointments(int userId) async {
-    final result = await _homeData.getPatientAppointments(userId);
+  Future<void> _loadAppointments() async {
+    final result = await _homeData.getPatientAppointments();
     if (_inactive) return;
     result.fold((failure) => appointmentsFailure = failure, (value) {
       appointments = value;

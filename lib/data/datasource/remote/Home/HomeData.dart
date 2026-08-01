@@ -116,11 +116,10 @@ class HomeData {
     });
   }
 
-  Future<Either<Failure, List<AppointmentModel>>> getPatientAppointments(
-    int userId,
-  ) async {
+  Future<Either<Failure, List<AppointmentModel>>>
+  getPatientAppointments() async {
     final result = await _apiService.get(
-      ApiLinks.appointmentsByUserId(userId),
+      ApiLinks.patientAppointments,
       auth: true,
     );
     return result.fold(Left.new, (response) {

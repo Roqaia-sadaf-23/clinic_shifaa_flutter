@@ -2,6 +2,7 @@ import 'package:clinic_shifaa/Controller/Patient/HomeController.dart';
 import 'package:clinic_shifaa/View/Screen/Patient/PatientHomePage.dart';
 import 'package:clinic_shifaa/core/Error/Failure.dart';
 import 'package:clinic_shifaa/core/class/ApiService.dart';
+import 'package:clinic_shifaa/core/constant/ApiLinks.dart';
 import 'package:clinic_shifaa/core/localization/translation.dart';
 import 'package:clinic_shifaa/data/datasource/remote/Home/HomeData.dart';
 import 'package:clinic_shifaa/data/model/AppointmentModel.dart';
@@ -78,6 +79,33 @@ void main() {
     expect(controller.filteredDoctors.map((doctor) => doctor.id), [1]);
     controller.onClose();
   });
+
+  test(
+    'patient appointments use the authenticated backend route and DTO',
+    () async {
+      final apiService = _RecordingApiService([
+        {
+          'id': 17,
+          'doctorName': 'Sarah Ali',
+          'specialty': 'Cardiology',
+          'appointmentDate': '2026-08-04T12:00:00',
+          'status': 'Pending',
+          'notes': 'Follow-up',
+        },
+      ]);
+
+      final result = await HomeData(apiService).getPatientAppointments();
+
+      expect(apiService.lastGetUrl, ApiLinks.patientAppointments);
+      expect(apiService.lastGetAuth, isTrue);
+      result.fold((failure) => fail(failure.message), (appointments) {
+        expect(appointments, hasLength(1));
+        expect(appointments.single.id, 17);
+        expect(appointments.single.doctorSpecialization, 'Cardiology');
+        expect(appointments.single.patientName, isEmpty);
+      });
+    },
+  );
 
   testWidgets('patient home renders live sections and changes patient tabs', (
     tester,
@@ -252,13 +280,27 @@ class _FakeHomeData extends HomeData {
       Right([_doctor()]);
 
   @override
-  Future<Either<Failure, List<AppointmentModel>>> getPatientAppointments(
-    int userId,
-  ) async => Right(appointments);
+  Future<Either<Failure, List<AppointmentModel>>>
+  getPatientAppointments() async => Right(appointments);
 
   @override
   Future<Either<Failure, List<Map<String, dynamic>>>> getPatientResource(
     PatientResourceType type, {
     int? patientId,
   }) async => const Right([]);
+}
+
+class _RecordingApiService extends ApiService {
+  _RecordingApiService(this.response);
+
+  final Object? response;
+  String? lastGetUrl;
+  bool? lastGetAuth;
+
+  @override
+  Future<Either<Failure, dynamic>> get(String url, {bool auth = false}) async {
+    lastGetUrl = url;
+    lastGetAuth = auth;
+    return Right(response);
+  }
 }

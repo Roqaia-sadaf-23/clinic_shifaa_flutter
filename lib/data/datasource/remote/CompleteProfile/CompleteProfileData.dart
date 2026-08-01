@@ -32,7 +32,7 @@ class CompleteProfileData {
     required String bloodType,
     required int personId,
   }) async {
-    final result = await _apiService.post(ApiLinks.patients, {
+    final result = await _apiService.post(ApiLinks.createPatient, {
       'bloodType': bloodType,
       'personId': personId,
     }, auth: true);

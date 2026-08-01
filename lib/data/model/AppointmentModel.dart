@@ -47,12 +47,16 @@ class AppointmentModel implements AppointmentDisplayData {
       doctorId: _nullableInt(_value(json, 'doctorId')),
       patientId: _nullableInt(_value(json, 'patientId')),
       doctorSpecialization: _nullableString(
-        _firstValue(json, const ['doctorSpecialization', 'specialization']),
+        _firstValue(json, const [
+          'doctorSpecialization',
+          'specialization',
+          'specialty',
+        ]),
       ),
       doctorImage: normalizeImagePath(
         _nullableString(_firstValue(json, const ['doctorImage', 'imagePath'])),
       ),
-      patientName: _string(_value(json, 'patientName'), 'patientName'),
+      patientName: _nullableString(_value(json, 'patientName')) ?? '',
       appointmentDate: _date(
         _value(json, 'appointmentDate'),
         'appointmentDate',
