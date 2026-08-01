@@ -95,6 +95,27 @@ void main() {
     },
   );
 
+  test('payment creation uses the confirmed Swagger contract', () async {
+    final api = _RecordingApiService(postResponse: 44);
+
+    final result = await HomeData(api).createPayment(
+      appointmentId: 31,
+      paymentMethod: 'Card',
+      amount: 125.5,
+      note: 'Consultation',
+    );
+
+    expect(result.isRight, isTrue);
+    expect(api.lastPostUrl, ApiLinks.createPayment);
+    expect(api.lastPostAuth, isTrue);
+    expect(api.lastPostBody, {
+      'appointmentId': 31,
+      'paymentMethod': 'Card',
+      'amount': 125.5,
+      'note': 'Consultation',
+    });
+  });
+
   test(
     'selected-doctor booking has independent slot and create state',
     () async {

@@ -1315,37 +1315,9 @@ Future<void> showPatientAppointmentDetails(
                     'notes'.tr,
                     appointment.appointmentNotes!,
                   ),
-                const SizedBox(height: 10),
-                Divider(color: DoctorHomeColors.border(context)),
-                const SizedBox(height: 10),
-                Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: Text(
-                    'payment'.tr,
-                    style: TextStyle(
-                      color: DoctorHomeColors.text(context),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(
-                      Icons.info_outline_rounded,
-                      color: Appcolor.textLight,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'appointmentPaymentUnavailable'.tr,
-                        style: const TextStyle(color: Appcolor.textLight),
-                      ),
-                    ),
-                  ],
+                _PatientPaymentSection(
+                  controller: current,
+                  appointment: appointment,
                 ),
                 if (current.canCancelAppointment(appointment)) ...[
                   const SizedBox(height: 16),
@@ -1380,6 +1352,235 @@ Future<void> showPatientAppointmentDetails(
     ),
     isScrollControlled: true,
   );
+}
+
+class _PatientPaymentSection extends StatelessWidget {
+  const _PatientPaymentSection({
+    required this.controller,
+    required this.appointment,
+  });
+
+  final PatientHomeControllerImp controller;
+  final AppointmentModel appointment;
+
+  @override
+  Widget build(BuildContext context) {
+    final paymentId = controller.createdPaymentIds[appointment.id];
+    final isSubmitting = controller.submittingPayments.contains(appointment.id);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 10),
+        Divider(color: DoctorHomeColors.border(context)),
+        const SizedBox(height: 10),
+        Text(
+          'payment'.tr,
+          style: TextStyle(
+            color: DoctorHomeColors.text(context),
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (paymentId != null) ...[
+          _detailRow(context, 'paymentId'.tr, '$paymentId'),
+          _detailRow(context, 'status'.tr, 'pending'.tr),
+          Text(
+            'paymentCreatedPending'.tr,
+            style: const TextStyle(color: Appcolor.textLight),
+          ),
+        ] else ...[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                Icons.info_outline_rounded,
+                color: Appcolor.textLight,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'appointmentPaymentUnavailable'.tr,
+                  style: const TextStyle(color: Appcolor.textLight),
+                ),
+              ),
+            ],
+          ),
+          if (controller.paymentFailures.containsKey(appointment.id)) ...[
+            const SizedBox(height: 8),
+            Text(
+              'requestFailed'.tr,
+              style: const TextStyle(color: Appcolor.error),
+            ),
+          ],
+          if (controller.canCreatePayment(appointment)) ...[
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: isSubmitting
+                  ? null
+                  : () => showPatientPaymentForm(appointment, controller),
+              icon: isSubmitting
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Appcolor.white,
+                      ),
+                    )
+                  : const Icon(Icons.payments_outlined),
+              label: Text('payNow'.tr),
+            ),
+          ],
+        ],
+      ],
+    );
+  }
+}
+
+Future<void> showPatientPaymentForm(
+  AppointmentModel appointment,
+  PatientHomeControllerImp controller,
+) {
+  return Get.dialog<void>(
+    _PatientPaymentDialog(appointment: appointment, controller: controller),
+    barrierDismissible: false,
+  );
+}
+
+class _PatientPaymentDialog extends StatefulWidget {
+  const _PatientPaymentDialog({
+    required this.appointment,
+    required this.controller,
+  });
+
+  final AppointmentModel appointment;
+  final PatientHomeControllerImp controller;
+
+  @override
+  State<_PatientPaymentDialog> createState() => _PatientPaymentDialogState();
+}
+
+class _PatientPaymentDialogState extends State<_PatientPaymentDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _paymentMethodController = TextEditingController();
+  final _amountController = TextEditingController();
+  final _noteController = TextEditingController();
+  bool _isSubmitting = false;
+
+  @override
+  void dispose() {
+    _paymentMethodController.dispose();
+    _amountController.dispose();
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: Text('paymentDetails'.tr),
+    content: SingleChildScrollView(
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              controller: _paymentMethodController,
+              textInputAction: TextInputAction.next,
+              decoration: InputDecoration(labelText: 'paymentMethod'.tr),
+              validator: (value) =>
+                  value?.trim().isEmpty == false ? null : 'fieldRequired'.tr,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _amountController,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              textInputAction: TextInputAction.next,
+              decoration: InputDecoration(labelText: 'amount'.tr),
+              validator: (value) {
+                final amount = _parsePaymentAmount(value);
+                return amount != null && amount > 0
+                    ? null
+                    : 'validPaymentAmountRequired'.tr;
+              },
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _noteController,
+              maxLines: 3,
+              decoration: InputDecoration(labelText: 'notes'.tr),
+            ),
+          ],
+        ),
+      ),
+    ),
+    actions: [
+      TextButton(
+        onPressed: _isSubmitting ? null : Get.back,
+        child: Text('cancel'.tr),
+      ),
+      FilledButton(
+        onPressed: _isSubmitting ? null : _submit,
+        child: _isSubmitting
+            ? const SizedBox.square(
+                dimension: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Appcolor.white,
+                ),
+              )
+            : Text('payNow'.tr),
+      ),
+    ],
+  );
+
+  Future<void> _submit() async {
+    if (_formKey.currentState?.validate() != true) return;
+    final amount = _parsePaymentAmount(_amountController.text)!;
+    final confirmed = await Get.dialog<bool>(
+      AlertDialog(
+        title: Text('confirmPayment'.tr),
+        content: Text('confirmPaymentQuestion'.tr),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: Text('cancel'.tr),
+          ),
+          FilledButton(
+            onPressed: () => Get.back(result: true),
+            child: Text('confirm'.tr),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _isSubmitting = true);
+    final paymentId = await widget.controller.createPayment(
+      appointment: widget.appointment,
+      paymentMethod: _paymentMethodController.text,
+      amount: amount,
+      note: _noteController.text,
+    );
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+    if (paymentId == null) return;
+    Get.back<void>();
+    Get.snackbar('success'.tr, 'paymentCreatedPending'.tr);
+  }
+}
+
+double? _parsePaymentAmount(String? input) {
+  const arabicDigits = '٠١٢٣٤٥٦٧٨٩';
+  const westernDigits = '0123456789';
+  var value = input?.trim().replaceAll('٫', '.').replaceAll(',', '.') ?? '';
+  for (var index = 0; index < arabicDigits.length; index++) {
+    value = value.replaceAll(arabicDigits[index], westernDigits[index]);
+  }
+  return double.tryParse(value);
 }
 
 Future<void> _cancelPatientAppointment(

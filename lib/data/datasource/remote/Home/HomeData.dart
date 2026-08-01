@@ -181,6 +181,27 @@ class HomeData {
     });
   }
 
+  Future<Either<Failure, int>> createPayment({
+    required int appointmentId,
+    required String paymentMethod,
+    required double amount,
+    required String note,
+  }) async {
+    final result = await _apiService.post(ApiLinks.createPayment, {
+      'appointmentId': appointmentId,
+      'paymentMethod': paymentMethod,
+      'amount': amount,
+      'note': note,
+    }, auth: true);
+    return result.fold(Left.new, (response) {
+      final paymentId = response is num
+          ? response.toInt()
+          : int.tryParse(response?.toString().trim() ?? '');
+      if (paymentId != null && paymentId > 0) return Right(paymentId);
+      return const Left(ServerFailure('Invalid create payment response.'));
+    });
+  }
+
   Future<Either<Failure, List<Map<String, dynamic>>>> getPatientResource(
     PatientResourceType type, {
     int? patientId,

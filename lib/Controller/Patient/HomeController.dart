@@ -39,6 +39,10 @@ class PatientHomeControllerImp extends GetxController {
   final Map<PatientResourceType, Failure> resourceFailures = {};
   final Set<PatientResourceType> loadingResources = {};
   final Set<int> cancellingAppointments = {};
+  final Set<int> submittingPayments = {};
+  final Set<int> paymentEligibleAppointmentIds = {};
+  final Map<int, int> createdPaymentIds = {};
+  final Map<int, Failure> paymentFailures = {};
 
   bool get _inactive => _disposed || isClosed;
   bool get hasDashboardData =>
@@ -204,9 +208,57 @@ class PatientHomeControllerImp extends GetxController {
     if (_inactive) return null;
     showAppointments();
     for (final appointment in appointments) {
-      if (appointment.id == appointmentId) return appointment;
+      if (appointment.id == appointmentId) {
+        paymentEligibleAppointmentIds.add(appointmentId);
+        return appointment;
+      }
     }
     return null;
+  }
+
+  bool canCreatePayment(AppointmentModel appointment) {
+    final status = appointment.status.trim().toLowerCase();
+    return appointment.id > 0 &&
+        paymentEligibleAppointmentIds.contains(appointment.id) &&
+        status != 'cancelled' &&
+        status != 'canceled' &&
+        !createdPaymentIds.containsKey(appointment.id);
+  }
+
+  Future<int?> createPayment({
+    required AppointmentModel appointment,
+    required String paymentMethod,
+    required double amount,
+    required String note,
+  }) async {
+    final appointmentId = appointment.id;
+    if (!canCreatePayment(appointment) ||
+        submittingPayments.contains(appointmentId) ||
+        paymentMethod.trim().isEmpty ||
+        !amount.isFinite ||
+        amount <= 0) {
+      return null;
+    }
+
+    submittingPayments.add(appointmentId);
+    paymentFailures.remove(appointmentId);
+    update();
+    final result = await _homeData.createPayment(
+      appointmentId: appointmentId,
+      paymentMethod: paymentMethod.trim(),
+      amount: amount,
+      note: note.trim(),
+    );
+    if (_inactive) return null;
+    int? paymentId;
+    result.fold((failure) => paymentFailures[appointmentId] = failure, (value) {
+      paymentId = value;
+      createdPaymentIds[appointmentId] = value;
+      paymentFailures.remove(appointmentId);
+    });
+    submittingPayments.remove(appointmentId);
+    update();
+    return paymentId;
   }
 
   void selectTab(int index) {

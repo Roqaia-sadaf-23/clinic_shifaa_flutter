@@ -56,6 +56,7 @@ class ApiLinks {
 
   // Payments
   static const String payments = "$server/Payment/All";
+  static const String createPayment = "$server/Payment/create";
   static String paymentById(int id) => "$server/Payment/$id";
   static String doctorPatientPayments(int patientId) =>
       "$server/Payment/doctor/me/patients/$patientId";

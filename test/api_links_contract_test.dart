@@ -16,6 +16,7 @@ void main() {
       ApiLinks.createAppointment,
       '${ApiLinks.server}/Appointments/create',
     );
+    expect(ApiLinks.createPayment, '${ApiLinks.server}/Payment/create');
     expect(ApiLinks.doctors, '${ApiLinks.server}/Doctors');
     expect(ApiLinks.doctorById(9), '${ApiLinks.server}/Doctors/9');
     expect(
