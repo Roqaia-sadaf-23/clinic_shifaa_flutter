@@ -1,9 +1,11 @@
+import 'package:clinic_shifaa/Controller/Patient/HomeController.dart';
 import 'package:clinic_shifaa/Controller/Patient/PatientBookingController.dart';
 import 'package:clinic_shifaa/core/Error/Failure.dart';
 import 'package:clinic_shifaa/core/class/ApiService.dart';
 import 'package:clinic_shifaa/core/constant/ApiLinks.dart';
 import 'package:clinic_shifaa/data/datasource/remote/Home/HomeData.dart';
 import 'package:clinic_shifaa/data/model/AvailableSlotModel.dart';
+import 'package:clinic_shifaa/data/model/AppointmentModel.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -138,6 +140,59 @@ void main() {
       controller.onClose();
     },
   );
+
+  test(
+    'successful payment cannot be submitted twice in the patient flow',
+    () async {
+      final data = _PaymentHomeData();
+      final controller = PatientHomeControllerImp(data, autoLoad: false);
+      final appointment = AppointmentModel(
+        id: 31,
+        doctorName: 'Sarah Ali',
+        doctorId: 14,
+        patientId: 9,
+        patientName: 'Patient',
+        appointmentDate: DateTime.now().add(const Duration(days: 1)),
+        status: 'Pending',
+      );
+      controller.paymentEligibleAppointmentIds.add(appointment.id);
+
+      final firstPayment = await controller.createPayment(
+        appointment: appointment,
+        paymentMethod: 'Card',
+        amount: 125.5,
+        note: '',
+      );
+      final repeatedPayment = await controller.createPayment(
+        appointment: appointment,
+        paymentMethod: 'Card',
+        amount: 125.5,
+        note: '',
+      );
+
+      expect(firstPayment, 44);
+      expect(repeatedPayment, isNull);
+      expect(data.createCalls, 1);
+      controller.onClose();
+    },
+  );
+}
+
+class _PaymentHomeData extends HomeData {
+  _PaymentHomeData() : super(ApiService());
+
+  int createCalls = 0;
+
+  @override
+  Future<Either<Failure, int>> createPayment({
+    required int appointmentId,
+    required String paymentMethod,
+    required double amount,
+    required String note,
+  }) async {
+    createCalls++;
+    return const Right(44);
+  }
 }
 
 class _BookingHomeData extends HomeData {
