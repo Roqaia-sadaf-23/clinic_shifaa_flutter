@@ -39,10 +39,18 @@ class PatientHomeControllerImp extends GetxController {
   final Map<PatientResourceType, Failure> resourceFailures = {};
   final Set<PatientResourceType> loadingResources = {};
   final Set<int> cancellingAppointments = {};
-  final Set<int> submittingPayments = {};
-  final Set<int> paymentEligibleAppointmentIds = {};
-  final Map<int, int> createdPaymentIds = {};
-  final Map<int, Failure> paymentFailures = {};
+  final Set<int> _paymentEligibleAppointmentIds = {};
+  final Set<int> _submittedPaymentAppointmentIds = {};
+
+  static const List<String> supportedPaymentMethods = ['Cash', 'Card'];
+  AppointmentModel? paymentAppointment;
+  Failure? paymentFailure;
+  String selectedPaymentMethod = '';
+  bool isPaying = false;
+  bool paymentSubmitted = false;
+  int? createdPaymentId;
+  double? paidAmount;
+  String? paidPaymentMethod;
 
   bool get _inactive => _disposed || isClosed;
   bool get hasDashboardData =>
@@ -82,6 +90,13 @@ class PatientHomeControllerImp extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    final arguments = Get.arguments;
+    if (arguments is Map) {
+      final initialTab = arguments['patientTab'];
+      if (initialTab is int && initialTab >= 0 && initialTab <= 3) {
+        selectedTab = initialTab;
+      }
+    }
     if (autoLoad) loadDashboard();
   }
 
@@ -203,61 +218,84 @@ class PatientHomeControllerImp extends GetxController {
     return succeeded;
   }
 
-  Future<AppointmentModel?> completePatientBooking(int appointmentId) async {
-    await refreshAppointments();
-    if (_inactive) return null;
-    showAppointments();
-    for (final appointment in appointments) {
-      if (appointment.id == appointmentId) {
-        paymentEligibleAppointmentIds.add(appointmentId);
-        return appointment;
-      }
-    }
-    return null;
+  void registerCreatedAppointment(int appointmentId) {
+    if (_inactive || appointmentId <= 0) return;
+    _paymentEligibleAppointmentIds.add(appointmentId);
+  }
+
+  bool preparePayment(AppointmentModel appointment) {
+    if (_inactive || !canCreatePayment(appointment)) return false;
+    if (paymentAppointment?.id == appointment.id) return true;
+    paymentAppointment = appointment;
+    paymentFailure = null;
+    selectedPaymentMethod = '';
+    isPaying = false;
+    paymentSubmitted = false;
+    createdPaymentId = null;
+    paidAmount = null;
+    paidPaymentMethod = null;
+    update();
+    return true;
   }
 
   bool canCreatePayment(AppointmentModel appointment) {
     final status = appointment.status.trim().toLowerCase();
     return appointment.id > 0 &&
-        paymentEligibleAppointmentIds.contains(appointment.id) &&
+        _paymentEligibleAppointmentIds.contains(appointment.id) &&
         status != 'cancelled' &&
         status != 'canceled' &&
-        !createdPaymentIds.containsKey(appointment.id);
+        !_submittedPaymentAppointmentIds.contains(appointment.id);
   }
 
-  Future<int?> createPayment({
-    required AppointmentModel appointment,
-    required String paymentMethod,
-    required double amount,
-    required String note,
-  }) async {
+  void selectPaymentMethod(String method) {
+    if (_inactive ||
+        isPaying ||
+        !supportedPaymentMethods.contains(method) ||
+        selectedPaymentMethod == method) {
+      return;
+    }
+    selectedPaymentMethod = method;
+    paymentFailure = null;
+    update();
+  }
+
+  Future<int?> submitPayment({required double amount, String note = ''}) async {
+    final appointment = paymentAppointment;
+    final paymentMethod = selectedPaymentMethod;
+    if (appointment == null) return null;
     final appointmentId = appointment.id;
     if (!canCreatePayment(appointment) ||
-        submittingPayments.contains(appointmentId) ||
-        paymentMethod.trim().isEmpty ||
+        isPaying ||
+        !supportedPaymentMethods.contains(paymentMethod) ||
         !amount.isFinite ||
         amount <= 0) {
       return null;
     }
 
-    submittingPayments.add(appointmentId);
-    paymentFailures.remove(appointmentId);
+    isPaying = true;
+    paymentFailure = null;
     update();
     final result = await _homeData.createPayment(
       appointmentId: appointmentId,
-      paymentMethod: paymentMethod.trim(),
+      paymentMethod: paymentMethod,
       amount: amount,
       note: note.trim(),
     );
     if (_inactive) return null;
     int? paymentId;
-    result.fold((failure) => paymentFailures[appointmentId] = failure, (value) {
+    result.fold((failure) => paymentFailure = failure, (value) {
       paymentId = value;
-      createdPaymentIds[appointmentId] = value;
-      paymentFailures.remove(appointmentId);
+      createdPaymentId = value;
+      paidAmount = amount;
+      paidPaymentMethod = paymentMethod;
+      paymentSubmitted = true;
+      paymentFailure = null;
+      _paymentEligibleAppointmentIds.remove(appointmentId);
+      _submittedPaymentAppointmentIds.add(appointmentId);
     });
-    submittingPayments.remove(appointmentId);
+    isPaying = false;
     update();
+    if (paymentId != null) await refreshAppointments();
     return paymentId;
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
+import '../class/AuthService.dart';
 import '../constant/Approutes.dart';
 import '../services/serveses.dart';
 
@@ -9,6 +10,23 @@ class MyMiddleWare extends GetMiddleware {
   int? get priority => 1;
 
   final Myservices myservices = Get.find<Myservices>();
+
+  String destinationAfterInitialization({required bool hasValidSession}) {
+    final preferences = myservices.sharedPreferences;
+
+    if (hasValidSession) {
+      final roleName = preferences?.getString('roleName')?.trim().toLowerCase();
+      return switch (roleName) {
+        'doctor' => Approutes.doctorHome,
+        'patient' => Approutes.HomeScreen,
+        _ => Approutes.login,
+      };
+    }
+
+    final introCompleted =
+        preferences?.getBool(AuthService.introCompletedKey) ?? false;
+    return introCompleted ? Approutes.login : Approutes.intro;
+  }
 
   @override
   RouteSettings? redirect(String? route) {
@@ -34,19 +52,8 @@ class MyMiddleWare extends GetMiddleware {
         roleName != null &&
         roleName.trim().isNotEmpty;
 
-    if (!hasSession) {
-      return const RouteSettings(name: Approutes.login);
-    }
-
-    switch (roleName.trim().toLowerCase()) {
-      case 'doctor':
-        return const RouteSettings(name: Approutes.doctorHome);
-
-      case 'patient':
-        return const RouteSettings(name: Approutes.HomeScreen);
-
-      default:
-        return const RouteSettings(name: Approutes.login);
-    }
+    return RouteSettings(
+      name: destinationAfterInitialization(hasValidSession: hasSession),
+    );
   }
 }

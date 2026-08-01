@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
 
 import 'Bindings/CompleteProfileBinding.dart';
+import 'Bindings/IntroBinding.dart';
+import 'Bindings/SplashBinding.dart';
 import 'Bindings/DoctorHomeBinding.dart';
 import 'Bindings/PatientHomeBinding.dart';
 import 'Bindings/DoctorEditProfileBinding.dart';
@@ -11,16 +13,18 @@ import 'View/Screen/CompleteProfile/CompleteProfileScreen.dart';
 import 'View/Screen/Doctor/DoctorHomePage.dart';
 import 'View/Screen/Doctor/DoctorEditProfilePage.dart';
 import 'View/Screen/Notvications/Notvications.dart';
+import 'View/Screen/IntroScreen.dart';
 import 'View/Screen/Patient/PatientHomePage.dart';
+import 'View/Screen/Patient/PatientPaymentPage.dart';
 import 'View/Screen/Patient/PatientResourcePage.dart';
 import 'View/Screen/Appointment/AppointmentDetailsPage.dart';
 import 'View/Screen/Doctor/CreateMedicalRecordPage.dart';
 import 'View/Screen/Doctor/CreatePrescriptionPage.dart';
 import 'View/Screen/Doctor/DoctorPatientDetailsPage.dart';
 import 'View/Screen/Languege.dart';
+import 'View/Screen/Splish/SplashScreen.dart';
 import 'View/Screen/Auth/Login/Loginpage.dart';
 import 'core/constant/Approutes.dart';
-import 'core/MiddelWere/mymiddleware%20.dart';
 
 //import '../core/localization/translation.dart';
 /* import 'package:testproject/core/MiddelWere/mymiddleware%20.dart';
@@ -48,10 +52,16 @@ import 'package:testproject/view/screen/product%20details.dart'; */
 final List<GetPage<dynamic>> routes = [
   //Auth
   GetPage(
-    name: "/",
-    page: () => const Languege(),
-    middlewares: [MyMiddleWare()],
+    name: Approutes.splash,
+    page: () => const SplashScreen(),
+    binding: SplashBinding(),
   ),
+  GetPage(
+    name: Approutes.intro,
+    page: () => const IntroScreen(),
+    binding: IntroBinding(),
+  ),
+  GetPage(name: Approutes.language, page: () => const Languege()),
 
   GetPage(name: Approutes.login, page: () => const LoginPage()),
   GetPage(
@@ -62,6 +72,16 @@ final List<GetPage<dynamic>> routes = [
   GetPage(
     name: Approutes.patientResource,
     page: () => const PatientResourcePage(),
+    binding: PatientHomeBinding(),
+  ),
+  GetPage(
+    name: Approutes.paymentMethod,
+    page: () => const PatientPaymentPage(),
+    binding: PatientHomeBinding(),
+  ),
+  GetPage(
+    name: Approutes.paymentSuccess,
+    page: () => const PatientPaymentSuccessPage(),
     binding: PatientHomeBinding(),
   ),
   GetPage(name: Approutes.Signup, page: () => RegisterScreen()),

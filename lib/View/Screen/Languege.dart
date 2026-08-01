@@ -28,7 +28,7 @@ class Languege extends GetView<localController> {
               onPressed: () {
                 // Add your logic to change the language to English
                 controller.changeLang("en");
-                Get.offNamed("/OnBoarding");
+                Get.offNamed(Approutes.intro);
               },
             ),
             const SizedBox(height: 10),
@@ -37,7 +37,7 @@ class Languege extends GetView<localController> {
               onPressed: () {
                 // Add your logic to change the language to Arabic
                 controller.changeLang("ar");
-                Get.offNamed(Approutes.OnBoarding);
+                Get.offNamed(Approutes.intro);
               },
             ),
           ],

@@ -7,6 +7,7 @@ import '../../data/model/TokenModel.dart';
 import '../constant/ApiLinks.dart';
 
 class AuthService {
+  static const String introCompletedKey = 'introCompleted';
   static const String _accessTokenKey = 'accessToken';
   static const String _refreshTokenKey = 'refreshToken';
   static const String _emailKey = 'email';
@@ -83,6 +84,16 @@ class AuthService {
   static Future<String?> getRoleName() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_roleNameKey);
+  }
+
+  static Future<bool> hasCompletedIntro() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(introCompletedKey) ?? false;
+  }
+
+  static Future<bool> setIntroCompleted() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.setBool(introCompletedKey, true);
   }
 
   static Future<bool> prepareSessionForStartup() async {

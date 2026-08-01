@@ -63,6 +63,7 @@ class RegisterController extends GetxController
   int roleId = 0;
   int nationalityCountryId = 0;
   int currentStep = 0;
+  String? initialAccountType;
 
   @override
   void onInit() {
@@ -70,6 +71,11 @@ class RegisterController extends GetxController
 
     signupData = SignupData(Get.find<ApiService>());
     loginData = LoginData(Get.find<ApiService>());
+    final arguments = Get.arguments;
+    if (arguments is Map) {
+      final value = arguments['accountType']?.toString().trim();
+      if (value == 'Patient' || value == 'Doctor') initialAccountType = value;
+    }
 
     _initAnimations();
 
@@ -91,7 +97,13 @@ class RegisterController extends GetxController
     roles = (data as List).map((e) => RoleModel.fromJson(e)).toList();
 
     if (roles.isNotEmpty && selectedRole == null) {
-      selectedRole = roles.first;
+      final requestedRole = initialAccountType?.toLowerCase();
+      selectedRole = requestedRole == null
+          ? roles.first
+          : roles.firstWhere(
+              (role) => role.roleName.trim().toLowerCase() == requestedRole,
+              orElse: () => roles.first,
+            );
       roleId = selectedRole!.Id;
     }
 

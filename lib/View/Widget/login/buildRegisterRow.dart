@@ -15,7 +15,16 @@ Widget buildRegisterRow() {
       ),
       TextButton(
         onPressed: () {
-          Get.toNamed(Approutes.Signup);
+          final arguments = Get.arguments;
+          final accountType = arguments is Map
+              ? arguments['accountType']?.toString()
+              : null;
+          Get.toNamed(
+            Approutes.Signup,
+            arguments: accountType == null
+                ? null
+                : {'accountType': accountType},
+          );
         },
         child: ShaderMask(
           shaderCallback: (bounds) => LinearGradient(

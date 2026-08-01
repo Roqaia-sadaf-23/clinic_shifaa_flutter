@@ -2,8 +2,8 @@ import 'package:clinic_shifaa/generated/l10n.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'Bindings/initialBinding.dart';
-import 'core/class/AuthService.dart';
 import 'core/localization/translation.dart';
+import 'core/constant/Approutes.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -14,8 +14,6 @@ import 'routes.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initialServices();
-  await Get.putAsync<Myservices>(() async => await Myservices().init());
-  await AuthService.prepareSessionForStartup();
 
   /*  WidgetsFlutterBinding.ensureInitialized();
 
@@ -48,7 +46,7 @@ class MyApp extends StatelessWidget {
       ],
       supportedLocales: S.delegate.supportedLocales,
       getPages: routes,
-      initialRoute: '/',
+      initialRoute: Approutes.splash,
       ////SplashScreen(),
       //RegisterScreen(),
       // RegisterPage(),

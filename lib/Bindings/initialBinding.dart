@@ -15,9 +15,13 @@ class initialBinding extends Bindings {
     // Get.put(FavoriteControllerim());
   } */
   void dependencies() {
-    Get.putAsync<Myservices>(() async => await Myservices().init());
-    Get.put(ApiService());
-    Get.put(localController());
-    Get.lazyPut<RegisterController>(() => RegisterController(), fenix: true);
+    if (!Get.isRegistered<Myservices>()) {
+      Get.putAsync<Myservices>(() => Myservices().init());
+    }
+    if (!Get.isRegistered<ApiService>()) Get.put(ApiService());
+    if (!Get.isRegistered<localController>()) Get.put(localController());
+    if (!Get.isRegistered<RegisterController>()) {
+      Get.lazyPut<RegisterController>(RegisterController.new, fenix: true);
+    }
   }
 }

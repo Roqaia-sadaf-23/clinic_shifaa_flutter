@@ -155,24 +155,45 @@ void main() {
         appointmentDate: DateTime.now().add(const Duration(days: 1)),
         status: 'Pending',
       );
-      controller.paymentEligibleAppointmentIds.add(appointment.id);
+      controller.registerCreatedAppointment(appointment.id);
+      expect(controller.preparePayment(appointment), isTrue);
+      controller.selectPaymentMethod('Card');
 
-      final firstPayment = await controller.createPayment(
-        appointment: appointment,
-        paymentMethod: 'Card',
-        amount: 125.5,
-        note: '',
-      );
-      final repeatedPayment = await controller.createPayment(
-        appointment: appointment,
-        paymentMethod: 'Card',
-        amount: 125.5,
-        note: '',
-      );
+      final firstPayment = await controller.submitPayment(amount: 125.5);
+      final repeatedPayment = await controller.submitPayment(amount: 125.5);
 
       expect(firstPayment, 44);
       expect(repeatedPayment, isNull);
       expect(data.createCalls, 1);
+      controller.onClose();
+    },
+  );
+
+  test(
+    'failed payment retries the same appointment without rebooking',
+    () async {
+      final data = _RetryPaymentHomeData();
+      final controller = PatientHomeControllerImp(data, autoLoad: false);
+      final appointment = AppointmentModel(
+        id: 31,
+        doctorName: 'Sarah Ali',
+        doctorId: 14,
+        patientId: 9,
+        patientName: 'Patient',
+        appointmentDate: DateTime.now().add(const Duration(days: 1)),
+        status: 'Pending',
+      );
+      controller.registerCreatedAppointment(appointment.id);
+      expect(controller.preparePayment(appointment), isTrue);
+      controller.selectPaymentMethod('Cash');
+
+      final failedPayment = await controller.submitPayment(amount: 125.5);
+      final retriedPayment = await controller.submitPayment(amount: 125.5);
+
+      expect(failedPayment, isNull);
+      expect(retriedPayment, 45);
+      expect(data.paymentAppointmentIds, [31, 31]);
+      expect(data.appointmentCreateCalls, 0);
       controller.onClose();
     },
   );
@@ -193,6 +214,44 @@ class _PaymentHomeData extends HomeData {
     createCalls++;
     return const Right(44);
   }
+
+  @override
+  Future<Either<Failure, List<AppointmentModel>>>
+  getPatientAppointments() async => const Right([]);
+}
+
+class _RetryPaymentHomeData extends HomeData {
+  _RetryPaymentHomeData() : super(ApiService());
+
+  final List<int> paymentAppointmentIds = [];
+  int appointmentCreateCalls = 0;
+
+  @override
+  Future<Either<Failure, int>> createAppointment({
+    required int doctorId,
+    required DateTime appointmentDate,
+  }) async {
+    appointmentCreateCalls++;
+    return const Right(99);
+  }
+
+  @override
+  Future<Either<Failure, int>> createPayment({
+    required int appointmentId,
+    required String paymentMethod,
+    required double amount,
+    required String note,
+  }) async {
+    paymentAppointmentIds.add(appointmentId);
+    if (paymentAppointmentIds.length == 1) {
+      return const Left(NetworkFailure('Offline'));
+    }
+    return const Right(45);
+  }
+
+  @override
+  Future<Either<Failure, List<AppointmentModel>>>
+  getPatientAppointments() async => const Right([]);
 }
 
 class _BookingHomeData extends HomeData {
