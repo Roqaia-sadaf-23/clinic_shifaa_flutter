@@ -153,7 +153,7 @@ class HomeData {
     });
   }
 
-  Future<Either<Failure, bool>> createAppointment({
+  Future<Either<Failure, int>> createAppointment({
     required int doctorId,
     required DateTime appointmentDate,
   }) async {
@@ -162,14 +162,22 @@ class HomeData {
       'appointmentDate': appointmentDate.toIso8601String(),
     }, auth: true);
     return result.fold(Left.new, (response) {
+      if (response is int && response > 0) return Right(response);
       if (response is Map) {
         final map = Map<String, dynamic>.from(response);
         final isSuccess = _value(map, const ['isSuccess']);
         if (isSuccess == false) {
           return Left(ServerFailure(_resultError(map)));
         }
+        final value = _value(map, const ['value', 'result', 'data']);
+        final appointmentId = value is Map
+            ? _firstInt(value, const ['id', 'appointmentId'])
+            : int.tryParse(value?.toString().trim() ?? '');
+        if (appointmentId != null && appointmentId > 0) {
+          return Right(appointmentId);
+        }
       }
-      return const Right(true);
+      return const Left(ServerFailure('Invalid create appointment response.'));
     });
   }
 
@@ -177,10 +185,18 @@ class HomeData {
     PatientResourceType type, {
     int? patientId,
   }) async {
+    if (type == PatientResourceType.payments) {
+      return const Left(
+        ServerFailure(
+          'Patient payment information is not available from the API.',
+          statusCode: 501,
+        ),
+      );
+    }
     final url = switch (type) {
       PatientResourceType.medicalRecords => ApiLinks.medicalRecords,
       PatientResourceType.prescriptions => ApiLinks.prescriptions,
-      PatientResourceType.payments => ApiLinks.payments,
+      PatientResourceType.payments => throw StateError('Unreachable'),
     };
     final result = await _apiService.get(url, auth: true);
     return result.fold(Left.new, (response) {

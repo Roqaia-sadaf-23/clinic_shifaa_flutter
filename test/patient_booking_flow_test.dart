@@ -3,6 +3,7 @@ import 'package:clinic_shifaa/core/Error/Failure.dart';
 import 'package:clinic_shifaa/core/class/ApiService.dart';
 import 'package:clinic_shifaa/core/constant/ApiLinks.dart';
 import 'package:clinic_shifaa/data/datasource/remote/Home/HomeData.dart';
+import 'package:clinic_shifaa/data/model/AvailableSlotModel.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -79,6 +80,71 @@ void main() {
       (_) => fail('Expected a failed backend Result to remain a failure.'),
     );
   });
+
+  test(
+    'patient payment flow does not call the unsafe global payment list',
+    () async {
+      final api = _RecordingApiService(getResponse: const []);
+
+      final result = await HomeData(
+        api,
+      ).getPatientResource(PatientResourceType.payments, patientId: 9);
+
+      expect(result.isLeft, isTrue);
+      expect(api.lastGetUrl, isNull);
+    },
+  );
+
+  test(
+    'selected-doctor booking has independent slot and create state',
+    () async {
+      final slot = AvailableSlotModel(
+        startTime: DateTime.now().add(const Duration(days: 1)),
+        endTime: DateTime.now().add(const Duration(days: 1, minutes: 40)),
+      );
+      final data = _BookingHomeData(slot);
+      final controller = PatientBookingController(data, doctorId: 14);
+
+      await controller.loadAvailableSlots();
+      controller.selectSlot(slot);
+      final succeeded = await controller.bookSelectedSlot();
+
+      expect(succeeded, isTrue);
+      expect(controller.createdAppointmentId, 31);
+      expect(data.requestedDoctorId, 14);
+      expect(data.createdDoctorId, 14);
+      expect(data.createdDate, slot.startTime);
+      controller.onClose();
+    },
+  );
+}
+
+class _BookingHomeData extends HomeData {
+  _BookingHomeData(this.slot) : super(ApiService());
+
+  final AvailableSlotModel slot;
+  int? requestedDoctorId;
+  int? createdDoctorId;
+  DateTime? createdDate;
+
+  @override
+  Future<Either<Failure, List<AvailableSlotModel>>> getAvailableSlots({
+    required int doctorId,
+    required DateTime date,
+  }) async {
+    requestedDoctorId = doctorId;
+    return Right([slot]);
+  }
+
+  @override
+  Future<Either<Failure, int>> createAppointment({
+    required int doctorId,
+    required DateTime appointmentDate,
+  }) async {
+    createdDoctorId = doctorId;
+    createdDate = appointmentDate;
+    return const Right(31);
+  }
 }
 
 class _RecordingApiService extends ApiService {

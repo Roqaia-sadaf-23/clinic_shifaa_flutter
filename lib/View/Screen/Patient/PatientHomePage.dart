@@ -1214,9 +1214,24 @@ class _PatientDoctorDetailsSheet extends StatelessWidget {
   Future<void> _bookAppointment() async {
     final succeeded = await booking.bookSelectedSlot();
     if (!succeeded) return;
-    await patientController.completePatientBooking();
+    final appointmentId = booking.createdAppointmentId;
+    if (appointmentId == null) return;
+    final appointment = await patientController.completePatientBooking(
+      appointmentId,
+    );
     if (Get.isBottomSheetOpen == true) Get.back<void>();
     Get.snackbar('success'.tr, 'appointmentBooked'.tr);
+    if (appointment != null) {
+      await Future<void>.delayed(Duration.zero);
+      final context = Get.context;
+      if (context != null && context.mounted) {
+        await showPatientAppointmentDetails(
+          context,
+          appointment,
+          patientController,
+        );
+      }
+    }
   }
 }
 
@@ -1300,6 +1315,38 @@ Future<void> showPatientAppointmentDetails(
                     'notes'.tr,
                     appointment.appointmentNotes!,
                   ),
+                const SizedBox(height: 10),
+                Divider(color: DoctorHomeColors.border(context)),
+                const SizedBox(height: 10),
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    'payment'.tr,
+                    style: TextStyle(
+                      color: DoctorHomeColors.text(context),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.info_outline_rounded,
+                      color: Appcolor.textLight,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'appointmentPaymentUnavailable'.tr,
+                        style: const TextStyle(color: Appcolor.textLight),
+                      ),
+                    ),
+                  ],
+                ),
                 if (current.canCancelAppointment(appointment)) ...[
                   const SizedBox(height: 16),
                   SizedBox(

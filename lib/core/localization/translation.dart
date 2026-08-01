@@ -24,6 +24,10 @@ class MyTranslation extends Translations {
       'availableAppointmentsLoadError':
           'Could not load the available appointments.',
       'appointmentBooked': 'Appointment booked successfully.',
+      'payment': 'Payment',
+      'payNow': 'Pay now',
+      'appointmentPaymentUnavailable':
+          'Payment information is not available for this appointment yet.',
       'doctors': 'Doctors',
       'doctorsLoadError': 'Could not load doctors.',
       'noDoctorsFound': 'No doctors found.',
@@ -221,6 +225,10 @@ class MyTranslation extends Translations {
       'noAvailableAppointments': 'لا توجد مواعيد متاحة في هذا التاريخ.',
       'availableAppointmentsLoadError': 'تعذر تحميل المواعيد المتاحة.',
       'appointmentBooked': 'تم حجز الموعد بنجاح.',
+      'payment': 'الدفع',
+      'payNow': 'الدفع الآن',
+      'appointmentPaymentUnavailable':
+          'معلومات الدفع غير متاحة لهذا الموعد حتى الآن.',
       'doctors': 'الأطباء',
       'doctorsLoadError': 'تعذر تحميل الأطباء.',
       'noDoctorsFound': 'لم يتم العثور على أطباء.',

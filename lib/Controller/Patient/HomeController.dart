@@ -199,9 +199,14 @@ class PatientHomeControllerImp extends GetxController {
     return succeeded;
   }
 
-  Future<void> completePatientBooking() async {
+  Future<AppointmentModel?> completePatientBooking(int appointmentId) async {
     await refreshAppointments();
-    if (!_inactive) showAppointments();
+    if (_inactive) return null;
+    showAppointments();
+    for (final appointment in appointments) {
+      if (appointment.id == appointmentId) return appointment;
+    }
+    return null;
   }
 
   void selectTab(int index) {

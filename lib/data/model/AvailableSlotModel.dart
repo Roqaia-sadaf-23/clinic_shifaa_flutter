@@ -1,3 +1,5 @@
+// ignore_for_file: file_names
+
 class AvailableSlotModel {
   const AvailableSlotModel({required this.startTime, required this.endTime});
 

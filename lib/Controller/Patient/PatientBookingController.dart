@@ -1,3 +1,5 @@
+// ignore_for_file: file_names
+
 import 'package:get/get.dart';
 
 import '../../core/Error/Failure.dart';
@@ -17,6 +19,7 @@ class PatientBookingController extends GetxController {
   Failure? bookingFailure;
   bool isLoadingSlots = false;
   bool isBooking = false;
+  int? createdAppointmentId;
 
   @override
   void onInit() {
@@ -73,6 +76,7 @@ class PatientBookingController extends GetxController {
     if (slot == null || isBooking) return false;
     isBooking = true;
     bookingFailure = null;
+    createdAppointmentId = null;
     update();
 
     final result = await _homeData.createAppointment(
@@ -81,8 +85,9 @@ class PatientBookingController extends GetxController {
     );
     if (isClosed) return false;
     var succeeded = false;
-    result.fold((failure) => bookingFailure = failure, (_) {
+    result.fold((failure) => bookingFailure = failure, (appointmentId) {
       succeeded = true;
+      createdAppointmentId = appointmentId;
       bookingFailure = null;
     });
     isBooking = false;
