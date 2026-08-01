@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../Controller/Doctor/DoctorDetailsController.dart';
-import '../../../core/constant/ApiLinks.dart';
+import '../../Widget/Custome/AppProfileImage.dart';
 
 class DoctorDetailsPage extends StatelessWidget {
   const DoctorDetailsPage({super.key});
@@ -88,12 +88,17 @@ class DoctorDetailsPage extends StatelessWidget {
                       ),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(24),
-                        child: Image.network(
-                          ApiLinks.images + controller.doctors!.imagePath,
-
-                          height: 190,
-                          width: 190,
-                          fit: BoxFit.cover,
+                        child: AppProfileImage(
+                          imagePath: controller.doctors!.imagePath,
+                          size: 190,
+                          borderRadius: BorderRadius.circular(24),
+                          backgroundColor: const Color(0xffEAF3FF),
+                          loadingIndicatorColor: Colors.blue,
+                          fallback: const Icon(
+                            Icons.medical_services_outlined,
+                            color: Colors.blue,
+                            size: 72,
+                          ),
                         ),
                       ),
                     ],

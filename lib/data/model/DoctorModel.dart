@@ -1,3 +1,5 @@
+import '../../core/helpers/image_path_helper.dart';
+
 class DoctorDetailsModel {
   final int id;
   final int personId;
@@ -34,13 +36,13 @@ class DoctorDetailsModel {
       note: _text(_value(json, 'note')),
       specialization:
           _text(_firstValue(json, const ['specialization', 'specialty'])) ?? '',
-      imagePath: _text(_value(json, 'imagePath')),
+      imagePath: normalizeImagePath(_text(_value(json, 'imagePath'))),
       userId: _int(_value(json, 'userId')) ?? 0,
     );
   }
 
   String get fullName => '$firstName $lastName'.trim();
-  bool get hasImage => imagePath?.trim().isNotEmpty == true;
+  bool get hasImage => isValidImagePath(imagePath);
 
   static List<DoctorDetailsModel> listFromResponse(Object? response) {
     final values = _responseList(response);

@@ -2,7 +2,7 @@ import '/View/Widget/Home/Custombuttonappbar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../Controller/Home/HomeScreen_controller.dart';
+import '../../../Controller/Patient/HomeScreen_controller.dart';
 
 class Custombuttomappbarhome extends GetView<HomeScreenOfPatint_controllerImp> {
   const Custombuttomappbarhome({super.key});

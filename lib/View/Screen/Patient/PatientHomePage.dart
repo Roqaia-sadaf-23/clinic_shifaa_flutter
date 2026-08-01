@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
-import '../../../Controller/Home/HomeController.dart';
+import '../../../Controller/Patient/HomeController.dart';
 import '../../../core/class/AuthService.dart';
-import '../../../core/constant/ApiLinks.dart';
 import '../../../core/constant/Appcolor.dart';
 import '../../../core/constant/Approutes.dart';
 import '../../../data/datasource/remote/Home/HomeData.dart';
 import '../../../data/model/AppointmentModel.dart';
 import '../../../data/model/DoctorModel.dart';
 import '../../../data/model/PatientHomeProfileModel.dart';
+import '../../Widget/Custome/AppProfileImage.dart';
 import '../Doctor/DoctorHomePage.dart';
 
 class PatientHomePage extends StatelessWidget {
@@ -33,8 +33,7 @@ class PatientHomePage extends StatelessWidget {
     return switch (controller.selectedTab) {
       1 => PatientDoctorsView(controller: controller),
       2 => PatientAppointmentsView(controller: controller),
-      3 => const PatientNotificationsView(),
-      4 => PatientProfileView(controller: controller),
+      3 => PatientProfileView(controller: controller),
       _ => PatientDashboardView(controller: controller),
     };
   }
@@ -192,7 +191,6 @@ class PatientAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = patientImageUrl(patient?.imagePath);
     return Container(
       width: diameter,
       height: diameter,
@@ -207,28 +205,12 @@ class PatientAvatar extends StatelessWidget {
           shape: BoxShape.circle,
           color: Appcolor.secondary,
         ),
-        child: ClipOval(
-          child: imageUrl == null
-              ? _PatientInitials(patient: patient)
-              : Image.network(
-                  imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => _PatientInitials(patient: patient),
-                  loadingBuilder: (_, child, progress) => progress == null
-                      ? child
-                      : const ColoredBox(
-                          color: Appcolor.primary,
-                          child: Center(
-                            child: SizedBox.square(
-                              dimension: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Appcolor.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                ),
+        child: AppProfileImage(
+          imagePath: patient?.imagePath,
+          size: diameter - 12,
+          backgroundColor: Appcolor.primary,
+          loadingIndicatorColor: Appcolor.white,
+          fallback: _PatientInitials(patient: patient),
         ),
       ),
     );
@@ -529,17 +511,16 @@ class _DoctorAvatar extends StatelessWidget {
   final DoctorDetailsModel doctor;
 
   @override
-  Widget build(BuildContext context) {
-    final imageUrl = patientImageUrl(doctor.imagePath);
-    return CircleAvatar(
-      radius: 28,
-      backgroundColor: Appcolor.primary,
-      backgroundImage: imageUrl == null ? null : NetworkImage(imageUrl),
-      child: imageUrl == null
-          ? const Icon(Icons.medical_services_outlined, color: Appcolor.white)
-          : null,
-    );
-  }
+  Widget build(BuildContext context) => AppProfileImage(
+    imagePath: doctor.imagePath,
+    size: 56,
+    backgroundColor: Appcolor.primary,
+    loadingIndicatorColor: Appcolor.white,
+    fallback: const Icon(
+      Icons.medical_services_outlined,
+      color: Appcolor.white,
+    ),
+  );
 }
 
 class PatientAppointmentCard extends StatelessWidget {
@@ -554,24 +535,20 @@ class PatientAppointmentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final doctorImageUrl = patientImageUrl(appointment.doctorImage);
     return SurfaceCard(
       child: Column(
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 27,
+              AppProfileImage(
+                imagePath: appointment.doctorImage,
+                size: 54,
                 backgroundColor: Appcolor.primary,
-                backgroundImage: doctorImageUrl == null
-                    ? null
-                    : NetworkImage(doctorImageUrl),
-                child: doctorImageUrl == null
-                    ? const Icon(
-                        Icons.medical_services_outlined,
-                        color: Appcolor.white,
-                      )
-                    : null,
+                loadingIndicatorColor: Appcolor.white,
+                fallback: const Icon(
+                  Icons.medical_services_outlined,
+                  color: Appcolor.white,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1006,7 +983,7 @@ class PatientBottomNavigation extends StatelessWidget {
         selectedIcon: const Icon(Icons.calendar_month_rounded),
         label: 'appointments'.tr,
       ),
-      NavigationDestination(
+      /*  NavigationDestination(
         icon: Badge(
           isLabelVisible: unreadCount > 0,
           label: Text('$unreadCount'),
@@ -1018,7 +995,7 @@ class PatientBottomNavigation extends StatelessWidget {
           child: const Icon(Icons.notifications_rounded),
         ),
         label: 'notifications'.tr,
-      ),
+      ), */
       NavigationDestination(
         icon: const Icon(Icons.person_outline_rounded),
         selectedIcon: const Icon(Icons.person_rounded),
@@ -1191,11 +1168,4 @@ String _appointmentDoctorName(AppointmentModel appointment) {
     return name;
   }
   return '${'doctorTitle'.tr} $name';
-}
-
-String? patientImageUrl(String? value) {
-  final path = value?.trim();
-  if (path == null || path.isEmpty) return null;
-  final uri = Uri.tryParse(path);
-  return uri != null && uri.hasScheme ? path : '${ApiLinks.images}$path';
 }

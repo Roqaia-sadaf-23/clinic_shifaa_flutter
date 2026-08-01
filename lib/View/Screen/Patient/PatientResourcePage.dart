@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
-import '../../../Controller/Home/HomeController.dart';
+import '../../../Controller/Patient/HomeController.dart';
 import '../../../core/constant/Appcolor.dart';
 import '../../../data/datasource/remote/Home/HomeData.dart';
 import '../Doctor/DoctorHomePage.dart';

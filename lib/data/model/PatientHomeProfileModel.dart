@@ -1,5 +1,7 @@
 // ignore_for_file: file_names
 
+import '../../core/helpers/image_path_helper.dart';
+
 class PatientHomeProfileModel {
   const PatientHomeProfileModel({
     required this.userId,
@@ -26,7 +28,7 @@ class PatientHomeProfileModel {
   final Object? gender;
 
   String get fullName => '$firstName $lastName'.trim();
-  bool get hasImage => imagePath?.trim().isNotEmpty == true;
+  bool get hasImage => isValidImagePath(imagePath);
 
   factory PatientHomeProfileModel.fromJson(
     Map<String, dynamic> json, {
@@ -45,7 +47,9 @@ class PatientHomeProfileModel {
           _text(_value(json, 'lastName')) ??
           (parts.length < 2 ? '' : parts.skip(1).join(' ')),
       email: _text(_value(json, 'email')),
-      imagePath: _text(_firstValue(json, const ['imagePath', 'patientImage'])),
+      imagePath: normalizeImagePath(
+        _text(_firstValue(json, const ['imagePath', 'patientImage'])),
+      ),
       bloodType: _text(_value(json, 'bloodType')),
       age: _int(_value(json, 'age')),
       gender: _value(json, 'gender'),

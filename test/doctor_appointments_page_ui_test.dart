@@ -207,7 +207,10 @@ void main() {
   test('patient image paths are safe and use the existing image endpoint', () {
     expect(doctorPatientImageUrl(null), isNull);
     expect(doctorPatientImageUrl(''), isNull);
+    expect(doctorPatientImageUrl('   '), isNull);
+    expect(doctorPatientImageUrl('string'), isNull);
     expect(doctorPatientImageUrl('test'), isNull);
+    expect(doctorPatientImageUrl('null'), isNull);
     expect(doctorPatientImageUrl('invalid'), isNull);
     expect(
       doctorPatientImageUrl('02ba3c96-1738-47d7-8d88-fb750869302b.png'),

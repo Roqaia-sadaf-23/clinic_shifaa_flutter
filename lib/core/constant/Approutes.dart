@@ -8,7 +8,7 @@ class Approutes {
   static const String ForgetPassword = '/ForgetPassword';
   static const String VarfiyCode = '/varifyCode';
   static const String ResetPassword = '/ResetPassword';
-  static const String SuccessReSetPassword = '/SuccessReSetPassword';
+  static const String Notvications = '/Notvications';
   static const String SuccessSignup = '/SuccessSignup';
   static const String VarfiyCodeSginUp = '/VarfiyCodeSginUp';
   //OnBoarding

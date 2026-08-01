@@ -1,3 +1,5 @@
+import '../../core/helpers/image_path_helper.dart';
+
 class CurrentDoctorModel {
   const CurrentDoctorModel({
     required this.id,
@@ -24,7 +26,7 @@ class CurrentDoctorModel {
   final int userId;
 
   String get fullName => '$firstName $lastName'.trim();
-  bool get hasImage => imagePath?.trim().isNotEmpty == true;
+  bool get hasImage => isValidImagePath(imagePath);
 
   factory CurrentDoctorModel.fromJson(Map<String, dynamic> json) =>
       CurrentDoctorModel(
@@ -36,7 +38,7 @@ class CurrentDoctorModel {
         note: _nullableString(json['note']),
         experienceYears: _requiredInt(json, 'experienceYears'),
         specialization: _requiredString(json, 'specialization'),
-        imagePath: _nullableString(json['imagePath']),
+        imagePath: normalizeImagePath(_nullableString(json['imagePath'])),
         userId: _requiredInt(json, 'userId'),
       );
 

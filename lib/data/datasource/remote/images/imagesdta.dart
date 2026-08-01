@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../../core/Error/Failure.dart';
 import '../../../../core/class/ApiService.dart';
 import '../../../../core/constant/ApiLinks.dart';
+import '../../../../core/helpers/image_path_helper.dart';
 
 class ImagesData {
   ImagesData([ApiService? apiService])
@@ -34,13 +35,13 @@ class ImagesData {
           ServerFailure('Invalid image upload response from the server.'),
         );
       }
-      final imageName = json['imageName'];
-      if (imageName is! String || imageName.trim().isEmpty) {
+      final imageName = normalizeImagePath(json['imageName']?.toString());
+      if (imageName == null) {
         return const Left(
           ServerFailure('The server did not return an uploaded image name.'),
         );
       }
-      return Right(imageName.trim());
+      return Right(imageName);
     });
   }
 }

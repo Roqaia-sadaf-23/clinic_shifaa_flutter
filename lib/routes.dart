@@ -10,8 +10,9 @@ import 'View/Screen/Auth/Register/RegisterScreen.dart';
 import 'View/Screen/CompleteProfile/CompleteProfileScreen.dart';
 import 'View/Screen/Doctor/DoctorHomePage.dart';
 import 'View/Screen/Doctor/DoctorEditProfilePage.dart';
-import 'View/Screen/Home/PatientHomePage.dart';
-import 'View/Screen/Home/PatientResourcePage.dart';
+import 'View/Screen/Notvications/Notvications.dart';
+import 'View/Screen/Patient/PatientHomePage.dart';
+import 'View/Screen/Patient/PatientResourcePage.dart';
 import 'View/Screen/Appointment/AppointmentDetailsPage.dart';
 import 'View/Screen/Doctor/CreateMedicalRecordPage.dart';
 import 'View/Screen/Doctor/CreatePrescriptionPage.dart';
@@ -99,6 +100,7 @@ final List<GetPage<dynamic>> routes = [
     page: () => const CreatePrescriptionPage(),
     binding: CreatePrescriptionBinding(),
   ),
+  GetPage(name: Approutes.Notvications, page: () => const Notvications()),
   /*   GetPage(name: Approutes.VarfiyCode, page: () => const VerfiyCode()),
   GetPage(name: Approutes.ResetPassword, page: () => const Resetpassword()),
   GetPage(

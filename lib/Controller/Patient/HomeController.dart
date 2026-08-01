@@ -155,15 +155,22 @@ class PatientHomeControllerImp extends GetxController {
   }
 
   void selectTab(int index) {
-    if (_inactive || index < 0 || index > 4 || index == selectedTab) return;
+    if (_inactive || index < 0 || index > 3 || index == selectedTab) {
+      return;
+    }
+
     selectedTab = index;
     update();
   }
 
+  void showHome() => selectTab(0);
   void findDoctor() => selectTab(1);
   void showAppointments() => selectTab(2);
-  void showNotifications() => selectTab(3);
-  void showProfile() => selectTab(4);
+  void showProfile() => selectTab(3);
+
+  void showNotifications() {
+    Get.toNamed(Approutes.Notvications);
+  }
 
   void updateSearch(String value) {
     if (searchQuery == value) return;

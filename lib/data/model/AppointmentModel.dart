@@ -1,4 +1,5 @@
 import 'DoctorAppointmentModel.dart';
+import '../../core/helpers/image_path_helper.dart';
 
 class AppointmentModel implements AppointmentDisplayData {
   @override
@@ -48,8 +49,8 @@ class AppointmentModel implements AppointmentDisplayData {
       doctorSpecialization: _nullableString(
         _firstValue(json, const ['doctorSpecialization', 'specialization']),
       ),
-      doctorImage: _nullableString(
-        _firstValue(json, const ['doctorImage', 'imagePath']),
+      doctorImage: normalizeImagePath(
+        _nullableString(_firstValue(json, const ['doctorImage', 'imagePath'])),
       ),
       patientName: _string(_value(json, 'patientName'), 'patientName'),
       appointmentDate: _date(

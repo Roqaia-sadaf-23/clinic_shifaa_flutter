@@ -1,3 +1,5 @@
+import '../../core/helpers/image_path_helper.dart';
+
 class RegisterModel {
   String? firstName;
   String? lastName;
@@ -48,7 +50,7 @@ class RegisterModel {
       address: json['address'],
       gender: json['gender'],
       nationalityCountryId: json['nationalityCountryId'],
-      imagePath: json['imagePath'],
+      imagePath: normalizeImagePath(json['imagePath']?.toString()),
       note: json['note'],
     );
   }

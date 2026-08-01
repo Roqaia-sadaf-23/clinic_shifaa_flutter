@@ -1,6 +1,7 @@
 import '../../../../core/Error/Failure.dart';
 import '../../../../core/class/ApiService.dart';
 import '../../../../core/constant/ApiLinks.dart';
+import '../../../../core/helpers/image_path_helper.dart';
 import '../../../model/CurrentDoctorModel.dart';
 
 class DoctorData {
@@ -39,13 +40,13 @@ class DoctorData {
           ServerFailure('Invalid profile image response from the server.'),
         );
       }
-      final savedPath = json['imagePath'];
-      if (savedPath is! String || savedPath.trim().isEmpty) {
+      final savedPath = normalizeImagePath(json['imagePath']?.toString());
+      if (savedPath == null) {
         return const Left(
           ServerFailure('The server did not confirm the profile image.'),
         );
       }
-      return Right(savedPath.trim());
+      return Right(savedPath);
     });
   }
 

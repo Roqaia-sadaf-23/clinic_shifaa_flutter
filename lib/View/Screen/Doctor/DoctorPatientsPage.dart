@@ -3,10 +3,10 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../../Controller/Doctor/DoctorPatientsController.dart';
-import '../../../core/constant/ApiLinks.dart';
 import '../../../core/constant/Appcolor.dart';
 import '../../../core/constant/Approutes.dart';
 import '../../../data/model/DoctorPatientModel.dart';
+import '../../Widget/Custome/AppProfileImage.dart';
 import 'DoctorHomePage.dart';
 
 class DoctorPatientsPage extends StatelessWidget {
@@ -66,12 +66,6 @@ class _PatientCard extends StatelessWidget {
       if (patient.lastAppointmentDate != null)
         '${'lastAppointment'.tr}: ${DateFormat.yMd(Get.locale?.languageCode).format(patient.lastAppointmentDate!.toLocal())}',
     ];
-    final image = patient.patientImage;
-    final url = image == null
-        ? null
-        : image.startsWith('http')
-        ? image
-        : '${ApiLinks.images}$image';
     return Card(
       color: DoctorHomeColors.surface(context),
       clipBehavior: Clip.antiAlias,
@@ -85,7 +79,7 @@ class _PatientCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _PatientImage(url: url),
+              _PatientImage(imagePath: patient.patientImage),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -113,27 +107,15 @@ class _PatientCard extends StatelessWidget {
 }
 
 class _PatientImage extends StatelessWidget {
-  const _PatientImage({required this.url});
-  final String? url;
+  const _PatientImage({required this.imagePath});
+  final String? imagePath;
 
   @override
-  Widget build(BuildContext context) {
-    final placeholder = Container(
-      width: 56,
-      height: 56,
-      color: Appcolor.accent.withValues(alpha: .12),
-      alignment: Alignment.center,
-      child: const Icon(Icons.person_rounded, color: Appcolor.accent),
-    );
-    if (url == null) return ClipOval(child: placeholder);
-    return ClipOval(
-      child: Image.network(
-        url!,
-        width: 56,
-        height: 56,
-        fit: BoxFit.cover,
-        errorBuilder: (_, _, _) => placeholder,
-      ),
-    );
-  }
+  Widget build(BuildContext context) => AppProfileImage(
+    imagePath: imagePath,
+    size: 56,
+    backgroundColor: Appcolor.accent.withValues(alpha: .12),
+    loadingIndicatorColor: Appcolor.accent,
+    fallback: const Icon(Icons.person_rounded, color: Appcolor.accent),
+  );
 }

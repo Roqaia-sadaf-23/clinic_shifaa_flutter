@@ -7,9 +7,10 @@ import 'package:intl/intl.dart';
 
 import '../../../Controller/Doctor/DoctorAppointmentsController.dart';
 import '../../../core/constant/Appcolor.dart';
-import '../../../core/constant/ApiLinks.dart';
 import '../../../core/constant/Approutes.dart';
+import '../../../core/helpers/image_path_helper.dart';
 import '../../../data/model/DoctorAppointmentModel.dart';
+import '../../Widget/Custome/AppProfileImage.dart';
 import 'DoctorHomePage.dart';
 
 class DoctorAppointmentsPage extends StatefulWidget {
@@ -787,7 +788,6 @@ class PatientAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = doctorPatientImageUrl(imagePath);
     return Container(
       width: 50,
       height: 50,
@@ -798,41 +798,22 @@ class PatientAvatar extends StatelessWidget {
       ),
       alignment: Alignment.center,
       clipBehavior: Clip.antiAlias,
-      child: imageUrl == null
-          ? const Icon(Icons.person_rounded, color: Appcolor.primary, size: 26)
-          : Image.network(
-              imageUrl,
-              width: 50,
-              height: 50,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => const Icon(
-                Icons.person_rounded,
-                color: Appcolor.primary,
-                size: 26,
-              ),
-            ),
+      child: AppProfileImage(
+        imagePath: imagePath,
+        size: 50,
+        loadingIndicatorColor: Appcolor.primary,
+        fallback: const Icon(
+          Icons.person_rounded,
+          color: Appcolor.primary,
+          size: 26,
+        ),
+      ),
     );
   }
 }
 
 String? doctorPatientImageUrl(String? imagePath) {
-  final value = imagePath?.trim();
-  if (value == null ||
-      value.isEmpty ||
-      value.toLowerCase() == 'test' ||
-      !RegExp(
-        r'\.(png|jpe?g|webp|gif)$',
-        caseSensitive: false,
-      ).hasMatch(value)) {
-    return null;
-  }
-  final uri = Uri.tryParse(value);
-  if (uri != null &&
-      uri.hasScheme &&
-      (uri.scheme == 'http' || uri.scheme == 'https')) {
-    return value;
-  }
-  return '${ApiLinks.images}${Uri.encodeComponent(value)}';
+  return imageUrlForPath(imagePath);
 }
 
 class AppointmentStatusBadge extends StatelessWidget {

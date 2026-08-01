@@ -1,5 +1,5 @@
-import 'package:clinic_shifaa/Controller/Home/HomeController.dart';
-import 'package:clinic_shifaa/View/Screen/Home/PatientHomePage.dart';
+import 'package:clinic_shifaa/Controller/Patient/HomeController.dart';
+import 'package:clinic_shifaa/View/Screen/Patient/PatientHomePage.dart';
 import 'package:clinic_shifaa/core/Error/Failure.dart';
 import 'package:clinic_shifaa/core/class/ApiService.dart';
 import 'package:clinic_shifaa/core/localization/translation.dart';

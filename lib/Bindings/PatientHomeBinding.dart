@@ -2,7 +2,7 @@
 
 import 'package:get/get.dart';
 
-import '../Controller/Home/HomeController.dart';
+import '../Controller/Patient/HomeController.dart';
 import '../core/class/ApiService.dart';
 import '../data/datasource/remote/Home/HomeData.dart';
 

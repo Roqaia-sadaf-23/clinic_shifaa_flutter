@@ -1,3 +1,5 @@
+import '../../core/helpers/image_path_helper.dart';
+
 class DoctorPatientModel {
   const DoctorPatientModel({
     required this.patientId,
@@ -19,7 +21,7 @@ class DoctorPatientModel {
     return DoctorPatientModel(
       patientId: _requiredInt(json['patientId'], 'patientId'),
       patientName: _requiredText(json['patientName'], 'patientName'),
-      patientImage: _text(json['patientImage']),
+      patientImage: normalizeImagePath(_text(json['patientImage'])),
       bloodType: _text(json['bloodType']),
       appointmentsCount: _requiredInt(
         json['appointmentsCount'],

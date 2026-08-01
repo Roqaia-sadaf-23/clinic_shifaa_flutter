@@ -7,9 +7,9 @@ import '../../../Controller/Doctor/DoctorAppointmentsController.dart';
 import '../../../Controller/Doctor/DoctorHome_Controller.dart';
 import '../../../Controller/Doctor/DoctorPatientsController.dart';
 import '../../../Controller/Doctor/DoctorProfileController.dart';
-import '../../../core/constant/ApiLinks.dart';
 import '../../../core/constant/Appcolor.dart';
 import '../../../data/model/CurrentDoctorModel.dart';
+import '../../Widget/Custome/AppProfileImage.dart';
 
 class DoctorProfileView extends StatelessWidget {
   const DoctorProfileView({super.key});
@@ -435,30 +435,12 @@ class DoctorProfileAvatar extends StatelessWidget {
   }
 
   Widget _serverImage() {
-    if (!doctor.hasImage) return _ProfileInitials(doctor: doctor);
-    final path = doctor.imagePath!;
-    final uri = Uri.tryParse(path);
-    final url = uri != null && uri.hasScheme ? path : '${ApiLinks.images}$path';
-    return Image.network(
-      url,
-      width: diameter - 14,
-      height: diameter - 14,
-      fit: BoxFit.cover,
-      errorBuilder: (_, _, _) => _ProfileInitials(doctor: doctor),
-      loadingBuilder: (_, child, progress) => progress == null
-          ? child
-          : const ColoredBox(
-              color: Appcolor.primary,
-              child: Center(
-                child: SizedBox.square(
-                  dimension: 22,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Appcolor.white,
-                  ),
-                ),
-              ),
-            ),
+    return AppProfileImage(
+      imagePath: doctor.imagePath,
+      size: diameter - 14,
+      backgroundColor: Appcolor.primary,
+      loadingIndicatorColor: Appcolor.white,
+      fallback: _ProfileInitials(doctor: doctor),
     );
   }
 }

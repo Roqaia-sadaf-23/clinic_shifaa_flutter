@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
+
+import '../Custome/AppProfileImage.dart';
 
 class DoctorHeader extends StatelessWidget {
   const DoctorHeader({super.key});
@@ -31,9 +32,16 @@ class DoctorHeader extends StatelessWidget {
             shape: BoxShape.circle,
             border: Border.all(color: Color(0xff0D6EFD), width: 2),
           ),
-          child: const CircleAvatar(
-            radius: 28,
-            backgroundImage: NetworkImage("https://i.pravatar.cc/150?img=12"),
+          child: const AppProfileImage(
+            imagePath: 'https://i.pravatar.cc/150?img=12',
+            size: 56,
+            backgroundColor: Color(0xffEAF3FF),
+            loadingIndicatorColor: Color(0xff0D6EFD),
+            fallback: Icon(
+              Icons.medical_services_outlined,
+              color: Color(0xff0D6EFD),
+              size: 28,
+            ),
           ),
         ),
       ],

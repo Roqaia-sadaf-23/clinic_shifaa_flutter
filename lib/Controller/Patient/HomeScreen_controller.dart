@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../View/Screen/Home/PatientHomePage.dart';
+import '../../View/Screen/Patient/PatientHomePage.dart';
 import '../../View/Screen/Notvications/Notvications.dart';
 import '../../View/Screen/Profile/Profile.dart';
 import '../../View/Screen/Setting/Setting.dart';

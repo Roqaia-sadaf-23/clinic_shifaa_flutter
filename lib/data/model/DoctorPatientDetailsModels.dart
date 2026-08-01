@@ -1,4 +1,5 @@
 import 'DoctorAppointmentModel.dart';
+import '../../core/helpers/image_path_helper.dart';
 
 class CreateMedicalRecordRequest {
   const CreateMedicalRecordRequest({
@@ -140,7 +141,7 @@ class DoctorPatientAppointmentDetailsModel implements AppointmentDisplayData {
       ),
       patientId: _requiredInt(_value(json, 'patientId'), 'patientId'),
       patientName: _text(_value(json, 'patientName')) ?? '',
-      patientImage: _text(_value(json, 'patientImage')),
+      patientImage: normalizeImagePath(_text(_value(json, 'patientImage'))),
       bloodType: _text(_value(json, 'bloodType')),
       age: _int(_value(json, 'age')),
       phoneNumber: _text(_value(json, 'phoneNumber')),

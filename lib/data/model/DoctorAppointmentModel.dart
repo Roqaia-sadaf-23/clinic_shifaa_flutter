@@ -1,3 +1,5 @@
+import '../../core/helpers/image_path_helper.dart';
+
 abstract interface class AppointmentDisplayData {
   int get id;
   String get patientName;
@@ -41,7 +43,7 @@ class DoctorAppointmentModel implements AppointmentDisplayData {
       id: _requiredInt(_value(json, 'id'), 'id'),
       patientId: _requiredInt(_value(json, 'patientId'), 'patientId'),
       patientName: _string(_value(json, 'patientName')) ?? '',
-      patientImage: _string(_value(json, 'patientImage')),
+      patientImage: normalizeImagePath(_string(_value(json, 'patientImage'))),
       appointmentDate: _requiredDate(
         _value(json, 'appointmentDate'),
         'appointmentDate',

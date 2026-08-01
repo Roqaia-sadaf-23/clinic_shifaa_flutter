@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../Controller/Doctor/DoctorHome_Controller.dart';
-import '../../../core/constant/ApiLinks.dart';
 import '../../../core/constant/Appcolor.dart';
 import '../../../core/constant/Approutes.dart';
 import '../../../data/model/AppointmentModel.dart';
 import '../../../data/model/CurrentDoctorModel.dart';
 import '../../../data/model/DoctorAppointmentSummary.dart';
+import '../../Widget/Custome/AppProfileImage.dart';
 import 'DoctorProfilePage.dart';
 import 'DoctorAppointmentsPage.dart';
 import 'DoctorPatientsPage.dart';
@@ -244,30 +244,12 @@ class DoctorAvatar extends StatelessWidget {
   );
 
   Widget _image() {
-    if (!doctor.hasImage) return InitialsAvatar(doctor: doctor);
-    final path = doctor.imagePath!;
-    final uri = Uri.tryParse(path);
-    final url = uri != null && uri.hasScheme ? path : '${ApiLinks.images}$path';
-    return Image.network(
-      url,
-      width: diameter - 12,
-      height: diameter - 12,
-      fit: BoxFit.cover,
-      errorBuilder: (_, _, _) => InitialsAvatar(doctor: doctor),
-      loadingBuilder: (_, child, progress) => progress == null
-          ? child
-          : const ColoredBox(
-              color: Appcolor.primary,
-              child: Center(
-                child: SizedBox.square(
-                  dimension: 22,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Appcolor.white,
-                  ),
-                ),
-              ),
-            ),
+    return AppProfileImage(
+      imagePath: doctor.imagePath,
+      size: diameter - 12,
+      backgroundColor: Appcolor.primary,
+      loadingIndicatorColor: Appcolor.white,
+      fallback: InitialsAvatar(doctor: doctor),
     );
   }
 }

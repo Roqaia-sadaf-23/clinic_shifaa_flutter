@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../Custome/AppProfileImage.dart';
+
 class DoctorCard extends StatelessWidget {
   final String doctorName;
   final String specialty;
@@ -29,7 +31,17 @@ class DoctorCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Icon(Icons.bookmark_border),
-              CircleAvatar(radius: 35, backgroundImage: NetworkImage(image)),
+              AppProfileImage(
+                imagePath: image,
+                size: 70,
+                backgroundColor: const Color(0xffEAF3FF),
+                loadingIndicatorColor: const Color(0xff0057FF),
+                fallback: const Icon(
+                  Icons.medical_services_outlined,
+                  size: 34,
+                  color: Color(0xff0057FF),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 15),
