@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../../Controller/Patient/HomeController.dart';
+import '../../../Controller/Patient/PatientBookingController.dart';
 import '../../../core/class/AuthService.dart';
 import '../../../core/constant/Appcolor.dart';
 import '../../../core/constant/Approutes.dart';
@@ -372,7 +373,8 @@ class PatientUpcomingSection extends StatelessWidget {
         else
           PatientAppointmentCard(
             appointment: appointment,
-            onTap: () => showPatientAppointmentDetails(context, appointment),
+            onTap: () =>
+                showPatientAppointmentDetails(context, appointment, controller),
           ),
       ],
     );
@@ -438,7 +440,8 @@ class PatientDoctorsSection extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 10),
               child: PatientDoctorCard(
                 doctor: doctor,
-                onTap: () => showPatientDoctorDetails(context, doctor),
+                onTap: () =>
+                    showPatientDoctorDetails(context, doctor, controller),
               ),
             ),
       ],
@@ -740,7 +743,11 @@ class PatientDoctorsView extends StatelessWidget {
                       final doctor = controller.filteredDoctors[index];
                       return PatientDoctorCard(
                         doctor: doctor,
-                        onTap: () => showPatientDoctorDetails(context, doctor),
+                        onTap: () => showPatientDoctorDetails(
+                          context,
+                          doctor,
+                          controller,
+                        ),
                       );
                     },
                   ),
@@ -778,8 +785,11 @@ class PatientAppointmentsView extends StatelessWidget {
                 separatorBuilder: (_, _) => const SizedBox(height: 10),
                 itemBuilder: (context, index) => PatientAppointmentCard(
                   appointment: items[index],
-                  onTap: () =>
-                      showPatientAppointmentDetails(context, items[index]),
+                  onTap: () => showPatientAppointmentDetails(
+                    context,
+                    items[index],
+                    controller,
+                  ),
                 ),
               ),
             ),
@@ -1008,54 +1018,315 @@ class PatientBottomNavigation extends StatelessWidget {
 Future<void> showPatientDoctorDetails(
   BuildContext context,
   DoctorDetailsModel doctor,
+  PatientHomeControllerImp patientController,
 ) {
+  final bookingController = PatientBookingController(
+    Get.find<HomeData>(),
+    doctorId: doctor.id,
+  );
   return Get.bottomSheet<void>(
-    SafeArea(
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 720),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: DoctorHomeColors.surface(context),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _DoctorAvatar(doctor: doctor),
-              const SizedBox(height: 12),
+    GetBuilder<PatientBookingController>(
+      init: bookingController,
+      global: false,
+      builder: (booking) => _PatientDoctorDetailsSheet(
+        doctor: doctor,
+        booking: booking,
+        patientController: patientController,
+      ),
+    ),
+    isScrollControlled: true,
+  );
+}
+
+class _PatientDoctorDetailsSheet extends StatelessWidget {
+  const _PatientDoctorDetailsSheet({
+    required this.doctor,
+    required this.booking,
+    required this.patientController,
+  });
+
+  final DoctorDetailsModel doctor;
+  final PatientBookingController booking;
+  final PatientHomeControllerImp patientController;
+
+  @override
+  Widget build(BuildContext context) => SafeArea(
+    child: Container(
+      constraints: BoxConstraints(
+        maxWidth: 720,
+        maxHeight: MediaQuery.sizeOf(context).height * .9,
+      ),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: DoctorHomeColors.surface(context),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _DoctorAvatar(doctor: doctor),
+            const SizedBox(height: 12),
+            Text(
+              _doctorName(doctor),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: DoctorHomeColors.text(context),
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            if (doctor.specialization.isNotEmpty) ...[
+              const SizedBox(height: 6),
               Text(
-                _doctorName(doctor),
-                textAlign: TextAlign.center,
+                doctor.specialization,
+                style: const TextStyle(color: Appcolor.textLight),
+              ),
+            ],
+            if (doctor.experienceYears != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                '${doctor.experienceYears} ${'yearsExperience'.tr}',
+                style: TextStyle(color: DoctorHomeColors.text(context)),
+              ),
+            ],
+            if (doctor.note?.trim().isNotEmpty == true) ...[
+              const SizedBox(height: 14),
+              Text(
+                doctor.note!,
+                textAlign: TextAlign.start,
+                style: TextStyle(color: DoctorHomeColors.text(context)),
+              ),
+            ],
+            const SizedBox(height: 20),
+            Divider(color: DoctorHomeColors.border(context)),
+            const SizedBox(height: 12),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Text(
+                'availableAppointments'.tr,
                 style: TextStyle(
                   color: DoctorHomeColors.text(context),
-                  fontSize: 20,
+                  fontSize: 17,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              if (doctor.specialization.isNotEmpty) ...[
-                const SizedBox(height: 6),
-                Text(
-                  doctor.specialization,
-                  style: const TextStyle(color: Appcolor.textLight),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: booking.isBooking
+                    ? null
+                    : () => _selectDate(context),
+                icon: const Icon(Icons.calendar_month_outlined),
+                label: Text(
+                  DateFormat.yMMMMd(
+                    Get.locale?.languageCode,
+                  ).format(booking.selectedDate),
                 ),
-              ],
-              if (doctor.experienceYears != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  '${doctor.experienceYears} ${'yearsExperience'.tr}',
+              ),
+            ),
+            const SizedBox(height: 14),
+            if (booking.isLoadingSlots)
+              const Padding(
+                padding: EdgeInsets.all(14),
+                child: CircularProgressIndicator(color: Appcolor.gold),
+              )
+            else if (booking.slotsFailure != null)
+              _SectionError(
+                message: 'availableAppointmentsLoadError'.tr,
+                onRetry: booking.loadAvailableSlots,
+              )
+            else if (booking.availableSlots.isEmpty)
+              _PatientEmptyState(message: 'noAvailableAppointments'.tr)
+            else ...[
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Text(
+                  'selectAppointmentTime'.tr,
                   style: TextStyle(color: DoctorHomeColors.text(context)),
                 ),
-              ],
-              if (doctor.note?.trim().isNotEmpty == true) ...[
-                const SizedBox(height: 14),
-                Text(
-                  doctor.note!,
-                  textAlign: TextAlign.start,
-                  style: TextStyle(color: DoctorHomeColors.text(context)),
-                ),
-              ],
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final slot in booking.availableSlots)
+                    ChoiceChip(
+                      label: Text(
+                        '${DateFormat.jm(Get.locale?.languageCode).format(slot.startTime)}'
+                        ' - '
+                        '${DateFormat.jm(Get.locale?.languageCode).format(slot.endTime)}',
+                      ),
+                      selected: identical(booking.selectedSlot, slot),
+                      onSelected: (_) => booking.selectSlot(slot),
+                    ),
+                ],
+              ),
             ],
+            if (booking.bookingFailure != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                'requestFailed'.tr,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Appcolor.error),
+              ),
+            ],
+            const SizedBox(height: 18),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: booking.selectedSlot == null || booking.isBooking
+                    ? null
+                    : _bookAppointment,
+                icon: booking.isBooking
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Appcolor.white,
+                        ),
+                      )
+                    : const Icon(Icons.event_available_outlined),
+                label: Text('bookAppointment'.tr),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  Future<void> _selectDate(BuildContext context) async {
+    final now = DateTime.now();
+    final firstDate = DateTime(now.year, now.month, now.day);
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: booking.selectedDate,
+      firstDate: firstDate,
+      lastDate: DateTime(now.year + 1, now.month, now.day),
+    );
+    if (selected != null) await booking.selectDate(selected);
+  }
+
+  Future<void> _bookAppointment() async {
+    final succeeded = await booking.bookSelectedSlot();
+    if (!succeeded) return;
+    await patientController.completePatientBooking();
+    if (Get.isBottomSheetOpen == true) Get.back<void>();
+    Get.snackbar('success'.tr, 'appointmentBooked'.tr);
+  }
+}
+
+Future<void> showPatientAppointmentDetails(
+  BuildContext context,
+  AppointmentModel appointment,
+  PatientHomeControllerImp controller,
+) {
+  return Get.bottomSheet<void>(
+    GetBuilder<PatientHomeControllerImp>(
+      init: controller,
+      autoRemove: false,
+      builder: (current) => SafeArea(
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: DoctorHomeColors.surface(context),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AppProfileImage(
+                  imagePath: appointment.doctorImage,
+                  size: 64,
+                  backgroundColor: Appcolor.primary,
+                  loadingIndicatorColor: Appcolor.white,
+                  fallback: const Icon(
+                    Icons.medical_services_outlined,
+                    color: Appcolor.white,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'appointmentDetails'.tr,
+                  style: TextStyle(
+                    color: DoctorHomeColors.text(context),
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                _detailRow(context, 'appointmentId'.tr, '${appointment.id}'),
+                _detailRow(
+                  context,
+                  'doctor'.tr,
+                  _appointmentDoctorName(appointment),
+                ),
+                if (appointment.doctorSpecialization != null)
+                  _detailRow(
+                    context,
+                    'specialization'.tr,
+                    appointment.doctorSpecialization!,
+                  ),
+                _detailRow(
+                  context,
+                  'appointmentDate'.tr,
+                  DateFormat.yMMMMd(
+                    Get.locale?.languageCode,
+                  ).format(appointment.appointmentDate.toLocal()),
+                ),
+                _detailRow(
+                  context,
+                  'appointmentTime'.tr,
+                  DateFormat.jm(
+                    Get.locale?.languageCode,
+                  ).format(appointment.appointmentDate.toLocal()),
+                ),
+                _detailRow(
+                  context,
+                  'status'.tr,
+                  (appointment.status.toLowerCase() == 'canceled'
+                          ? 'cancelled'
+                          : appointment.status.toLowerCase())
+                      .tr,
+                ),
+                if (appointment.appointmentNotes?.trim().isNotEmpty == true)
+                  _detailRow(
+                    context,
+                    'notes'.tr,
+                    appointment.appointmentNotes!,
+                  ),
+                if (current.canCancelAppointment(appointment)) ...[
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed:
+                          current.cancellingAppointments.contains(
+                            appointment.id,
+                          )
+                          ? null
+                          : () =>
+                                _cancelPatientAppointment(current, appointment),
+                      icon:
+                          current.cancellingAppointments.contains(
+                            appointment.id,
+                          )
+                          ? const SizedBox.square(
+                              dimension: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.event_busy_outlined),
+                      label: Text('cancelAppointment'.tr),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
       ),
@@ -1064,71 +1335,35 @@ Future<void> showPatientDoctorDetails(
   );
 }
 
-Future<void> showPatientAppointmentDetails(
-  BuildContext context,
+Future<void> _cancelPatientAppointment(
+  PatientHomeControllerImp controller,
   AppointmentModel appointment,
-) {
-  return Get.bottomSheet<void>(
-    SafeArea(
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: DoctorHomeColors.surface(context),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+) async {
+  final confirmed = await Get.dialog<bool>(
+    AlertDialog(
+      title: Text('cancelAppointment'.tr),
+      content: Text('cancelAppointmentQuestion'.tr),
+      actions: [
+        TextButton(
+          onPressed: () => Get.back(result: false),
+          child: Text('cancel'.tr),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'appointmentDetails'.tr,
-              style: TextStyle(
-                color: DoctorHomeColors.text(context),
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 18),
-            _detailRow(
-              context,
-              'doctor'.tr,
-              _appointmentDoctorName(appointment),
-            ),
-            if (appointment.doctorSpecialization != null)
-              _detailRow(
-                context,
-                'specialization'.tr,
-                appointment.doctorSpecialization!,
-              ),
-            _detailRow(
-              context,
-              'appointmentDate'.tr,
-              DateFormat.yMMMMd(
-                Get.locale?.languageCode,
-              ).format(appointment.appointmentDate.toLocal()),
-            ),
-            _detailRow(
-              context,
-              'appointmentTime'.tr,
-              DateFormat.jm(
-                Get.locale?.languageCode,
-              ).format(appointment.appointmentDate.toLocal()),
-            ),
-            _detailRow(
-              context,
-              'status'.tr,
-              (appointment.status.toLowerCase() == 'canceled'
-                      ? 'cancelled'
-                      : appointment.status.toLowerCase())
-                  .tr,
-            ),
-            if (appointment.appointmentNotes != null)
-              _detailRow(context, 'notes'.tr, appointment.appointmentNotes!),
-          ],
+        FilledButton(
+          onPressed: () => Get.back(result: true),
+          child: Text('confirm'.tr),
         ),
-      ),
+      ],
     ),
-    isScrollControlled: true,
   );
+  if (confirmed != true) return;
+
+  final succeeded = await controller.cancelAppointment(appointment);
+  if (succeeded) {
+    if (Get.isBottomSheetOpen == true) Get.back<void>();
+    Get.snackbar('success'.tr, 'appointmentUpdated'.tr);
+  } else {
+    Get.snackbar('error'.tr, 'requestFailed'.tr);
+  }
 }
 
 Widget _detailRow(BuildContext context, String label, String value) => Padding(

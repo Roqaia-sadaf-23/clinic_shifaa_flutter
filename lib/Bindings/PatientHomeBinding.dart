@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../Controller/Patient/HomeController.dart';
 import '../core/class/ApiService.dart';
 import '../data/datasource/remote/Home/HomeData.dart';
+import '../data/datasource/remote/Appointments/DoctorAppointmentData.dart';
 
 class PatientHomeBinding extends Bindings {
   @override
@@ -12,9 +13,17 @@ class PatientHomeBinding extends Bindings {
     if (!Get.isRegistered<HomeData>()) {
       Get.lazyPut<HomeData>(() => HomeData(Get.find<ApiService>()));
     }
+    if (!Get.isRegistered<DoctorAppointmentData>()) {
+      Get.lazyPut<DoctorAppointmentData>(
+        () => DoctorAppointmentData(Get.find<ApiService>()),
+      );
+    }
     if (!Get.isRegistered<PatientHomeControllerImp>()) {
       Get.lazyPut<PatientHomeControllerImp>(
-        () => PatientHomeControllerImp(Get.find<HomeData>()),
+        () => PatientHomeControllerImp(
+          Get.find<HomeData>(),
+          appointmentData: Get.find<DoctorAppointmentData>(),
+        ),
         fenix: true,
       );
     }

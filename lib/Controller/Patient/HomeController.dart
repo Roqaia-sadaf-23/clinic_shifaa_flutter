@@ -4,14 +4,20 @@ import 'package:get/get.dart';
 import '../../core/Error/Failure.dart';
 import '../../core/constant/Approutes.dart';
 import '../../data/datasource/remote/Home/HomeData.dart';
+import '../../data/datasource/remote/Appointments/DoctorAppointmentData.dart';
 import '../../data/model/AppointmentModel.dart';
 import '../../data/model/DoctorModel.dart';
 import '../../data/model/PatientHomeProfileModel.dart';
 
 class PatientHomeControllerImp extends GetxController {
-  PatientHomeControllerImp(this._homeData, {this.autoLoad = true});
+  PatientHomeControllerImp(
+    this._homeData, {
+    DoctorAppointmentData? appointmentData,
+    this.autoLoad = true,
+  }) : _appointmentData = appointmentData;
 
   final HomeData _homeData;
+  final DoctorAppointmentData? _appointmentData;
   final bool autoLoad;
   final TextEditingController searchController = TextEditingController();
 
@@ -21,6 +27,7 @@ class PatientHomeControllerImp extends GetxController {
   Failure? profileFailure;
   Failure? doctorsFailure;
   Failure? appointmentsFailure;
+  Failure? appointmentActionFailure;
   bool isLoading = false;
   bool isRefreshing = false;
   bool _loading = false;
@@ -31,6 +38,7 @@ class PatientHomeControllerImp extends GetxController {
   final Map<PatientResourceType, List<Map<String, dynamic>>> resourceItems = {};
   final Map<PatientResourceType, Failure> resourceFailures = {};
   final Set<PatientResourceType> loadingResources = {};
+  final Set<int> cancellingAppointments = {};
 
   bool get _inactive => _disposed || isClosed;
   bool get hasDashboardData =>
@@ -152,6 +160,48 @@ class PatientHomeControllerImp extends GetxController {
       appointments = value;
       appointmentsFailure = null;
     });
+  }
+
+  Future<void> refreshAppointments() async {
+    if (_inactive) return;
+    appointmentsFailure = null;
+    update();
+    await _loadAppointments();
+    if (!_inactive) update();
+  }
+
+  bool canCancelAppointment(AppointmentModel appointment) {
+    final status = appointment.status.trim().toLowerCase();
+    return appointment.id > 0 && (status == 'pending' || status == 'confirmed');
+  }
+
+  Future<bool> cancelAppointment(AppointmentModel appointment) async {
+    final data = _appointmentData;
+    if (data == null ||
+        !canCancelAppointment(appointment) ||
+        cancellingAppointments.contains(appointment.id)) {
+      return false;
+    }
+
+    cancellingAppointments.add(appointment.id);
+    appointmentActionFailure = null;
+    update();
+    final result = await data.cancelAppointment(appointment.id);
+    if (_inactive) return false;
+    var succeeded = false;
+    result.fold((failure) => appointmentActionFailure = failure, (_) {
+      succeeded = true;
+      appointmentActionFailure = null;
+    });
+    cancellingAppointments.remove(appointment.id);
+    if (succeeded) await refreshAppointments();
+    if (!_inactive) update();
+    return succeeded;
+  }
+
+  Future<void> completePatientBooking() async {
+    await refreshAppointments();
+    if (!_inactive) showAppointments();
   }
 
   void selectTab(int index) {

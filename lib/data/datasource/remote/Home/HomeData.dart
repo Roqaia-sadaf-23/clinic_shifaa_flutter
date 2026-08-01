@@ -5,6 +5,7 @@ import '../../../../core/class/ApiService.dart';
 import '../../../../core/class/AuthService.dart';
 import '../../../../core/constant/ApiLinks.dart';
 import '../../../model/AppointmentModel.dart';
+import '../../../model/AvailableSlotModel.dart';
 import '../../../model/DoctorModel.dart';
 import '../../../model/PatientHomeProfileModel.dart';
 
@@ -131,6 +132,47 @@ class HomeData {
     });
   }
 
+  Future<Either<Failure, List<AvailableSlotModel>>> getAvailableSlots({
+    required int doctorId,
+    required DateTime date,
+  }) async {
+    final dateValue =
+        '${date.year.toString().padLeft(4, '0')}-'
+        '${date.month.toString().padLeft(2, '0')}-'
+        '${date.day.toString().padLeft(2, '0')}';
+    final result = await _apiService.get(
+      ApiLinks.availableSlots(doctorId: doctorId, date: dateValue),
+      auth: true,
+    );
+    return result.fold(Left.new, (response) {
+      try {
+        return Right(AvailableSlotModel.listFromResponse(response));
+      } catch (_) {
+        return const Left(ServerFailure('Invalid available slots response.'));
+      }
+    });
+  }
+
+  Future<Either<Failure, bool>> createAppointment({
+    required int doctorId,
+    required DateTime appointmentDate,
+  }) async {
+    final result = await _apiService.post(ApiLinks.createAppointment, {
+      'doctorId': doctorId,
+      'appointmentDate': appointmentDate.toIso8601String(),
+    }, auth: true);
+    return result.fold(Left.new, (response) {
+      if (response is Map) {
+        final map = Map<String, dynamic>.from(response);
+        final isSuccess = _value(map, const ['isSuccess']);
+        if (isSuccess == false) {
+          return Left(ServerFailure(_resultError(map)));
+        }
+      }
+      return const Right(true);
+    });
+  }
+
   Future<Either<Failure, List<Map<String, dynamic>>>> getPatientResource(
     PatientResourceType type, {
     int? patientId,
@@ -228,5 +270,24 @@ class HomeData {
   static String? _firstText(Map<dynamic, dynamic> map, List<String> names) {
     final value = _value(map, names)?.toString().trim();
     return value == null || value.isEmpty ? null : value;
+  }
+
+  static String _resultError(Map<String, dynamic> map) {
+    final errors = _value(map, const ['errors']);
+    if (errors is Iterable) {
+      for (final error in errors) {
+        if (error is Map) {
+          final description = _firstText(error, const [
+            'description',
+            'message',
+          ]);
+          if (description != null) return description;
+        }
+        final text = error?.toString().trim() ?? '';
+        if (text.isNotEmpty) return text;
+      }
+    }
+    return _firstText(map, const ['message', 'error']) ??
+        'Unable to create the appointment.';
   }
 }
