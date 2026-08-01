@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:clinic_shifaa/Controller/Patient/HomeController.dart';
 import 'package:clinic_shifaa/Controller/Patient/PatientBookingController.dart';
 import 'package:clinic_shifaa/core/Error/Failure.dart';
@@ -141,6 +143,73 @@ void main() {
     },
   );
 
+  test('repeated booking taps create only one appointment request', () async {
+    final slot = AvailableSlotModel(
+      startTime: DateTime.now().add(const Duration(days: 1)),
+      endTime: DateTime.now().add(const Duration(days: 1, minutes: 40)),
+    );
+    final data = _DelayedBookingHomeData(slot);
+    final controller = PatientBookingController(data, doctorId: 14);
+
+    await controller.loadAvailableSlots();
+    controller.selectSlot(slot);
+    final firstBooking = controller.bookSelectedSlot();
+    final repeatedBooking = await controller.bookSelectedSlot();
+
+    expect(repeatedBooking, isFalse);
+    expect(data.createCalls, 1);
+    data.complete(31);
+    expect(await firstBooking, isTrue);
+    expect(controller.createdAppointmentId, 31);
+    controller.onClose();
+  });
+
+  test('preparing a new booking resets old payment state with one update', () {
+    final controller = PatientHomeControllerImp(
+      _PaymentHomeData(),
+      autoLoad: false,
+    );
+    final first = _appointment(id: 31, doctorName: 'First Doctor');
+    final second = _appointment(id: 32, doctorName: 'Second Doctor');
+    controller.registerCreatedAppointment(first.id);
+    expect(controller.preparePayment(first), isTrue);
+    controller.selectPaymentMethod('Card');
+    controller.paymentFailure = const ServerFailure('Old failure');
+
+    var updates = 0;
+    controller.addListener(() => updates++);
+    controller.registerCreatedAppointment(second.id);
+    expect(controller.preparePayment(second), isTrue);
+
+    expect(updates, 1);
+    expect(controller.paymentAppointment?.id, 32);
+    expect(controller.paymentAppointment?.doctorName, 'Second Doctor');
+    expect(
+      controller.paymentAppointment?.appointmentDate,
+      second.appointmentDate,
+    );
+    expect(controller.selectedPaymentMethod, isEmpty);
+    expect(controller.paymentFailure, isNull);
+    expect(controller.createdPaymentId, isNull);
+    controller.onClose();
+  });
+
+  test('invalid appointment ID cannot prepare payment state', () {
+    final controller = PatientHomeControllerImp(
+      _PaymentHomeData(),
+      autoLoad: false,
+    );
+    var updates = 0;
+    controller.addListener(() => updates++);
+    final invalid = _appointment(id: 0, doctorName: 'Doctor');
+
+    controller.registerCreatedAppointment(invalid.id);
+    expect(controller.preparePayment(invalid), isFalse);
+    expect(controller.paymentAppointment, isNull);
+    expect(updates, 0);
+    controller.onClose();
+  });
+
   test(
     'successful payment cannot be submitted twice in the patient flow',
     () async {
@@ -198,6 +267,16 @@ void main() {
     },
   );
 }
+
+AppointmentModel _appointment({required int id, required String doctorName}) =>
+    AppointmentModel(
+      id: id,
+      doctorName: doctorName,
+      doctorId: 14,
+      patientName: 'Patient',
+      appointmentDate: DateTime(2026, 8, 4, 13, 20),
+      status: 'Pending',
+    );
 
 class _PaymentHomeData extends HomeData {
   _PaymentHomeData() : super(ApiService());
@@ -280,6 +359,31 @@ class _BookingHomeData extends HomeData {
     createdDate = appointmentDate;
     return const Right(31);
   }
+}
+
+class _DelayedBookingHomeData extends HomeData {
+  _DelayedBookingHomeData(this.slot) : super(ApiService());
+
+  final AvailableSlotModel slot;
+  final Completer<Either<Failure, int>> _result = Completer();
+  int createCalls = 0;
+
+  @override
+  Future<Either<Failure, List<AvailableSlotModel>>> getAvailableSlots({
+    required int doctorId,
+    required DateTime date,
+  }) async => Right([slot]);
+
+  @override
+  Future<Either<Failure, int>> createAppointment({
+    required int doctorId,
+    required DateTime appointmentDate,
+  }) {
+    createCalls++;
+    return _result.future;
+  }
+
+  void complete(int appointmentId) => _result.complete(Right(appointmentId));
 }
 
 class _RecordingApiService extends ApiService {

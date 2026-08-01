@@ -1223,26 +1223,30 @@ class _PatientDoctorDetailsSheet extends StatelessWidget {
       return;
     }
     patientController.registerCreatedAppointment(appointmentId);
-    final paymentArguments = <String, Object>{
-      'appointmentId': appointmentId,
-      'doctor': doctor,
-      'appointmentDate': appointmentDate,
-    };
+    final paymentAppointment = AppointmentModel(
+      id: appointmentId,
+      doctorName: doctor.fullName,
+      doctorId: doctor.id,
+      doctorSpecialization: doctor.specialization,
+      doctorImage: doctor.imagePath,
+      patientName: '',
+      appointmentDate: appointmentDate,
+      status: 'Pending',
+    );
+    if (!patientController.preparePayment(paymentAppointment)) {
+      Get.snackbar('error'.tr, 'invalidAppointmentInformation'.tr);
+      return;
+    }
     if (Get.isBottomSheetOpen == true) Get.back<void>();
-    await Future<void>.delayed(Duration.zero);
     try {
-      await Get.toNamed<void>(
-        Approutes.paymentMethod,
-        arguments: paymentArguments,
-      );
+      await Get.toNamed<void>(Approutes.paymentMethod);
     } catch (_) {
-      await _showPaymentNavigationFailure(paymentArguments, patientController);
+      await _showPaymentNavigationFailure(patientController);
     }
   }
 }
 
 Future<void> _showPaymentNavigationFailure(
-  Map<String, Object> paymentArguments,
   PatientHomeControllerImp controller,
 ) async {
   await Get.dialog<void>(
@@ -1261,10 +1265,7 @@ Future<void> _showPaymentNavigationFailure(
         FilledButton(
           onPressed: () {
             Get.back<void>();
-            Get.toNamed<void>(
-              Approutes.paymentMethod,
-              arguments: paymentArguments,
-            );
+            Get.toNamed<void>(Approutes.paymentMethod);
           },
           child: Text('tryPaymentAgain'.tr),
         ),
@@ -1427,19 +1428,24 @@ class _PatientPaymentSection extends StatelessWidget {
       if (controller.canCreatePayment(appointment)) ...[
         const SizedBox(height: 12),
         FilledButton.icon(
-          onPressed: () => Get.toNamed<void>(
-            Approutes.paymentMethod,
-            arguments: {
-              'appointmentId': appointment.id,
-              'appointment': appointment,
-            },
-          ),
+          onPressed: () => _openPreparedPayment(appointment, controller),
           icon: const Icon(Icons.payments_outlined),
           label: Text('tryPaymentAgain'.tr),
         ),
       ],
     ],
   );
+}
+
+Future<void> _openPreparedPayment(
+  AppointmentModel appointment,
+  PatientHomeControllerImp controller,
+) async {
+  if (!controller.preparePayment(appointment)) {
+    Get.snackbar('error'.tr, 'invalidAppointmentInformation'.tr);
+    return;
+  }
+  await Get.toNamed<void>(Approutes.paymentMethod);
 }
 
 Future<void> _cancelPatientAppointment(

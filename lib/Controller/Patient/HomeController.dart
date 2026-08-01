@@ -224,8 +224,9 @@ class PatientHomeControllerImp extends GetxController {
   }
 
   bool preparePayment(AppointmentModel appointment) {
-    if (_inactive || !canCreatePayment(appointment)) return false;
-    if (paymentAppointment?.id == appointment.id) return true;
+    if (_inactive || appointment.id <= 0 || !canCreatePayment(appointment)) {
+      return false;
+    }
     paymentAppointment = appointment;
     paymentFailure = null;
     selectedPaymentMethod = '';
@@ -236,6 +237,11 @@ class PatientHomeControllerImp extends GetxController {
     paidPaymentMethod = null;
     update();
     return true;
+  }
+
+  bool get hasPreparedPayment {
+    final appointment = paymentAppointment;
+    return appointment != null && canCreatePayment(appointment);
   }
 
   bool canCreatePayment(AppointmentModel appointment) {

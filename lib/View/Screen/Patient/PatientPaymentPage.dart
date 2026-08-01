@@ -9,7 +9,6 @@ import '../../../core/Error/Failure.dart';
 import '../../../core/constant/Appcolor.dart';
 import '../../../core/constant/Approutes.dart';
 import '../../../data/model/AppointmentModel.dart';
-import '../../../data/model/DoctorModel.dart';
 import '../Doctor/DoctorHomePage.dart';
 
 class PatientPaymentPage extends StatefulWidget {
@@ -31,11 +30,8 @@ class _PatientPaymentPageState extends State<PatientPaymentPage> {
   void initState() {
     super.initState();
     _controller = Get.find<PatientHomeControllerImp>();
-    _appointment = _appointmentFromArguments(Get.arguments);
-    final appointment = _appointment;
-    _validArguments =
-        appointment != null && _controller.preparePayment(appointment);
-    if (_validArguments) _appointment = _controller.paymentAppointment;
+    _appointment = _controller.paymentAppointment;
+    _validArguments = _controller.hasPreparedPayment;
   }
 
   @override
@@ -582,39 +578,6 @@ class _InvalidPaymentArguments extends StatelessWidget {
         ],
       ),
     ),
-  );
-}
-
-AppointmentModel? _appointmentFromArguments(Object? arguments) {
-  if (arguments is! Map) return null;
-  final rawId = arguments['appointmentId'];
-  final appointmentId = rawId is num
-      ? rawId.toInt()
-      : int.tryParse(rawId?.toString().trim() ?? '');
-  if (appointmentId == null || appointmentId <= 0) return null;
-
-  final existing = arguments['appointment'];
-  if (existing is AppointmentModel && existing.id == appointmentId) {
-    return existing;
-  }
-
-  final doctor = arguments['doctor'];
-  final rawDate = arguments['appointmentDate'];
-  final appointmentDate = rawDate is DateTime
-      ? rawDate
-      : DateTime.tryParse(rawDate?.toString() ?? '');
-  if (doctor is! DoctorDetailsModel || appointmentDate == null) return null;
-  final doctorName = doctor.fullName;
-  if (doctor.id <= 0 || doctorName.isEmpty) return null;
-
-  return AppointmentModel(
-    id: appointmentId,
-    doctorName: doctorName,
-    doctorId: doctor.id,
-    doctorSpecialization: doctor.specialization,
-    patientName: '',
-    appointmentDate: appointmentDate,
-    status: 'Pending',
   );
 }
 

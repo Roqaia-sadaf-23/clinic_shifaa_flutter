@@ -4,6 +4,7 @@ import 'package:clinic_shifaa/core/class/ApiService.dart';
 import 'package:clinic_shifaa/core/constant/Approutes.dart';
 import 'package:clinic_shifaa/core/localization/translation.dart';
 import 'package:clinic_shifaa/data/datasource/remote/Home/HomeData.dart';
+import 'package:clinic_shifaa/data/model/AppointmentModel.dart';
 import 'package:clinic_shifaa/data/model/DoctorModel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -73,6 +74,15 @@ class _PaymentPageFixture {
       autoLoad: false,
     );
     controller.registerCreatedAppointment(31);
+    final appointment = AppointmentModel(
+      id: 31,
+      doctorName: doctor.fullName,
+      doctorId: doctor.id,
+      doctorSpecialization: doctor.specialization,
+      patientName: '',
+      appointmentDate: appointmentDate,
+      status: 'Pending',
+    );
     Get.put<PatientHomeControllerImp>(controller);
 
     await tester.pumpWidget(
@@ -85,17 +95,13 @@ class _PaymentPageFixture {
             page: () => const PatientPaymentPage(),
           ),
         ],
-        home: Builder(
-          builder: (context) => Scaffold(
+        home: GetBuilder<PatientHomeControllerImp>(
+          builder: (current) => Scaffold(
             body: FilledButton(
-              onPressed: () => Get.toNamed<void>(
-                Approutes.paymentMethod,
-                arguments: {
-                  'appointmentId': 31,
-                  'doctor': doctor,
-                  'appointmentDate': appointmentDate,
-                },
-              ),
+              onPressed: () {
+                expect(current.preparePayment(appointment), isTrue);
+                Get.toNamed<void>(Approutes.paymentMethod);
+              },
               child: const Text('open'),
             ),
           ),
@@ -104,5 +110,6 @@ class _PaymentPageFixture {
     );
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
   }
 }
