@@ -249,10 +249,7 @@ class _PatientPaymentPageState extends State<PatientPaymentPage> {
     } catch (_) {
       if (!mounted) return;
       Get.snackbar('paymentSuccessful'.tr, 'paymentCreatedPending'.tr);
-      Get.offAllNamed<void>(
-        Approutes.HomeScreen,
-        arguments: const {'patientTab': 2},
-      );
+      _returnToExistingHome(tab: 2);
     }
   }
 
@@ -283,7 +280,7 @@ class _PatientPaymentPageState extends State<PatientPaymentPage> {
   }
 
   void _openPatientHome() {
-    Get.offAllNamed<void>(Approutes.HomeScreen);
+    _returnToExistingHome(tab: 0);
   }
 }
 
@@ -423,13 +420,21 @@ class PatientPaymentSuccessPage extends StatelessWidget {
   }
 
   static void _openHome({required int tab}) {
-    Get.offAllNamed<void>(Approutes.HomeScreen, arguments: {'patientTab': tab});
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!Get.isRegistered<PatientHomeControllerImp>()) return;
-      final controller = Get.find<PatientHomeControllerImp>();
-      tab == 2 ? controller.showAppointments() : controller.showHome();
-    });
+    _returnToExistingHome(tab: tab);
   }
+}
+
+void _returnToExistingHome({required int tab}) {
+  if (Get.isRegistered<PatientHomeControllerImp>()) {
+    final controller = Get.find<PatientHomeControllerImp>();
+    if (!controller.isClosed) {
+      tab == 2 ? controller.showAppointments() : controller.showHome();
+      Get.until((route) => route.settings.name == Approutes.HomeScreen);
+      return;
+    }
+  }
+
+  Get.offAllNamed<void>(Approutes.HomeScreen, arguments: {'patientTab': tab});
 }
 
 class _PaymentMethodTile extends StatelessWidget {

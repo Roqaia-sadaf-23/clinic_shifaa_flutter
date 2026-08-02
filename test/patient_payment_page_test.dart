@@ -49,6 +49,132 @@ void main() {
     expect(find.text('الدفع الآن'), findsOneWidget);
     expect(Directionality.of(tester.element(title)), TextDirection.rtl);
   });
+
+  testWidgets(
+    'payment success returns to the existing home controller without disposing it',
+    (tester) async {
+      await initializeDateFormatting('en');
+      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final controller = PatientHomeControllerImp(
+        HomeData(ApiService()),
+        autoLoad: false,
+      );
+      Get.put<PatientHomeControllerImp>(controller);
+      final appointment = AppointmentModel(
+        id: 25,
+        doctorName: 'Sarah Ali',
+        doctorId: 14,
+        doctorSpecialization: 'Cardiology',
+        patientName: '',
+        appointmentDate: DateTime(2026, 8, 4, 13, 20),
+        status: 'Pending',
+      );
+
+      await tester.pumpWidget(
+        GetMaterialApp(
+          translations: MyTranslation(),
+          locale: const Locale('en'),
+          initialRoute: Approutes.HomeScreen,
+          getPages: [
+            GetPage(
+              name: Approutes.HomeScreen,
+              page: () =>
+                  _PatientHomeLifecycleHarness(appointment: appointment),
+            ),
+            GetPage(
+              name: Approutes.paymentMethod,
+              page: () => _PaymentReplacementHarness(appointment: appointment),
+            ),
+            GetPage(
+              name: Approutes.paymentSuccess,
+              page: () => const PatientPaymentSuccessPage(),
+            ),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('open payment success'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('complete payment'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('View my appointments'));
+      await tester.pumpAndSettle();
+
+      expect(Get.currentRoute, Approutes.HomeScreen);
+      expect(Get.find<PatientHomeControllerImp>(), same(controller));
+      expect(controller.isClosed, isFalse);
+      expect(controller.selectedTab, 2);
+      await tester.enterText(find.byKey(const Key('patient-search')), 'heart');
+      expect(controller.searchController.text, 'heart');
+      expect(tester.takeException(), isNull);
+
+      await tester.tap(find.text('open payment success'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('complete payment'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Return to patient home'));
+      await tester.pumpAndSettle();
+
+      expect(Get.currentRoute, Approutes.HomeScreen);
+      expect(Get.find<PatientHomeControllerImp>(), same(controller));
+      expect(controller.isClosed, isFalse);
+      expect(controller.selectedTab, 0);
+      await tester.enterText(find.byKey(const Key('patient-search')), 'clinic');
+      expect(controller.searchController.text, 'clinic');
+      expect(tester.takeException(), isNull);
+    },
+  );
+}
+
+class _PatientHomeLifecycleHarness extends StatelessWidget {
+  const _PatientHomeLifecycleHarness({required this.appointment});
+
+  final AppointmentModel appointment;
+
+  @override
+  Widget build(BuildContext context) => GetBuilder<PatientHomeControllerImp>(
+    builder: (controller) => Scaffold(
+      body: Column(
+        children: [
+          TextField(
+            key: const Key('patient-search'),
+            controller: controller.searchController,
+          ),
+          FilledButton(
+            onPressed: () => Get.toNamed<void>(Approutes.paymentMethod),
+            child: const Text('open payment success'),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _PaymentReplacementHarness extends StatelessWidget {
+  const _PaymentReplacementHarness({required this.appointment});
+
+  final AppointmentModel appointment;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    body: FilledButton(
+      onPressed: () => Get.offNamed<void>(
+        Approutes.paymentSuccess,
+        arguments: {
+          'appointment': appointment,
+          'paymentId': 81,
+          'amount': 250.0,
+          'paymentMethod': 'Card',
+        },
+      ),
+      child: const Text('complete payment'),
+    ),
+  );
 }
 
 class _PaymentPageFixture {
