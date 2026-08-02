@@ -368,6 +368,12 @@ class PatientUpcomingSection extends StatelessWidget {
             message: 'appointmentsLoadError'.tr,
             onRetry: controller.refreshDashboard,
           )
+        else if (controller.isLoadingAppointments &&
+            controller.appointments.isEmpty)
+          const Padding(
+            padding: EdgeInsets.all(18),
+            child: CircularProgressIndicator(color: Appcolor.gold),
+          )
         else if (appointment == null)
           _UpcomingEmpty(onBook: controller.findDoctor)
         else
@@ -430,7 +436,12 @@ class PatientDoctorsSection extends StatelessWidget {
         if (controller.doctorsFailure != null && controller.doctors.isEmpty)
           _SectionError(
             message: 'doctorsLoadError'.tr,
-            onRetry: controller.refreshDashboard,
+            onRetry: controller.refreshDoctors,
+          )
+        else if (controller.isLoadingDoctors && controller.doctors.isEmpty)
+          const Padding(
+            padding: EdgeInsets.all(18),
+            child: CircularProgressIndicator(color: Appcolor.gold),
           )
         else if (items.isEmpty)
           _PatientEmptyState(message: 'noDoctorsFound'.tr)
@@ -492,6 +503,18 @@ class PatientDoctorCard extends StatelessWidget {
                 const SizedBox(height: 5),
                 Text(
                   '${doctor.experienceYears} ${'yearsExperience'.tr}',
+                  style: const TextStyle(
+                    color: Appcolor.textLight,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+              if (doctor.note?.trim().isNotEmpty == true) ...[
+                const SizedBox(height: 5),
+                Text(
+                  doctor.note!,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Appcolor.textLight,
                     fontSize: 12,
@@ -601,6 +624,18 @@ class PatientAppointmentCard extends StatelessWidget {
               TextButton(onPressed: onTap, child: Text('viewDetails'.tr)),
             ],
           ),
+          if (appointment.appointmentNotes?.trim().isNotEmpty == true) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Text(
+                appointment.appointmentNotes!,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Appcolor.textLight, fontSize: 12),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -728,7 +763,11 @@ class PatientDoctorsView extends StatelessWidget {
           child: controller.doctorsFailure != null && controller.doctors.isEmpty
               ? DoctorEmptyState(
                   message: 'doctorsLoadError'.tr,
-                  onRetry: controller.refreshDashboard,
+                  onRetry: controller.refreshDoctors,
+                )
+              : controller.isLoadingDoctors && controller.doctors.isEmpty
+              ? const Center(
+                  child: CircularProgressIndicator(color: Appcolor.gold),
                 )
               : controller.filteredDoctors.isEmpty
               ? _PatientEmptyState(message: 'noDoctorsFound'.tr)
@@ -765,36 +804,74 @@ class PatientAppointmentsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = [...controller.appointments]
-      ..sort((a, b) => b.appointmentDate.compareTo(a.appointmentDate));
+    final items = controller.filteredAppointments;
     return _PatientTabFrame(
       title: 'myAppointments'.tr,
-      child: controller.appointmentsFailure != null && items.isEmpty
-          ? DoctorEmptyState(
-              message: 'appointmentsLoadError'.tr,
-              onRetry: controller.refreshDashboard,
-            )
-          : items.isEmpty
-          ? _PatientEmptyState(message: 'noAppointments'.tr)
-          : RefreshIndicator(
-              color: Appcolor.gold,
-              onRefresh: controller.refreshDashboard,
-              child: ListView.separated(
-                physics: const AlwaysScrollableScrollPhysics(),
-                itemCount: items.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 10),
-                itemBuilder: (context, index) => PatientAppointmentCard(
-                  appointment: items[index],
-                  onTap: () => showPatientAppointmentDetails(
-                    context,
-                    items[index],
-                    controller,
+      child: Column(
+        children: [
+          _PatientAppointmentFilters(controller: controller),
+          const SizedBox(height: 14),
+          Expanded(
+            child:
+                controller.isLoadingAppointments &&
+                    controller.appointments.isEmpty
+                ? const Center(
+                    child: CircularProgressIndicator(color: Appcolor.gold),
+                  )
+                : controller.appointmentsFailure != null &&
+                      controller.appointments.isEmpty
+                ? DoctorEmptyState(
+                    message: 'appointmentsLoadError'.tr,
+                    onRetry: controller.refreshAppointments,
+                  )
+                : items.isEmpty
+                ? _PatientEmptyState(message: 'noAppointments'.tr)
+                : RefreshIndicator(
+                    color: Appcolor.gold,
+                    onRefresh: controller.refreshAppointments,
+                    child: ListView.separated(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      itemCount: items.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 10),
+                      itemBuilder: (context, index) => PatientAppointmentCard(
+                        appointment: items[index],
+                        onTap: () => showPatientAppointmentDetails(
+                          context,
+                          items[index],
+                          controller,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ),
+          ),
+        ],
+      ),
     );
   }
+}
+
+class _PatientAppointmentFilters extends StatelessWidget {
+  const _PatientAppointmentFilters({required this.controller});
+
+  final PatientHomeControllerImp controller;
+
+  @override
+  Widget build(BuildContext context) => SingleChildScrollView(
+    scrollDirection: Axis.horizontal,
+    child: Row(
+      children: [
+        for (final filter in PatientAppointmentFilter.values) ...[
+          ChoiceChip(
+            label: Text(filter.name.tr),
+            selected: controller.selectedAppointmentFilter == filter,
+            onSelected: (_) => controller.selectAppointmentFilter(filter),
+          ),
+          if (filter != PatientAppointmentFilter.values.last)
+            const SizedBox(width: 8),
+        ],
+      ],
+    ),
+  );
 }
 
 class PatientNotificationsView extends StatelessWidget {
@@ -817,7 +894,9 @@ class PatientProfileView extends StatelessWidget {
     final patient = controller.patient;
     return _PatientTabFrame(
       title: 'profile'.tr,
-      child: patient == null
+      child: controller.isLoadingProfile && patient == null
+          ? const Center(child: CircularProgressIndicator(color: Appcolor.gold))
+          : patient == null
           ? DoctorEmptyState(
               message: 'patientProfileNotFound'.tr,
               onRetry: controller.refreshDashboard,
@@ -827,7 +906,30 @@ class PatientProfileView extends StatelessWidget {
                 SurfaceCard(
                   child: Column(
                     children: [
-                      PatientAvatar(patient: patient, diameter: 92),
+                      Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          PatientAvatar(patient: patient, diameter: 92),
+                          PositionedDirectional(
+                            end: -6,
+                            bottom: -6,
+                            child: Material(
+                              color: Appcolor.accent,
+                              shape: const CircleBorder(),
+                              child: IconButton(
+                                key: const Key('patient-edit-profile-button'),
+                                tooltip: 'editProfile'.tr,
+                                onPressed: controller.openEditProfile,
+                                icon: const Icon(
+                                  Icons.edit_outlined,
+                                  color: Appcolor.white,
+                                  size: 19,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 12),
                       Text(
                         patient.fullName,
@@ -849,6 +951,29 @@ class PatientProfileView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
+                if (_hasPersonalInformation(patient)) ...[
+                  SectionTitle(title: 'personalInformation'.tr),
+                  const SizedBox(height: 12),
+                  SurfaceCard(
+                    child: Column(
+                      children: [
+                        if (patient.email != null)
+                          _detailRow(context, 'email'.tr, patient.email!),
+                        if (patient.phoneNumber != null)
+                          _detailRow(
+                            context,
+                            'phoneNumber'.tr,
+                            patient.phoneNumber!,
+                          ),
+                        if (patient.address != null)
+                          _detailRow(context, 'address'.tr, patient.address!),
+                        if (patient.note != null)
+                          _detailRow(context, 'biography'.tr, patient.note!),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 if (patient.bloodType != null ||
                     patient.age != null ||
                     patient.gender != null)
@@ -869,6 +994,12 @@ class PatientProfileView extends StatelessWidget {
             ),
     );
   }
+
+  bool _hasPersonalInformation(PatientHomeProfileModel patient) =>
+      patient.email != null ||
+      patient.phoneNumber != null ||
+      patient.address != null ||
+      patient.note != null;
 }
 
 class _PatientTabFrame extends StatelessWidget {
@@ -1135,7 +1266,7 @@ class _PatientDoctorDetailsSheet extends StatelessWidget {
               )
             else if (booking.slotsFailure != null)
               _SectionError(
-                message: 'availableAppointmentsLoadError'.tr,
+                message: booking.slotsFailure!.message,
                 onRetry: booking.loadAvailableSlots,
               )
             else if (booking.availableSlots.isEmpty)
@@ -1169,7 +1300,7 @@ class _PatientDoctorDetailsSheet extends StatelessWidget {
             if (booking.bookingFailure != null) ...[
               const SizedBox(height: 12),
               Text(
-                'requestFailed'.tr,
+                booking.bookingFailure!.message,
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: Appcolor.error),
               ),

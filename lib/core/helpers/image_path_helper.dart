@@ -9,8 +9,19 @@ final _imageFileExtension = RegExp(
 bool isValidImagePath(String? imagePath) {
   if (imagePath == null) return false;
 
-  final value = imagePath.trim().toLowerCase();
-  return value.isNotEmpty && !_invalidImagePaths.contains(value);
+  final value = imagePath.trim();
+  if (value.isEmpty || _invalidImagePaths.contains(value.toLowerCase())) {
+    return false;
+  }
+
+  final uri = Uri.tryParse(value);
+  if (uri != null && uri.hasScheme) {
+    return (uri.scheme == 'http' || uri.scheme == 'https') &&
+        uri.host.isNotEmpty &&
+        _imageFileExtension.hasMatch(uri.path);
+  }
+
+  return _imageFileExtension.hasMatch(value);
 }
 
 String? normalizeImagePath(String? imagePath) {

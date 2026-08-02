@@ -234,6 +234,13 @@ void main() {
       expect(firstPayment, 44);
       expect(repeatedPayment, isNull);
       expect(data.createCalls, 1);
+      final savedPayment =
+          controller.resourceItems[PatientResourceType.payments]!.single;
+      expect(savedPayment['id'], 44);
+      expect(savedPayment['appointmentId'], 31);
+      expect(savedPayment['paymentMethod'], 'Card');
+      expect(savedPayment['amount'], 125.5);
+      expect(savedPayment['status'], 'Pending');
       controller.onClose();
     },
   );

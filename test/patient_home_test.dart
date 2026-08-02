@@ -3,6 +3,7 @@ import 'package:clinic_shifaa/View/Screen/Patient/PatientHomePage.dart';
 import 'package:clinic_shifaa/core/Error/Failure.dart';
 import 'package:clinic_shifaa/core/class/ApiService.dart';
 import 'package:clinic_shifaa/core/constant/ApiLinks.dart';
+import 'package:clinic_shifaa/core/helpers/image_path_helper.dart';
 import 'package:clinic_shifaa/core/localization/translation.dart';
 import 'package:clinic_shifaa/data/datasource/remote/Home/HomeData.dart';
 import 'package:clinic_shifaa/data/model/AppointmentModel.dart';
@@ -79,6 +80,173 @@ void main() {
     expect(controller.filteredDoctors.map((doctor) => doctor.id), [1]);
     controller.onClose();
   });
+
+  test(
+    'patient profile uses the actual user and Patient controller routes',
+    () async {
+      final api = _ProfileRecordingApiService({
+        ApiLinks.userById(7): {
+          'id': 7,
+          'personId': 9,
+          'firstName': 'Roqaia',
+          'lastName': 'Ahmed',
+          'email': 'patient@example.com',
+          'phoneNumber': '+966500000000',
+          'address': 'Riyadh',
+        },
+        ApiLinks.patients: [
+          {
+            'patientId': 13,
+            'userId': 7,
+            'personId': 9,
+            'patientName': 'Roqaia Ahmed',
+            'bloodType': 'A+',
+          },
+        ],
+      });
+
+      final result = await HomeData(
+        api,
+      ).getPatientProfile(userId: 7, email: 'patient@example.com');
+
+      expect(api.getUrls, [ApiLinks.userById(7), ApiLinks.patients]);
+      expect(api.authValues, everyElement(isTrue));
+      result.fold((failure) => fail(failure.message), (profile) {
+        expect(profile.userId, 7);
+        expect(profile.patientId, 13);
+        expect(profile.fullName, 'Roqaia Ahmed');
+        expect(profile.phoneNumber, '+966500000000');
+        expect(profile.address, 'Riyadh');
+        expect(profile.bloodType, 'A+');
+      });
+    },
+  );
+
+  test(
+    'patient doctor browsing uses the root Doctors list with auth',
+    () async {
+      final api = _RecordingApiService([
+        {
+          'id': 4,
+          'personId': 10,
+          'firstName': 'Sarah',
+          'lastName': 'Ali',
+          'specialization': 'Cardiology',
+          'userId': 20,
+        },
+      ]);
+
+      final result = await HomeData(api).getDoctors();
+
+      expect(api.lastGetUrl, ApiLinks.doctors);
+      expect(api.lastGetAuth, isTrue);
+      result.fold((failure) => fail(failure.message), (doctors) {
+        expect(doctors.single.id, 4);
+        expect(doctors.single.fullName, 'Sarah Ali');
+      });
+    },
+  );
+
+  test('patient profile maps contact fields returned by the backend DTOs', () {
+    final userProfile = PatientHomeProfileModel.fromJson({
+      'id': 7,
+      'personId': 9,
+      'firstName': 'Roqaia',
+      'lastName': 'Ahmed',
+      'email': 'patient@example.com',
+      'phoneNumber': '+966500000000',
+      'address': 'Riyadh',
+      'note': 'Prefers morning appointments',
+    });
+    final patientProfile = PatientHomeProfileModel.fromJson({
+      'patientId': 13,
+      'userId': 7,
+      'personId': 9,
+      'patientName': 'Roqaia Ahmed',
+      'bloodType': 'A+',
+    });
+
+    final profile = userProfile.merge(patientProfile);
+
+    expect(profile.patientId, 13);
+    expect(profile.phoneNumber, '+966500000000');
+    expect(profile.address, 'Riyadh');
+    expect(profile.note, 'Prefers morning appointments');
+    expect(profile.bloodType, 'A+');
+  });
+
+  test('image paths reject placeholders and malformed server filenames', () {
+    expect(imageUrlForPath(null), isNull);
+    expect(imageUrlForPath(''), isNull);
+    expect(imageUrlForPath('test'), isNull);
+    expect(imageUrlForPath('string'), isNull);
+    expect(imageUrlForPath('avatar-without-extension'), isNull);
+    expect(
+      imageUrlForPath('patient photo.jpg'),
+      '${ApiLinks.server}/Images/GetImage/patient%20photo.jpg',
+    );
+    expect(
+      imageUrlForPath('https://cdn.example.com/avatar.png'),
+      'https://cdn.example.com/avatar.png',
+    );
+  });
+
+  test('appointments use backend statuses for patient filters', () {
+    final now = DateTime.now();
+    final controller =
+        PatientHomeControllerImp(_FakeHomeData(), autoLoad: false)
+          ..appointments = [
+            _appointment(
+              id: 1,
+              date: now.subtract(const Duration(days: 1)),
+              status: 'Pending',
+            ),
+            _appointment(
+              id: 2,
+              date: now.subtract(const Duration(days: 2)),
+              status: 'Completed',
+            ),
+            _appointment(
+              id: 3,
+              date: now.add(const Duration(days: 1)),
+              status: 'Cancelled',
+            ),
+          ];
+
+    controller.selectAppointmentFilter(PatientAppointmentFilter.upcoming);
+    expect(controller.filteredAppointments.map((item) => item.id), [1]);
+    controller.selectAppointmentFilter(PatientAppointmentFilter.completed);
+    expect(controller.filteredAppointments.map((item) => item.id), [2]);
+    controller.selectAppointmentFilter(PatientAppointmentFilter.cancelled);
+    expect(controller.filteredAppointments.map((item) => item.id), [3]);
+    controller.onClose();
+  });
+
+  test(
+    'appointments reuse loaded doctor data instead of extra requests',
+    () async {
+      final data = _FakeHomeData(
+        doctors: [_doctor(imagePath: 'doctor.jpg')],
+        appointments: [
+          AppointmentModel(
+            id: 17,
+            doctorName: 'Sarah Ali',
+            patientName: '',
+            appointmentDate: DateTime(2026, 8, 4, 12),
+            status: 'Pending',
+          ),
+        ],
+      );
+      final controller = PatientHomeControllerImp(data, autoLoad: false);
+
+      await controller.loadDashboard();
+
+      expect(controller.appointments.single.doctorId, 4);
+      expect(controller.appointments.single.doctorSpecialization, 'Cardiology');
+      expect(controller.appointments.single.doctorImage, 'doctor.jpg');
+      controller.onClose();
+    },
+  );
 
   test(
     'patient appointments use the authenticated backend route and DTO',
@@ -171,6 +339,29 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('patient profile displays available contact information', (
+    tester,
+  ) async {
+    await _setPhoneSize(tester);
+    final controller = PatientHomeControllerImp(
+      _FakeHomeData(),
+      autoLoad: false,
+    )..patient = _profile;
+    Get.put<PatientHomeControllerImp>(controller);
+
+    await tester.pumpWidget(_app(locale: const Locale('en')));
+    await tester.pumpAndSettle();
+    controller.showProfile();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Personal information'), findsOneWidget);
+    expect(find.text('+966500000000'), findsOneWidget);
+    expect(find.text('Riyadh'), findsOneWidget);
+    expect(find.text('Prefers morning appointments'), findsOneWidget);
+    expect(find.textContaining('13'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Arabic patient home keeps localized RTL content', (
     tester,
   ) async {
@@ -197,6 +388,33 @@ void main() {
     expect(find.text('نتمنى لك يومًا صحيًا'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('Arabic appointment filters remain localized and RTL', (
+    tester,
+  ) async {
+    await _setPhoneSize(tester);
+    final controller =
+        PatientHomeControllerImp(_FakeHomeData(), autoLoad: false)
+          ..patient = _profile
+          ..appointments = [
+            _appointment(
+              date: DateTime.now().add(const Duration(days: 1)),
+              status: 'Pending',
+            ),
+          ];
+    Get.put<PatientHomeControllerImp>(controller);
+
+    await tester.pumpWidget(_app(locale: const Locale('ar')));
+    controller.showAppointments();
+    await tester.pumpAndSettle();
+
+    final upcoming = find.text('upcoming'.tr);
+    expect(upcoming, findsOneWidget);
+    expect(find.text('completed'.tr), findsOneWidget);
+    expect(find.text('cancelled'.tr), findsWidgets);
+    expect(Directionality.of(tester.element(upcoming)), TextDirection.rtl);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 Widget _app({required Locale locale}) => GetMaterialApp(
@@ -219,6 +437,9 @@ const _profile = PatientHomeProfileModel(
   firstName: 'Roqaia',
   lastName: 'Ahmed',
   email: 'patient@example.com',
+  phoneNumber: '+966500000000',
+  address: 'Riyadh',
+  note: 'Prefers morning appointments',
   bloodType: 'A+',
   age: 29,
   gender: 1,
@@ -228,6 +449,7 @@ DoctorDetailsModel _doctor({
   int id = 4,
   String firstName = 'Sarah',
   String specialization = 'Cardiology',
+  String? imagePath,
 }) => DoctorDetailsModel(
   id: id,
   personId: 10,
@@ -237,6 +459,7 @@ DoctorDetailsModel _doctor({
   experienceYears: 8,
   note: 'Heart specialist',
   specialization: specialization,
+  imagePath: imagePath,
   userId: 20,
 );
 
@@ -256,9 +479,11 @@ AppointmentModel _appointment({
 );
 
 class _FakeHomeData extends HomeData {
-  _FakeHomeData({this.appointments = const []}) : super(ApiService());
+  _FakeHomeData({this.appointments = const [], this.doctors})
+    : super(ApiService());
 
   final List<AppointmentModel> appointments;
+  final List<DoctorDetailsModel>? doctors;
 
   @override
   Future<String?> getAuthenticatedRole() async => 'patient';
@@ -277,7 +502,7 @@ class _FakeHomeData extends HomeData {
 
   @override
   Future<Either<Failure, List<DoctorDetailsModel>>> getDoctors() async =>
-      Right([_doctor()]);
+      Right(doctors ?? [_doctor()]);
 
   @override
   Future<Either<Failure, List<AppointmentModel>>>
@@ -302,5 +527,20 @@ class _RecordingApiService extends ApiService {
     lastGetUrl = url;
     lastGetAuth = auth;
     return Right(response);
+  }
+}
+
+class _ProfileRecordingApiService extends ApiService {
+  _ProfileRecordingApiService(this.responses);
+
+  final Map<String, Object?> responses;
+  final List<String> getUrls = [];
+  final List<bool> authValues = [];
+
+  @override
+  Future<Either<Failure, dynamic>> get(String url, {bool auth = false}) async {
+    getUrls.add(url);
+    authValues.add(auth);
+    return Right(responses[url]);
   }
 }

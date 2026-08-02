@@ -117,6 +117,65 @@ class HomeData {
     });
   }
 
+  Future<Either<Failure, Map<String, dynamic>>> updatePersonProfile({
+    required int personId,
+    required String firstName,
+    required String lastName,
+    required String nationalityNo,
+    required String? phoneNumber,
+    required int? age,
+    required String? address,
+    required int gender,
+    required int nationalityCountryId,
+    required String? imagePath,
+    required String? note,
+  }) async {
+    if (personId <= 0 ||
+        nationalityNo.trim().isEmpty ||
+        nationalityCountryId <= 0) {
+      return const Left(ServerFailure('Invalid patient profile information.'));
+    }
+    final result = await _apiService.put(ApiLinks.personById(personId), {
+      'id': personId,
+      'firstName': firstName,
+      'lastName': lastName,
+      'nationalityNo': nationalityNo,
+      'phoneNumber': phoneNumber,
+      'age': age,
+      'address': address,
+      'gender': gender,
+      'nationalityCountryId': nationalityCountryId,
+      'imagePath': imagePath,
+      'note': note,
+    }, auth: true);
+    return result.fold(Left.new, (response) {
+      final map = _responseMap(response);
+      return map == null
+          ? const Left(ServerFailure('Invalid person update response.'))
+          : Right(map);
+    });
+  }
+
+  Future<Either<Failure, Map<String, dynamic>>> updatePatientProfile({
+    required int patientId,
+    required int personId,
+    required String bloodType,
+  }) async {
+    if (patientId <= 0 || personId <= 0 || bloodType.trim().isEmpty) {
+      return const Left(ServerFailure('Invalid patient profile information.'));
+    }
+    final result = await _apiService.put(ApiLinks.patientById(patientId), {
+      'bloodType': bloodType,
+      'personId': personId,
+    }, auth: true);
+    return result.fold(Left.new, (response) {
+      final map = _responseMap(response);
+      return map == null
+          ? const Left(ServerFailure('Invalid patient update response.'))
+          : Right(map);
+    });
+  }
+
   Future<Either<Failure, List<AppointmentModel>>>
   getPatientAppointments() async {
     final result = await _apiService.get(

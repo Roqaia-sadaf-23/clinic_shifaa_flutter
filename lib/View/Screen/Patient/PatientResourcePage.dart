@@ -100,7 +100,7 @@ class _PatientResourcePageState extends State<PatientResourcePage> {
   String _errorKey(PatientResourceType type) => switch (type) {
     PatientResourceType.medicalRecords => 'medicalRecordsLoadError',
     PatientResourceType.prescriptions => 'prescriptionsLoadError',
-    PatientResourceType.payments => 'paymentsLoadError',
+    PatientResourceType.payments => 'patientPaymentHistoryUnavailable',
   };
 }
 
@@ -183,6 +183,16 @@ class _PatientResourceCard extends StatelessWidget {
       if (display.isNotEmpty) rows.add((key.tr, display));
     }
 
+    void addLocalized(
+      String key,
+      List<String> names, {
+      bool lowerCase = false,
+    }) {
+      final value = _value(names)?.toString().trim();
+      if (value == null || value.isEmpty) return;
+      rows.add((key.tr, (lowerCase ? value.toLowerCase() : value).tr));
+    }
+
     switch (type) {
       case PatientResourceType.medicalRecords:
         add('diagnosis', const ['diagnosis']);
@@ -199,8 +209,8 @@ class _PatientResourceCard extends StatelessWidget {
         add('specialInstructions', const ['specialInstructions']);
       case PatientResourceType.payments:
         add('amount', const ['amount']);
-        add('paymentMethod', const ['paymentMethod']);
-        add('status', const ['status']);
+        addLocalized('paymentMethod', const ['paymentMethod']);
+        addLocalized('status', const ['status'], lowerCase: true);
         add('createdDate', const ['createdAt', 'createdDate'], date: true);
     }
     return rows;

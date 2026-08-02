@@ -152,6 +152,14 @@ class MyTranslation extends Translations {
       'firstName': 'First name',
       'lastName': 'Last name',
       'editProfileSubtitle': 'Update your personal and professional details.',
+      'patientEditProfileSubtitle':
+          'Update your personal and health information.',
+      'patientEditProfileUnavailable':
+          'The required patient profile information is unavailable. Refresh and try again.',
+      'profilePartiallyUpdated':
+          'Personal information was updated, but health information was not saved.',
+      'imageSelectionFailed': 'Could not select the profile image.',
+      'imageUploadUnavailable': 'Profile image upload is unavailable.',
       'saveChanges': 'Save changes',
       'fieldRequired': 'This field is required.',
       'nameTooShort': 'Enter at least 2 characters.',
@@ -213,6 +221,8 @@ class MyTranslation extends Translations {
       'medicalRecordsLoadError': 'Could not load medical records.',
       'prescriptionsLoadError': 'Could not load prescriptions.',
       'paymentsLoadError': 'Could not load payments.',
+      'patientPaymentHistoryUnavailable':
+          'Payment history is not available from the patient API. Payments created in this app session will still appear here.',
       'patientAccessForbidden':
           'The doctor is not allowed to access this patient.',
       'patientDetailsNotFound': 'The patient data was not found.',
@@ -390,6 +400,13 @@ class MyTranslation extends Translations {
       'firstName': 'الاسم الأول',
       'lastName': 'اسم العائلة',
       'editProfileSubtitle': 'حدّث معلوماتك الشخصية والمهنية.',
+      'patientEditProfileSubtitle': 'حدّث معلوماتك الشخصية والصحية.',
+      'patientEditProfileUnavailable':
+          'معلومات ملف المريض المطلوبة غير متوفرة. حدّث الصفحة وحاول مرة أخرى.',
+      'profilePartiallyUpdated':
+          'تم تحديث المعلومات الشخصية، لكن لم يتم حفظ المعلومات الصحية.',
+      'imageSelectionFailed': 'تعذر اختيار صورة الملف الشخصي.',
+      'imageUploadUnavailable': 'رفع صورة الملف الشخصي غير متاح.',
       'saveChanges': 'حفظ التغييرات',
       'fieldRequired': 'هذا الحقل مطلوب.',
       'nameTooShort': 'أدخل حرفين على الأقل.',
@@ -448,6 +465,8 @@ class MyTranslation extends Translations {
       'medicalRecordsLoadError': 'تعذر تحميل السجلات الطبية.',
       'prescriptionsLoadError': 'تعذر تحميل الوصفات الطبية.',
       'paymentsLoadError': 'تعذر تحميل المدفوعات.',
+      'patientPaymentHistoryUnavailable':
+          'سجل المدفوعات غير متاح من واجهة المريض. ستظهر هنا عمليات الدفع التي تم إنشاؤها خلال جلسة التطبيق الحالية.',
       'patientAccessForbidden': 'غير مسموح للطبيب بالوصول إلى هذا المريض.',
       'patientDetailsNotFound': 'لم يتم العثور على بيانات هذا المريض.',
       'invalidPatient': 'معرّف المريض غير صالح.',

@@ -18,6 +18,7 @@ class ApiLinks {
   static const String currentDoctor = "$server/Doctors/me";
   static const String updateCurrentDoctorProfile = "$server/Doctors/updateme";
   static const String updateCurrentPersonImage = "$server/Person/me/image";
+  static String personById(int id) => "$server/Person/$id";
   //http://192.168.8.4:5210/api/Person/me/image
   // Patients
   static const String patients = "$server/Patient";

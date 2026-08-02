@@ -12,6 +12,7 @@ import 'View/Screen/Doctor/DoctorHomePage.dart';
 import 'View/Screen/Doctor/DoctorEditProfilePage.dart';
 import 'View/Screen/Notvications/Notvications.dart';
 import 'View/Screen/Patient/PatientHomePage.dart';
+import 'View/Screen/Patient/PatientEditProfilePage.dart';
 import 'View/Screen/Patient/PatientPaymentPage.dart';
 import 'View/Screen/Patient/PatientResourcePage.dart';
 import 'View/Screen/Appointment/AppointmentDetailsPage.dart';
@@ -64,6 +65,11 @@ final List<GetPage<dynamic>> routes = [
   GetPage(
     name: Approutes.HomeScreen,
     page: () => const PatientHomePage(),
+    binding: PatientHomeBinding(),
+  ),
+  GetPage(
+    name: Approutes.patientEditProfile,
+    page: () => const PatientEditProfilePage(),
     binding: PatientHomeBinding(),
   ),
   GetPage(

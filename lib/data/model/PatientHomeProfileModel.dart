@@ -10,6 +10,11 @@ class PatientHomeProfileModel {
     required this.firstName,
     required this.lastName,
     this.email,
+    this.phoneNumber,
+    this.address,
+    this.note,
+    this.nationalityNo,
+    this.nationalityCountryId,
     this.imagePath,
     this.bloodType,
     this.age,
@@ -22,6 +27,11 @@ class PatientHomeProfileModel {
   final String firstName;
   final String lastName;
   final String? email;
+  final String? phoneNumber;
+  final String? address;
+  final String? note;
+  final String? nationalityNo;
+  final int? nationalityCountryId;
   final String? imagePath;
   final String? bloodType;
   final int? age;
@@ -47,6 +57,16 @@ class PatientHomeProfileModel {
           _text(_value(json, 'lastName')) ??
           (parts.length < 2 ? '' : parts.skip(1).join(' ')),
       email: _text(_value(json, 'email')),
+      phoneNumber: _text(_value(json, 'phoneNumber')),
+      address: _text(_value(json, 'address')),
+      note: _text(_value(json, 'note')),
+      nationalityNo: _text(_value(json, 'nationalityNo')),
+      nationalityCountryId: _int(
+        _firstValue(json, const [
+          'nationalityCountryId',
+          'nationalityCountryID',
+        ]),
+      ),
       imagePath: normalizeImagePath(
         _text(_firstValue(json, const ['imagePath', 'patientImage'])),
       ),
@@ -64,6 +84,11 @@ class PatientHomeProfileModel {
       firstName: firstName.isNotEmpty ? firstName : other.firstName,
       lastName: lastName.isNotEmpty ? lastName : other.lastName,
       email: email ?? other.email,
+      phoneNumber: phoneNumber ?? other.phoneNumber,
+      address: address ?? other.address,
+      note: note ?? other.note,
+      nationalityNo: nationalityNo ?? other.nationalityNo,
+      nationalityCountryId: nationalityCountryId ?? other.nationalityCountryId,
       imagePath: imagePath ?? other.imagePath,
       bloodType: bloodType ?? other.bloodType,
       age: age ?? other.age,

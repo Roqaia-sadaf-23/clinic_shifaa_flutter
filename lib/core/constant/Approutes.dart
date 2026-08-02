@@ -22,6 +22,7 @@ class Approutes {
   //home
   static const String Homepage = '/Homepage';
   static const String HomeScreen = "/HomeScreen";
+  static const String patientEditProfile = '/patient-edit-profile';
   static const String patientResource = '/patient-resource';
   static const String paymentMethod = '/patient-payment-method';
   static const String paymentSuccess = '/patient-payment-success';
