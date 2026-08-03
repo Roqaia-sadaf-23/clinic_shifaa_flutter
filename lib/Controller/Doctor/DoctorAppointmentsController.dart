@@ -3,14 +3,20 @@ import 'package:get/get.dart';
 
 import '../../core/Error/Failure.dart';
 import '../../core/constant/Approutes.dart';
+import '../../core/services/ClinicNotificationService.dart';
 import '../../data/datasource/remote/Appointments/DoctorAppointmentData.dart';
 import '../../data/model/DoctorAppointmentModel.dart';
 import '../../data/model/DoctorPatientDetailsModels.dart';
+import '../../data/model/ClinicNotification.dart';
 import 'DoctorHome_Controller.dart';
 
 class DoctorAppointmentsController extends GetxController {
-  DoctorAppointmentsController(this._data);
+  DoctorAppointmentsController(
+    this._data, {
+    ClinicNotificationService? notificationService,
+  }) : _notificationService = notificationService;
   final DoctorAppointmentData _data;
+  final ClinicNotificationService? _notificationService;
 
   static const statuses = ['Pending', 'Confirmed', 'Completed', 'Cancelled'];
   final appointments = <DoctorAppointmentModel>[];
@@ -188,6 +194,7 @@ class DoctorAppointmentsController extends GetxController {
     update();
     final requestedPage = reset ? 1 : currentPage + 1;
     final requestRevision = _filterRevision;
+    var shouldSyncNotifications = false;
     try {
       final result = await _data.getDoctorAppointments(
         status: selectedStatus,
@@ -218,8 +225,24 @@ class DoctorAppointmentsController extends GetxController {
               : appointments.length < totalCount;
           hasLoaded = true;
           failure = null;
+          shouldSyncNotifications =
+              selectedStatus == null && selectedDate == null;
         },
       );
+      if (shouldSyncNotifications) {
+        await _notificationService?.syncDoctorAppointments(
+          appointments.map(
+            (appointment) => ClinicAppointmentNotificationSnapshot(
+              id: appointment.id,
+              personName: appointment.patientName,
+              appointmentDate: appointment.appointmentDate,
+              status: appointment.status,
+              lastStatusDate: appointment.lastStatusDate,
+            ),
+          ),
+          detectNew: reset,
+        );
+      }
     } catch (error, stackTrace) {
       if (kDebugMode) {
         debugPrint('Doctor appointments error: $error');

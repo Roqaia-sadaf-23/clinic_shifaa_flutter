@@ -6,6 +6,7 @@ import 'Bindings/PatientHomeBinding.dart';
 import 'Bindings/DoctorEditProfileBinding.dart';
 import 'Bindings/DoctorAppointmentDetailsBinding.dart';
 import 'Bindings/DoctorPatientDetailsBinding.dart';
+import 'Bindings/ClinicNotificationsBinding.dart';
 import 'View/Screen/Auth/Register/RegisterScreen.dart';
 import 'View/Screen/CompleteProfile/CompleteProfileScreen.dart';
 import 'View/Screen/Doctor/DoctorHomePage.dart';
@@ -123,7 +124,11 @@ final List<GetPage<dynamic>> routes = [
     page: () => const CreatePrescriptionPage(),
     binding: CreatePrescriptionBinding(),
   ),
-  GetPage(name: Approutes.Notvications, page: () => const Notvications()),
+  GetPage(
+    name: Approutes.Notvications,
+    page: () => const Notvications(),
+    binding: ClinicNotificationsBinding(),
+  ),
   /*   GetPage(name: Approutes.VarfiyCode, page: () => const VerfiyCode()),
   GetPage(name: Approutes.ResetPassword, page: () => const Resetpassword()),
   GetPage(

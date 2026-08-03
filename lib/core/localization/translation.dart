@@ -74,6 +74,31 @@ class MyTranslation extends Translations {
       'female': 'Female',
       'notifications': 'Notifications',
       'noNotifications': 'You have no notifications.',
+      'clearReadNotifications': 'Clear read notifications',
+      'notificationPermissionDenied':
+          'Device notifications are off. In-app notifications still work.',
+      'enableNotifications': 'Enable',
+      'notificationUnknownPerson': 'Clinic user',
+      'notificationAppointmentCreatedTitle': 'Appointment created',
+      'notificationPatientAppointmentCreatedBody':
+          'Your appointment with Dr. @name is scheduled for @date.',
+      'notificationAppointmentConfirmedTitle': 'Appointment confirmed',
+      'notificationPatientAppointmentConfirmedBody':
+          'Dr. @name confirmed your appointment for @date.',
+      'notificationAppointmentCancelledTitle': 'Appointment cancelled',
+      'notificationPatientAppointmentCancelledBody':
+          'Your appointment with Dr. @name on @date was cancelled.',
+      'notificationAppointmentReminderTitle': 'Upcoming appointment',
+      'notificationPatientAppointmentReminderBody':
+          'Reminder: your appointment with Dr. @name is on @date.',
+      'notificationDoctorAppointmentReminderBody':
+          'Reminder: your appointment with @name is on @date.',
+      'notificationNewAppointmentTitle': 'New appointment booked',
+      'notificationDoctorNewAppointmentBody':
+          '@name booked an appointment for @date.',
+      'notificationPaymentCompletedTitle': 'Payment completed',
+      'notificationMedicalRecordCreatedTitle': 'Medical record added',
+      'notificationPrescriptionCreatedTitle': 'Prescription added',
       'patientProfileNotFound': 'Your patient profile could not be loaded.',
       'resourceUnavailable': 'This patient resource is unavailable.',
       'doctorTitle': 'Dr.',
@@ -322,6 +347,30 @@ class MyTranslation extends Translations {
       'female': 'أنثى',
       'notifications': 'الإشعارات',
       'noNotifications': 'لا توجد لديك إشعارات.',
+      'clearReadNotifications': 'مسح الإشعارات المقروءة',
+      'notificationPermissionDenied':
+          'إشعارات الجهاز متوقفة. ستظل الإشعارات داخل التطبيق متاحة.',
+      'enableNotifications': 'تفعيل',
+      'notificationUnknownPerson': 'مستخدم العيادة',
+      'notificationAppointmentCreatedTitle': 'تم إنشاء الموعد',
+      'notificationPatientAppointmentCreatedBody':
+          'تم تحديد موعدك مع د. @name في @date.',
+      'notificationAppointmentConfirmedTitle': 'تم تأكيد الموعد',
+      'notificationPatientAppointmentConfirmedBody':
+          'أكد د. @name موعدك في @date.',
+      'notificationAppointmentCancelledTitle': 'تم إلغاء الموعد',
+      'notificationPatientAppointmentCancelledBody':
+          'تم إلغاء موعدك مع د. @name بتاريخ @date.',
+      'notificationAppointmentReminderTitle': 'موعد قادم',
+      'notificationPatientAppointmentReminderBody':
+          'تذكير: موعدك مع د. @name في @date.',
+      'notificationDoctorAppointmentReminderBody':
+          'تذكير: موعدك مع @name في @date.',
+      'notificationNewAppointmentTitle': 'تم حجز موعد جديد',
+      'notificationDoctorNewAppointmentBody': 'حجز @name موعدًا في @date.',
+      'notificationPaymentCompletedTitle': 'اكتمل الدفع',
+      'notificationMedicalRecordCreatedTitle': 'تمت إضافة سجل طبي',
+      'notificationPrescriptionCreatedTitle': 'تمت إضافة وصفة طبية',
       'patientProfileNotFound': 'تعذر تحميل ملف المريض.',
       'resourceUnavailable': 'هذا القسم غير متاح للمريض.',
       'doctorTitle': 'د.',

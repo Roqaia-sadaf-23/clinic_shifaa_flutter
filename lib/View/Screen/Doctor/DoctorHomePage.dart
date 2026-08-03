@@ -70,7 +70,8 @@ class DoctorHomePage extends StatelessWidget {
             children: [
               DoctorProfileHeader(
                 doctor: doctor,
-                onAction: controller.showComingSoon,
+                onAction: controller.showNotifications,
+                unreadCount: controller.unreadNotificationsCount,
               ),
               const SizedBox(height: 20),
               DoctorActionGrid(onAction: controller.handleAction),
@@ -113,9 +114,11 @@ class DoctorProfileHeader extends StatelessWidget {
     super.key,
     required this.doctor,
     required this.onAction,
+    this.unreadCount = 0,
   });
   final CurrentDoctorModel doctor;
   final VoidCallback onAction;
+  final int unreadCount;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -144,7 +147,7 @@ class DoctorProfileHeader extends StatelessWidget {
             HeaderAction(
               icon: Icons.notifications_none_rounded,
               onTap: onAction,
-              badge: true,
+              badge: unreadCount > 0,
             ),
             const SizedBox(width: 8),
             //  HeaderAction(icon: Icons.settings_outlined, onTap: onAction),

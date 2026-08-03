@@ -1353,7 +1353,6 @@ class _PatientDoctorDetailsSheet extends StatelessWidget {
       Get.snackbar('error'.tr, 'invalidAppointmentInformation'.tr);
       return;
     }
-    patientController.registerCreatedAppointment(appointmentId);
     final paymentAppointment = AppointmentModel(
       id: appointmentId,
       doctorName: doctor.fullName,
@@ -1364,6 +1363,7 @@ class _PatientDoctorDetailsSheet extends StatelessWidget {
       appointmentDate: appointmentDate,
       status: 'Pending',
     );
+    await patientController.recordCreatedAppointment(paymentAppointment);
     if (!patientController.preparePayment(paymentAppointment)) {
       Get.snackbar('error'.tr, 'invalidAppointmentInformation'.tr);
       return;

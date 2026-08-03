@@ -9,6 +9,7 @@ import 'package:get/get.dart';
 
 import 'core/localization/changelocal.dart';
 import 'core/services/serveses.dart';
+import 'core/services/ClinicNotificationService.dart';
 import 'routes.dart';
 
 void main() async {
@@ -20,6 +21,11 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform); */
 
   runApp(const MyApp());
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (Get.isRegistered<ClinicNotificationService>()) {
+      Get.find<ClinicNotificationService>().openPendingNotification();
+    }
+  });
 }
 
 class MyApp extends StatelessWidget {

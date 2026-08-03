@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'ClinicNotificationService.dart';
+
 class Myservices extends GetxService {
   SharedPreferences? sharedPreferences;
 
@@ -13,4 +15,8 @@ class Myservices extends GetxService {
 
 initialServices() async {
   await Get.putAsync(() => Myservices().init());
+  await Get.putAsync<ClinicNotificationService>(
+    () => ClinicNotificationService().init(),
+    permanent: true,
+  );
 }

@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
 
 import '../../core/Error/Failure.dart';
+import '../../core/constant/Approutes.dart';
+import '../../core/services/ClinicNotificationService.dart';
 import '../../data/datasource/remote/Doctors/DactorData.dart';
 import '../../data/datasource/remote/Appointments/DoctorAppointmentData.dart';
 import '../../data/model/AppointmentModel.dart';
@@ -8,9 +10,14 @@ import '../../data/model/CurrentDoctorModel.dart';
 import '../../data/model/DoctorAppointmentSummary.dart';
 
 class DoctorHomeController extends GetxController {
-  DoctorHomeController(this._doctorData, this._appointmentData);
+  DoctorHomeController(
+    this._doctorData,
+    this._appointmentData, {
+    ClinicNotificationService? notificationService,
+  }) : _notificationService = notificationService;
   final DoctorData _doctorData;
   final DoctorAppointmentData _appointmentData;
+  final ClinicNotificationService? _notificationService;
   CurrentDoctorModel? doctor;
   DoctorAppointmentSummary? summary;
   List<AppointmentModel> todayAppointments = const [];
@@ -27,10 +34,13 @@ class DoctorHomeController extends GetxController {
   Failure? get appointmentsFailure =>
       summaryFailure ?? todayAppointmentsFailure;
   bool get _inactive => _disposed || isClosed;
+  int get unreadNotificationsCount => _notificationService?.unreadCount ?? 0;
 
   @override
   void onInit() {
     super.onInit();
+    _notificationService?.addListener(_notificationsChanged);
+    _notificationService?.loadForCurrentUser(role: 'doctor');
     loadDashboard();
   }
 
@@ -78,6 +88,10 @@ class DoctorHomeController extends GetxController {
       'featureNotAvailable'.tr,
       snackPosition: SnackPosition.BOTTOM,
     );
+  }
+
+  void showNotifications() {
+    Get.toNamed<void>(Approutes.Notvications);
   }
 
   Future<void> _load({
@@ -189,6 +203,11 @@ class DoctorHomeController extends GetxController {
   @override
   void onClose() {
     _disposed = true;
+    _notificationService?.removeListener(_notificationsChanged);
     super.onClose();
+  }
+
+  void _notificationsChanged() {
+    if (!_inactive) update();
   }
 }

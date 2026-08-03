@@ -5,6 +5,7 @@ import '../core/class/ApiService.dart';
 
 import '../core/localization/changelocal.dart';
 import '../core/services/serveses.dart';
+import '../core/services/ClinicNotificationService.dart';
 //import '../controller/Favorite_controller.dart';
 
 // ignore: camel_case_types
@@ -19,6 +20,9 @@ class initialBinding extends Bindings {
       Get.putAsync<Myservices>(() => Myservices().init());
     }
     if (!Get.isRegistered<ApiService>()) Get.put(ApiService());
+    if (!Get.isRegistered<ClinicNotificationService>()) {
+      Get.put(ClinicNotificationService(), permanent: true);
+    }
     if (!Get.isRegistered<localController>()) Get.put(localController());
     if (!Get.isRegistered<RegisterController>()) {
       Get.lazyPut<RegisterController>(RegisterController.new, fenix: true);

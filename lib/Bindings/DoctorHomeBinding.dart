@@ -7,6 +7,7 @@ import '../core/class/ApiService.dart';
 import '../data/datasource/remote/Doctors/DactorData.dart';
 import '../data/datasource/remote/images/imagesdta.dart';
 import '../data/datasource/remote/Appointments/DoctorAppointmentData.dart';
+import '../core/services/ClinicNotificationService.dart';
 
 class DoctorHomeBinding extends Bindings {
   @override
@@ -20,11 +21,19 @@ class DoctorHomeBinding extends Bindings {
       () => DoctorHomeController(
         Get.find<DoctorData>(),
         Get.find<DoctorAppointmentData>(),
+        notificationService: Get.isRegistered<ClinicNotificationService>()
+            ? Get.find<ClinicNotificationService>()
+            : null,
       ),
       fenix: true,
     );
     Get.lazyPut<DoctorAppointmentsController>(
-      () => DoctorAppointmentsController(Get.find<DoctorAppointmentData>()),
+      () => DoctorAppointmentsController(
+        Get.find<DoctorAppointmentData>(),
+        notificationService: Get.isRegistered<ClinicNotificationService>()
+            ? Get.find<ClinicNotificationService>()
+            : null,
+      ),
       fenix: true,
     );
     Get.lazyPut<DoctorPatientsController>(

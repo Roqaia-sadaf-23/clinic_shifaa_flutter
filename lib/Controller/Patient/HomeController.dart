@@ -4,11 +4,13 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../core/Error/Failure.dart';
 import '../../core/constant/Approutes.dart';
+import '../../core/services/ClinicNotificationService.dart';
 import '../../data/datasource/remote/Home/HomeData.dart';
 import '../../data/datasource/remote/Appointments/DoctorAppointmentData.dart';
 import '../../data/model/AppointmentModel.dart';
 import '../../data/model/DoctorModel.dart';
 import '../../data/model/PatientHomeProfileModel.dart';
+import '../../data/model/ClinicNotification.dart';
 import '../../data/datasource/remote/images/imagesdta.dart';
 
 enum PatientAppointmentFilter { all, upcoming, completed, cancelled }
@@ -18,13 +20,16 @@ class PatientHomeControllerImp extends GetxController {
     this._homeData, {
     DoctorAppointmentData? appointmentData,
     ImagesData? imageData,
+    ClinicNotificationService? notificationService,
     this.autoLoad = true,
   }) : _appointmentData = appointmentData,
-       _imageData = imageData;
+       _imageData = imageData,
+       _notificationService = notificationService;
 
   final HomeData _homeData;
   final DoctorAppointmentData? _appointmentData;
   final ImagesData? _imageData;
+  final ClinicNotificationService? _notificationService;
   final bool autoLoad;
   final TextEditingController searchController = TextEditingController();
   final patientEditFormKey = GlobalKey<FormState>();
@@ -145,7 +150,7 @@ class PatientHomeControllerImp extends GetxController {
     return result;
   }
 
-  int get unreadNotificationsCount => 0;
+  int get unreadNotificationsCount => _notificationService?.unreadCount ?? 0;
   bool get isPatientProfileEditBusy =>
       isSavingPatientProfile || isPickingPatientImage;
 
@@ -160,6 +165,8 @@ class PatientHomeControllerImp extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    _notificationService?.addListener(_notificationsChanged);
+    _notificationService?.loadForCurrentUser(role: 'patient');
     final arguments = Get.arguments;
     if (arguments is Map) {
       final initialTab = arguments['patientTab'];
@@ -260,14 +267,21 @@ class PatientHomeControllerImp extends GetxController {
   }
 
   Future<void> _loadAppointments() async {
+    List<AppointmentModel>? loadedAppointments;
     try {
       final result = await _homeData.getPatientAppointments();
       if (_inactive) return;
       result.fold((failure) => appointmentsFailure = failure, (value) {
         appointments = value;
+        loadedAppointments = value;
         appointmentsFailure = null;
         _enrichAppointmentsWithDoctors();
       });
+      if (loadedAppointments != null) {
+        await _notificationService?.syncPatientAppointments(
+          loadedAppointments!.map(_patientNotificationSnapshot),
+        );
+      }
     } finally {
       isLoadingAppointments = false;
     }
@@ -373,6 +387,11 @@ class PatientHomeControllerImp extends GetxController {
       appointmentActionFailure = null;
     });
     cancellingAppointments.remove(appointment.id);
+    if (succeeded) {
+      await _notificationService?.recordPatientAppointmentCancelled(
+        _patientNotificationSnapshot(appointment),
+      );
+    }
     if (succeeded) await refreshAppointments();
     if (!_inactive) update();
     return succeeded;
@@ -381,6 +400,14 @@ class PatientHomeControllerImp extends GetxController {
   void registerCreatedAppointment(int appointmentId) {
     if (_inactive || appointmentId <= 0) return;
     _paymentEligibleAppointmentIds.add(appointmentId);
+  }
+
+  Future<void> recordCreatedAppointment(AppointmentModel appointment) async {
+    if (_inactive || appointment.id <= 0) return;
+    registerCreatedAppointment(appointment.id);
+    await _notificationService?.recordAppointmentCreated(
+      _patientNotificationSnapshot(appointment),
+    );
   }
 
   bool preparePayment(AppointmentModel appointment) {
@@ -818,6 +845,7 @@ class PatientHomeControllerImp extends GetxController {
   @override
   void onClose() {
     _disposed = true;
+    _notificationService?.removeListener(_notificationsChanged);
     searchController.dispose();
     patientFirstNameController.dispose();
     patientLastNameController.dispose();
@@ -826,5 +854,19 @@ class PatientHomeControllerImp extends GetxController {
     patientNoteController.dispose();
     patientAgeController.dispose();
     super.onClose();
+  }
+
+  ClinicAppointmentNotificationSnapshot _patientNotificationSnapshot(
+    AppointmentModel appointment,
+  ) => ClinicAppointmentNotificationSnapshot(
+    id: appointment.id,
+    personName: appointment.doctorName,
+    appointmentDate: appointment.appointmentDate,
+    status: appointment.status,
+    lastStatusDate: appointment.lastStatusDate,
+  );
+
+  void _notificationsChanged() {
+    if (!_inactive) update();
   }
 }
